@@ -70,16 +70,6 @@ def test(name='cifar10', net_name='cifarnet', model_path=None):
             coord.join(threads, stop_grace_period_secs=10)
 
 
-def restore(chkp_path, saver, sess):
-    ckpt = tf.train.get_checkpoint_state(chkp_path)
-    if ckpt and ckpt.model_checkpoint_path:
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        global_step = ckpt.model_checkpoint_path.split(
-            '/')[-1].split('-')[-1]
-    else:
-        print('Non checkpoint file found in %s' % chkp_path)
-
-
 def train(data_name, net_name, chkp_path=None):
     # setting output level
     tf.logging.set_verbosity(tf.logging.INFO)

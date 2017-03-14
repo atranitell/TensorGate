@@ -12,22 +12,21 @@ class cifarnet(net.Net):
         pass
 
     def arg_scope(self):
-        with arg_scope(
-            [layers.conv2d],
-            weight_initializer=tf.truncated_normal_initializer(stddev=5e-2),
-                activation=tf.nn.relu):
-            with arg_scope(
-                [layers.fully_connected],
-                biases_initializer=tf.constant_initializer(0.1),
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.04),
-                weights_regularizer=layers.l2_regularizer(0.004),
-                    activation_fn=layers.relu) as sc:
+        with arg_scope([layers.conv2d],
+                       weights_initializer=tf.truncated_normal_initializer(
+                           stddev=5e-2),
+                       activation_fn=tf.nn.relu):
+            with arg_scope([layers.fully_connected],
+                           biases_initializer=tf.constant_initializer(0.1),
+                           weights_initializer=tf.truncated_normal_initializer(
+                               stddev=0.04),
+                           weights_regularizer=layers.l2_regularizer(0.004),
+                           activation_fn=tf.nn.relu) as sc:
                 return sc
 
     def model(self, images, num_classes, is_training=True):
         end_points = {}
-        dropout_keep_prob = 0.5
+        dropout_keep_prob = 0.9
         with tf.variable_scope('cifarnet', 'cifarnet', [images, num_classes]):
 
             net = layers.conv2d(images, 64, [5, 5], scope='conv1')

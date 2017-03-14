@@ -12,7 +12,7 @@ from data import utils
 import tensorflow as tf
 
 
-class cifar10(dataset.Dataset):
+class avec2014_flow(dataset.Dataset):
 
     def __init__(self, data_type):
         self.data_type = data_type
@@ -35,17 +35,17 @@ class cifar10(dataset.Dataset):
         self.log = log_param()
         # Directory where checkpoints and event logs are written to.        
         if self.data_type == 'train':
-            self.log.train_dir = utils.dir_log_constructor('_output/cifar_train')
+            self.log.train_dir = utils.dir_log_constructor('_output/avec2014_flow_train')
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
-        self.log.print_frequency = 50
+        self.log.print_frequency = 100
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 500
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 1000
+        self.log.save_model_iter = 2000
         # test iteration
-        self.log.test_interval = 1000
+        self.log.test_interval = 2000
 
     def _init_opt_param(self):
         """The name of the optimizer: 
@@ -56,7 +56,7 @@ class cifar10(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'adagrad'
+        self.opt.optimizer = 'adam'
 
         """ SGD """
         self.opt.weight_decay = 0.00004
@@ -68,7 +68,7 @@ class cifar10(dataset.Dataset):
         self.opt.adagrad_initial_accumulator_value = 0.1
 
         """ ADAMs """
-        self.opt.adam_beta1 = 0.9
+        self.opt.adam_beta1 = 0.09
         self.opt.adam_beta2 = 0.999
 
         """ FTRL """
@@ -113,22 +113,22 @@ class cifar10(dataset.Dataset):
         self.output_height = 28
         self.output_width = 28
         self.padding = 4
-        self.reader_thread = 1
-        self.min_queue_num = 1024
+        self.reader_thread = 8
+        self.min_queue_num = 4096
         self.device = '/cpu:0'
-        self.num_classes = 10
+        self.num_classes = 100
 
     def _init_train_param(self):
-        self.total_num = 50000
-        self.name = 'cifar10_train'
+        self.total_num = 29067
+        self.name = 'avec2014_flow_train'
         self.shuffle = True
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/train_list.txt'
+        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/trn_dev_flow_list.txt'
 
     def _init_test_param(self):
-        self.total_num = 10000
-        self.name = 'cifar10_test'
+        self.total_num = 17727
+        self.name = 'avec2014_flow_test'
         self.shuffle = False
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/test_list.txt'
+        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/tst_list_flow.txt'
 
     def loads(self):
         """ load images and labels from folder/files.
@@ -157,7 +157,7 @@ class cifar10(dataset.Dataset):
         input_queue = tf.train.slice_input_producer([images, labels], shuffle=self.shuffle)
 
         # preprocessing
-        # there, the cifar image if 'JPEG' format
+        # there, the avec2014 image if 'JPEG' format
         image_raw = tf.read_file(input_queue[0])
         image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
         image = self._preprocessing_image(image_jpeg)

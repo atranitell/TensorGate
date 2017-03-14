@@ -14,13 +14,16 @@ def configure_learning_rate(dataset, num_samples_per_epoch, global_step):
     Raises:
       ValueError: if
     """
+    current_base_lr = dataset.lr.learning_rate
+
     decay_steps = int(num_samples_per_epoch / dataset.batch_size *
                       dataset.lr.num_epochs_per_decay)
+
     if dataset.lr.sync_replicas:
         decay_steps /= dataset.lr.replicas_to_aggregate
 
     if dataset.lr.learning_rate_decay_type == 'exponential':
-        return tf.train.exponential_decay(dataset.lr.learning_rate,
+        return tf.train.exponential_decay(current_base_lr,
                                           global_step,
                                           decay_steps,
                                           dataset.lr.learning_rate_decay_factor,
@@ -28,17 +31,16 @@ def configure_learning_rate(dataset, num_samples_per_epoch, global_step):
                                           name='exponential_decay_learning_rate')
 
     elif dataset.lr.learning_rate_decay_type == 'fixed':
-        return tf.constant(dataset.lr.learning_rate, name='fixed_learning_rate')
+        return tf.constant(current_base_lr, name='fixed_learning_rate')
 
     elif dataset.lr.learning_rate_decay_type == 'polynomial':
-        return tf.train.polynomial_decay(dataset.lr.learning_rate,
+        return tf.train.polynomial_decay(current_base_lr,
                                          global_step,
                                          decay_steps,
                                          dataset.lr.end_learning_rate,
                                          power=1.0,
                                          cycle=False,
                                          name='polynomial_decay_learning_rate')
-
     else:
         raise ValueError('learning_rate_decay_type [%s] was not recognized',
                          dataset.lr.learning_rate_decay_type)
@@ -56,6 +58,8 @@ def configure_optimizer(dataset, learning_rate):
     Raises:
       ValueError: if dataset.opt.optimizer is not recognized.
     """
+
+    print('[TRAIN]: Routine will use %s optimizer.' % dataset.opt.optimizer)
 
     if dataset.opt.optimizer == 'adadelta':
         optimizer = tf.train.AdadeltaOptimizer(
@@ -102,5 +106,5 @@ def configure_optimizer(dataset, learning_rate):
     else:
         raise ValueError(
             'Optimizer [%s] was not recognized', dataset.opt.optimizer)
-    
+
     return optimizer
