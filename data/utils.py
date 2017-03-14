@@ -36,6 +36,6 @@ def dir_log_constructor(folder_path):
     """
     date_str = datetime.strftime(datetime.now(), '%Y%m%d%H%M')
     dir_log = folder_path + '_' + date_str
-    os.mkdir(dir_log)
-    # tf.gfile.MakeDirs(dir_log)
+    if not os.path.exists(dir_log):
+        os.mkdir(dir_log)
     return dir_log

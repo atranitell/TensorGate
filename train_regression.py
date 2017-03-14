@@ -47,7 +47,6 @@ def test(name='cifar10', net_name='cifarnet', model_path=None):
             for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
                 threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
                                                  start=True))
-
             # prepare
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
             aver_precision = 0
@@ -64,19 +63,33 @@ def test(name='cifar10', net_name='cifarnet', model_path=None):
 
             aver_precision = 1.0 * aver_precision / num_iter
             aver_loss = 1.0 * aver_loss / num_iter
-            print('INFO:tensorflow:Iter in %d, precision: %f' % (int(global_step), aver_precision))
+            print('INFO:tensorflow:Iter in %d, precision: %f' %
+                  (int(global_step), aver_precision))
 
             coord.request_stop()
             coord.join(threads, stop_grace_period_secs=10)
 
 
-def train():
+def restore(chkp_path, saver, sess):
+    ckpt = tf.train.get_checkpoint_state(chkp_path)
+    if ckpt and ckpt.model_checkpoint_path:
+        saver.restore(sess, ckpt.model_checkpoint_path)
+        global_step = ckpt.model_checkpoint_path.split(
+            '/')[-1].split('-')[-1]
+    else:
+        print('Non checkpoint file found in %s' % chkp_path)
+
+
+def train(data_name, net_name, chkp_path=None):
     # setting output level
     tf.logging.set_verbosity(tf.logging.INFO)
 
     with tf.Graph().as_default():
         # get all param information
-        dataset = datasets_factory.get_dataset('cifar10', 'train')
+        dataset = datasets_factory.get_dataset(data_name, 'train')
+        # reset_training_path
+        if chkp_path is not None:
+            dataset.log.train_dir = chkp_path
 
         # create global step
         with tf.device(dataset.device):
@@ -86,12 +99,27 @@ def train():
         images, labels = dataset.loads()
 
         # choose network
-        logits, end_points = nets_factory.get_network(
-            'cifarnet', 'train', images, dataset.num_classes)
+        fc_last, end_points = nets_factory.get_network(
+            net_name, 'train', images, dataset.num_classes)
 
         # loss
-        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels, logits=logits)
+        # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        #     labels=labels, logits=logits)
+
+        # regression
+        # labels = tf.to_float(tf.div(labels, 100))
+        labels = tf.to_float(labels)
+        logits = layers.fully_connected(
+            fc_last, 1,
+            biases_initializer=tf.zeros_initializer(),
+            weights_initializer=tf.truncated_normal_initializer(
+                stddev=1 / 192.0),
+            weights_regularizer=None,
+            activation_fn=None,
+            scope='last_logits')
+        end_points['last_logits'] = logits
+
+        losses = tf.nn.l2_loss([labels-logits], name='l2_loss')
 
         # Gather initial summaries.
         # summaries = set(tf.get_collection(tf.GraphKeys.SUMMARIES))
@@ -119,20 +147,22 @@ def train():
             global_step=global_step, name='train_step')
 
         # precision
-        predictions = tf.to_int32(tf.argmax(logits, axis=1))
-        precision = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
+        # predictions = tf.to_int32(tf.argmax(logits, axis=1))
+
+        # precision = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
         loss = tf.reduce_mean(losses)
 
         logging_hook = tf.train.LoggingTensorHook(
             tensors={'step': global_step,
-                     'loss': loss,
-                     'precision': precision},
+                     'loss': loss},
+                    #  'precision': precision},
             every_n_iter=dataset.log.print_frequency)
 
         chkp_hook = tf.train.CheckpointSaverHook(
             checkpoint_dir=dataset.log.train_dir,
             save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(var_list=tf.all_variables(), max_to_keep=10),
+            saver=tf.train.Saver(
+                var_list=tf.global_variables(), max_to_keep=10),
             checkpoint_basename=dataset.name + '.ckpt')
 
         # running operation
@@ -145,13 +175,15 @@ def train():
 
             def after_run(self, run_context, run_values):
                 cur_iter = run_values.results[0]
-                if cur_iter % dataset.log.test_interval == 0:
-                    test('cifar10', 'cifarnet', dataset.log.train_dir)
+                if (cur_iter - 1) % dataset.log.test_interval == 0 and (cur_iter - 1) != 0:
+                    test(data_name, net_name, dataset.log.train_dir)
 
         with tf.train.MonitoredTrainingSession(
                 hooks=[logging_hook, chkp_hook, running_hook()],
                 save_summaries_steps=0,
-                config=tf.ConfigProto(allow_soft_placement=False)) as mon_sess:
+                config=tf.ConfigProto(allow_soft_placement=False),
+                checkpoint_dir=chkp_path) as mon_sess:
+
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
 
@@ -159,6 +191,9 @@ def train():
 def interface(args):
     """ interface related to command
     """
+    data_name = 'cifar10'
+    net_name = 'cifarnet'
+
     # check model
     if isinstance(args.model, str):
         if not tf.gfile.IsDirectory(args.model):
@@ -166,17 +201,15 @@ def interface(args):
 
     # start to train
     if args.task == 'train' and args.model is None:
-        train()
+        train(data_name, net_name, chkp_path=None)
 
     # continue to train
     elif args.task == 'train' and args.model is not None:
-        pass
-        # train(True, args.model)
+        train(data_name, net_name, args.model)
 
-    # eval
+    # test
     elif args.task == 'eval' and args.model is not None:
-        # evaluate('eval', args.model)
-        pass
+        test(data_name, net_name, model_path=args.model)
 
     # finetune
 

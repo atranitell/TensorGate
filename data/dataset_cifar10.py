@@ -45,7 +45,7 @@ class cifar10(dataset.Dataset):
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 100
+        self.log.test_interval = 2000
 
     def _init_opt_param(self):
         """The name of the optimizer: 
@@ -68,7 +68,7 @@ class cifar10(dataset.Dataset):
         self.opt.adagrad_initial_accumulator_value = 0.1
 
         """ ADAMs """
-        self.opt.adam_beta1 = 0.9
+        self.opt.adam_beta1 = 0.09
         self.opt.adam_beta2 = 0.999
 
         """ FTRL """
@@ -154,7 +154,7 @@ class cifar10(dataset.Dataset):
         # construct a fifo queue
         images = tf.convert_to_tensor(image_list, dtype=tf.string)
         labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-        input_queue = tf.train.slice_input_producer([images, labels], shuffle=dataset.shuffle)
+        input_queue = tf.train.slice_input_producer([images, labels], shuffle=self.shuffle)
 
         # preprocessing
         # there, the cifar image if 'JPEG' format
