@@ -29,7 +29,7 @@ def interface(args):
         regression_train.train(data_name, args.net, args.model)
 
     # test
-    elif args.task == 'eval' and args.model is not None:
+    elif args.task == 'test' and args.model is not None:
         regression_test.test(data_name, args.net, model_path=args.model)
 
     # feature

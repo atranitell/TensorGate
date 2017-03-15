@@ -39,30 +39,28 @@ class Dataset(metaclass=ABCMeta):
 
     def __init__(self):
         pass
-        
+
     @abstractmethod
     def loads(self):
         pass
 
-    def _generate_image_label_batch(self, image, label, shuffle,
-                                    min_queue_num, batch_size, reader_thread):
+    def _generate_image_label_batch(self, image, label, shuffle, min_queue_num,
+                                    batch_size, reader_thread, filename=None):
         if shuffle:
-            images, label_batch = tf.train.shuffle_batch(
-                tensors=[image, label],
+            images, label_batch, filenames = tf.train.shuffle_batch(
+                tensors=[image, label, filename],
                 batch_size=batch_size,
                 capacity=min_queue_num + 3 * batch_size,
                 min_after_dequeue=min_queue_num,
                 num_threads=reader_thread)
         else:
-            images, label_batch = tf.train.batch(
-                tensors=[image, label],
+            images, label_batch, filenames = tf.train.batch(
+                tensors=[image, label, filename],
                 batch_size=batch_size,
                 capacity=min_queue_num + 3 * batch_size,
                 num_threads=reader_thread)
 
-        # tf.summary.image('images', images)
-
-        return images, tf.reshape(label_batch, [batch_size])
+        return images, tf.reshape(label_batch, [batch_size]), filenames
 
     def _preprocessing_image(self, preprocessing_method, data_type,
                              image, output_height, output_width):

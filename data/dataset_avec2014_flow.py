@@ -113,20 +113,22 @@ class avec2014_flow(dataset.Dataset):
         self.output_height = 28
         self.output_width = 28
         self.padding = 4
-        self.reader_thread = 8
         self.min_queue_num = 4096
         self.device = '/cpu:0'
         self.num_classes = 100
+        self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
         self.total_num = 29067
         self.name = 'avec2014_flow_train'
+        self.reader_thread = 8
         self.shuffle = True
         self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/trn_dev_flow_list.txt'
 
     def _init_test_param(self):
         self.total_num = 17727
         self.name = 'avec2014_flow_test'
+        self.reader_thread = 1
         self.shuffle = False
         self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/tst_list_flow.txt'
 
@@ -169,4 +171,4 @@ class avec2014_flow(dataset.Dataset):
 
         return self._generate_image_label_batch(
             image, label, self.shuffle, self.min_queue_num,
-            self.batch_size, self.reader_thread)
+            self.batch_size, self.reader_thread, input_queue[0])

@@ -1,6 +1,7 @@
 
 import os
 import math
+import progressive
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow as tf
@@ -19,10 +20,12 @@ def test(name, net_name, model_path=None):
         #-------------------------------------------
         dataset = datasets_factory.get_dataset(name, 'test')
         dataset.log.test_dir = model_path + '/test/'
+        if not os.path.exists(dataset.log.test_dir):
+            os.mkdir(dataset.log.test_dir)
 
         output.print_basic_information(dataset, net_name)
 
-        images, labels_orig = dataset.loads()
+        images, labels_orig, filenames = dataset.loads()
 
         #-------------------------------------------
         # Network
@@ -40,11 +43,10 @@ def test(name, net_name, model_path=None):
         err_mse = tf.reduce_mean(
             input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
-
         saver = tf.train.Saver()
         with tf.Session() as sess:
             #-------------------------------------------
-            # restore from checkpoint 
+            # restore from checkpoint
             #-------------------------------------------
             ckpt = tf.train.get_checkpoint_state(model_path)
             if ckpt and ckpt.model_checkpoint_path:
@@ -65,21 +67,50 @@ def test(name, net_name, model_path=None):
             for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
                 threads.extend(qr.create_threads(sess, coord=coord, daemon=True,
                                                  start=True))
-            
+
             #-------------------------------------------
-            # evaluation
+            # Initial some variables
             #-------------------------------------------
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
-            mae = 0.0
-            rmse = 0.0
-            loss = 0.0
+            mae, rmse, loss = 0, 0, 0
 
-            for _ in range(num_iter):
+            # output test information
+            tab = tf.constant(' ', shape=[dataset.batch_size])
+            labels_str = tf.as_string(tf.reshape(
+                labels_orig, shape=[dataset.batch_size]))
+            logits_str = tf.as_string(tf.reshape(
+                logits * dataset.num_classes, shape=[dataset.batch_size]))
+            test_batch_info = filenames + tab + labels_str + tab + logits_str
+
+            test_infp_path = os.path.join(
+                dataset.log.test_dir, '%s.txt' % global_step)
+
+            test_info_fp = open(test_infp_path, 'wb')
+            print('[TEST] Output file in %s.' % test_infp_path)
+
+            # progressive bar
+            progress_bar = output.progressive(min_scale=2.0)
+
+            #-------------------------------------------
+            # Start to TEST
+            #-------------------------------------------
+            for cur in range(num_iter):
                 if coord.should_stop():
                     break
-                loss += sess.run(losses)
-                mae += sess.run(err_mae)
-                rmse += sess.run(err_mse)
+
+                _loss, _mae, _rmse, _info = sess.run(
+                    [losses, err_mae, err_mse, test_batch_info])
+
+                loss += _loss
+                mae += _mae
+                rmse += _rmse
+
+                for _line in _info:
+                    test_info_fp.write(_line + b'\r\n')
+
+                progress_bar.add_float(cur, num_iter)
+
+            test_info_fp.close()
 
             loss = 1.0 * loss / num_iter
             rmse = math.sqrt(1.0 * rmse / num_iter)
@@ -88,10 +119,10 @@ def test(name, net_name, model_path=None):
             #-------------------------------------------
             # output
             #-------------------------------------------
-            print('[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
+            print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
                   (int(global_step), dataset.total_num, num_iter))
 
-            print('[TEST] loss:%.2f, mae:%.2f, rmse:%.2f' %
+            print('[TEST] Loss:%.2f, mae:%.2f, rmse:%.2f' %
                   (loss, mae, rmse))
 
             #-------------------------------------------

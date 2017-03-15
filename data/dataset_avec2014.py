@@ -41,7 +41,7 @@ class avec2014(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 100
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 500
+        self.log.save_summaries_iter = 100
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 5000
         # test iteration
@@ -90,7 +90,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.1
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -110,23 +110,24 @@ class avec2014(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 224
-        self.output_width = 224
-        self.reader_thread = 8
+        self.output_height = 28
+        self.output_width = 28
         self.min_queue_num = 4096
         self.device = '/cpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'vgg'
+        self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
         self.total_num = 15660
         self.name = 'avec2014_train'
+        self.reader_thread = 8
         self.shuffle = True
         self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
     def _init_test_param(self):
         self.total_num = 17727
         self.name = 'avec2014_test'
+        self.reader_thread = 8
         self.shuffle = False
         self.data_path = '_datasets/AVEC2014/tst_list.txt'
 
@@ -169,4 +170,4 @@ class avec2014(dataset.Dataset):
 
         return self._generate_image_label_batch(
             image, label, self.shuffle, self.min_queue_num,
-            self.batch_size, self.reader_thread)
+            self.batch_size, self.reader_thread, input_queue[0])

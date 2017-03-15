@@ -17,6 +17,7 @@ from optimizer import opt_optimizer
 from util_tools import analyzer
 from util_tools import output
 
+
 def train(data_name, net_name, chkp_path=None):
 
     with tf.Graph().as_default():
@@ -32,7 +33,7 @@ def train(data_name, net_name, chkp_path=None):
                 dataset.log.train_dir = chkp_path
 
             # get data
-            images, labels = dataset.loads()
+            images, labels, _ = dataset.loads()
 
         #-------------------------------------------
         # Network
@@ -72,7 +73,8 @@ def train(data_name, net_name, chkp_path=None):
         with tf.device(dataset.device):
             learning_rate = opt_optimizer.configure_learning_rate(
                 dataset, dataset.total_num, global_step)
-            optimizer = opt_optimizer.configure_optimizer(dataset, learning_rate)
+            optimizer = opt_optimizer.configure_optimizer(
+                dataset, learning_rate)
 
         # compute gradients
         variables_to_train = tf.trainable_variables()
@@ -131,9 +133,12 @@ def train(data_name, net_name, chkp_path=None):
                     _mae = self.mean_mae / _invl
                     _rmse = math.sqrt(self.mean_mse / _invl)
                     _lr = str(run_values.results[4])
-                    _duration = (time.time() - self._start_time) / _invl
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s., sec/batch:%.2f'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    _duration = (time.time() - self._start_time) * 1000 / _invl
+                    # there time is the running time of a iteration
+                    # (if 1 GPU, it is a batch)
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s, time:%.2fms'
+                    print(format_str %
+                          (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse = 0, 0, 0
 

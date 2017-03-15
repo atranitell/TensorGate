@@ -114,7 +114,6 @@ class cifar10(dataset.Dataset):
         self.output_height = 28
         self.output_width = 28
         self.padding = 4
-        self.reader_thread = 1
         self.min_queue_num = 1024
         self.device = '/cpu:0'
         self.num_classes = 10
@@ -123,12 +122,14 @@ class cifar10(dataset.Dataset):
     def _init_train_param(self):
         self.total_num = 50000
         self.name = 'cifar10_train'
+        self.reader_thread = 8
         self.shuffle = True
         self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/train_list.txt'
 
     def _init_test_param(self):
         self.total_num = 10000
         self.name = 'cifar10_test'
+        self.reader_thread = 1
         self.shuffle = False
         self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/test_list.txt'
 
@@ -161,6 +162,12 @@ class cifar10(dataset.Dataset):
 
         # preprocessing
         # there, the cifar image if 'JPEG' format
+        with tf.Session() as sess:
+            tf.train.start_queue_runners(sess=sess)
+            print(sess.run(input_queue[0]))
+            raise ValueError('111')
+
+
         image_raw = tf.read_file(input_queue[0])
         image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
         image = self._preprocessing_image(
@@ -172,4 +179,4 @@ class cifar10(dataset.Dataset):
 
         return self._generate_image_label_batch(
             image, label, self.shuffle, self.min_queue_num,
-            self.batch_size, self.reader_thread)
+            self.batch_size, self.reader_thread, input_queue[0])
