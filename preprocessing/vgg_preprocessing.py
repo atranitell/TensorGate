@@ -343,9 +343,10 @@ def preprocess_image(image, output_height, output_width, is_training=False,
     Returns:
       A preprocessed image.
     """
-    if is_training:
-        return preprocess_for_train(image, output_height, output_width,
-                                    resize_side_min, resize_side_max)
-    else:
-        return preprocess_for_eval(image, output_height, output_width,
-                                   resize_side_min)
+    with tf.name_scope('preprocessing'):
+        if is_training:
+            return preprocess_for_train(image, output_height, output_width,
+                                        resize_side_min, resize_side_max)
+        else:
+            return preprocess_for_eval(image, output_height, output_width,
+                                    resize_side_min)

@@ -43,7 +43,7 @@ class avec2014(dataset.Dataset):
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 500
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 2500
+        self.log.save_model_iter = 5000
         # test iteration
         self.log.test_interval = 5000
 
@@ -88,9 +88,9 @@ class avec2014(dataset.Dataset):
         self.lr = opt()
         # Specifies how the learning rate is decayed. One of "fixed",
         # "exponential", or "polynomial"
-        self.lr.learning_rate_decay_type = 'fixed'
+        self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.001
+        self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -99,7 +99,7 @@ class avec2014(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.94
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 10.0
+        self.lr.num_epochs_per_decay = 15.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -114,7 +114,7 @@ class avec2014(dataset.Dataset):
         self.output_width = 28
         self.reader_thread = 8
         self.min_queue_num = 4096
-        self.device = '/cpu:0'
+        self.device = '/gpu:0'
         self.num_classes = 100
         self.preprocessing_method = 'cifarnet'
 
@@ -122,13 +122,13 @@ class avec2014(dataset.Dataset):
         self.total_num = 15660
         self.name = 'avec2014_train'
         self.shuffle = True
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/trn_list.txt'
+        self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
     def _init_test_param(self):
         self.total_num = 17727
         self.name = 'avec2014_test'
         self.shuffle = False
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/AVEC2014/tst_list.txt'
+        self.data_path = '_datasets/AVEC2014/tst_list.txt'
 
     def loads(self):
         """ load images and labels from folder/files.

@@ -15,10 +15,11 @@ def preprocess_image(image, output_height, output_width, is_training):
     Returns:
       A preprocessed image.
     """
-    image = tf.to_float(image)
-    image = tf.image.resize_image_with_crop_or_pad(
-        image, output_width, output_height)
-    image = tf.subtract(image, 128.0)
-    image = tf.div(image, 128.0)
+    with tf.name_scope('preprocessing'):
+        image = tf.to_float(image)
+        image = tf.image.resize_image_with_crop_or_pad(
+            image, output_width, output_height)
+        image = tf.subtract(image, 128.0)
+        image = tf.div(image, 128.0)
 
-    return image
+        return image

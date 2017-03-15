@@ -58,8 +58,7 @@ def configure_optimizer(dataset, learning_rate):
     Raises:
       ValueError: if dataset.opt.optimizer is not recognized.
     """
-
-    print('[TRAIN]: Routine will use %s optimizer.' % dataset.opt.optimizer)
+    print('[TRAIN] Routine will use %s optimizer.' % dataset.opt.optimizer)
 
     if dataset.opt.optimizer == 'adadelta':
         optimizer = tf.train.AdadeltaOptimizer(
