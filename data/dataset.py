@@ -26,6 +26,9 @@ Call Method:
 """
 
 from abc import ABCMeta, abstractmethod
+from preprocessing import preprocessing_factory
+import tensorflow as tf
+
 
 class Dataset(metaclass=ABCMeta):
     """ Represents a Dataset specification.
@@ -35,20 +38,48 @@ class Dataset(metaclass=ABCMeta):
     """
 
     def __init__(self):
-        pass
+        self.preprocessing_method = ''
+        self.data_type = 'train'
 
     @abstractmethod
     def loads(self):
         pass
-    
-    @abstractmethod
-    def _generate_image_label_batch(self):
-        pass
-    
-    @abstractmethod
-    def _preprocessing_image(self):
-        pass
-    
-    @abstractmethod
-    def _preprocessing_label(self):
-        pass
+
+    def _generate_image_label_batch(self, image, label, shuffle,
+                                    min_queue_num, batch_size, reader_thread):
+
+        if shuffle:
+            images, label_batch = tf.train.shuffle_batch(
+                tensors=[image, label],
+                batch_size=batch_size,
+                capacity=min_queue_num + 3 * batch_size,
+                min_after_dequeue=min_queue_num,
+                num_threads=reader_thread)
+        else:
+            images, label_batch = tf.train.batch(
+                tensors=[image, label],
+                batch_size=batch_size,
+                capacity=min_queue_num + 3 * batch_size,
+                num_threads=reader_thread)
+
+        tf.summary.image('images', images)
+
+        return images, tf.reshape(label_batch, [batch_size])
+
+    def _preprocessing_image(self, preprocessing_method, data_type,
+                             image, output_height, output_width):
+        return preprocessing_factory.get_preprocessing(
+            self.preprocessing_method, data_type,
+            image, output_height, output_width)
+
+    def _preprocessing_label(self, label):
+        if self.data_type is 'train':
+            return self._preprocessing_label_for_train(label)
+        elif self.data_type is 'test':
+            return self._preprocessing_label_for_test(label)
+
+    def _preprocessing_label_for_train(self, label):
+        return label
+
+    def _preprocessing_label_for_test(self, label):
+        return label

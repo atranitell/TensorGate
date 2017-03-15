@@ -10,13 +10,13 @@ networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
     'lenet': net_lenet.lenet(),
     'alexnet': net_alexnet.alexnet(),
-    'resnet50': net_resnet.resnet50(),
-    'resnet101': net_resnet.resnet101(),
-    'resnet152': net_resnet.resnet152(),
-    'resnet200': net_resnet.resnet200(),
-    'vgg': net_vgg.vgg(),
-    'vgg16': net_vgg.vgg16(),
-    'vgg19': net_vgg.vgg19()
+    'resnet_50': net_resnet.resnet_50(),
+    'resnet_101': net_resnet.resnet_101(),
+    'resnet_152': net_resnet.resnet_152(),
+    'resnet_200': net_resnet.resnet_200(),
+    'vgg_a': net_vgg.vgg_a(),
+    'vgg_16': net_vgg.vgg_16(),
+    'vgg_19': net_vgg.vgg_19()
 }
 
 

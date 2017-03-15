@@ -1,17 +1,3 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
 """Contains building blocks for various versions of Residual Networks.
 
 Residual networks (ResNets) were proposed in:
@@ -36,6 +22,8 @@ implementation is more memory efficient.
 
 import collections
 import tensorflow as tf
+from tensorflow.contrib.framework import arg_scope
+from tensorflow.contrib import layers
 
 slim = tf.contrib.slim
 
@@ -203,51 +191,3 @@ def stack_blocks_dense(net, blocks, output_stride=None,
         raise ValueError('The target output_stride cannot be reached.')
 
     return net
-
-
-def resnet_arg_scope(weight_decay=0.0001,
-                     batch_norm_decay=0.997,
-                     batch_norm_epsilon=1e-5,
-                     batch_norm_scale=True):
-    """Defines the default ResNet arg scope.
-
-    TODO(gpapan): The batch-normalization related default values above are
-      appropriate for use in conjunction with the reference ResNet models
-      released at https://github.com/KaimingHe/deep-residual-networks. When
-      training ResNets from scratch, they might need to be tuned.
-
-    Args:
-      weight_decay: The weight decay to use for regularizing the model.
-      batch_norm_decay: The moving average decay when estimating layer activation
-        statistics in batch normalization.
-      batch_norm_epsilon: Small constant to prevent division by zero when
-        normalizing activations by their variance in batch normalization.
-      batch_norm_scale: If True, uses an explicit `gamma` multiplier to scale the
-        activations in the batch normalization layer.
-
-    Returns:
-      An `arg_scope` to use for the resnet models.
-    """
-    batch_norm_params = {
-        'decay': batch_norm_decay,
-        'epsilon': batch_norm_epsilon,
-        'scale': batch_norm_scale,
-        'updates_collections': tf.GraphKeys.UPDATE_OPS,
-    }
-
-    with slim.arg_scope(
-        [slim.conv2d],
-        weights_regularizer=slim.l2_regularizer(weight_decay),
-        weights_initializer=slim.variance_scaling_initializer(),
-        activation_fn=tf.nn.relu,
-        normalizer_fn=slim.batch_norm,
-            normalizer_params=batch_norm_params):
-        with slim.arg_scope([slim.batch_norm], **batch_norm_params):
-            # The following implies padding='SAME' for pool1, which makes feature
-            # alignment easier for dense prediction tasks. This is also used in
-            # https://github.com/facebook/fb.resnet.torch. However the accompanying
-            # code of 'Deep Residual Learning for Image Recognition' uses
-            # padding='VALID' for pool1. You can switch to that choice by setting
-            # slim.arg_scope([slim.max_pool2d], padding='VALID').
-            with slim.arg_scope([slim.max_pool2d], padding='SAME') as arg_sc:
-                return arg_sc

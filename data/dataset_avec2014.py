@@ -110,13 +110,13 @@ class avec2014(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 224
-        self.output_width = 224
-        self.padding = 0
+        self.output_height = 28
+        self.output_width = 28
         self.reader_thread = 8
         self.min_queue_num = 4096
         self.device = '/cpu:0'
         self.num_classes = 100
+        self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
         self.total_num = 15660
@@ -160,114 +160,120 @@ class avec2014(dataset.Dataset):
         # there, the avec2014 image if 'JPEG' format
         image_raw = tf.read_file(input_queue[0])
         image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
-        image = self._preprocessing_image(image_jpeg)
+        image = self._preprocessing_image(
+            self.preprocessing_method, self.data_type,
+            image_jpeg, self.output_height, self.output_width)
+
+        # preprocessing method
         label = self._preprocessing_label(input_queue[1])
 
-        return self._generate_image_label_batch(image, label)
+        return self._generate_image_label_batch(
+            image, label, self.shuffle, self.min_queue_num,
+            self.batch_size, self.reader_thread)
 
-    def _preprocessing_image(self, image):
-        if self.data_type is 'train':
-            return self._preprocessing_image_for_train(image)
-        elif self.data_type is 'test':
-            return self._preprocessing_image_for_test(image)
+    # def _preprocessing_image(self, image):
+    #     if self.data_type is 'train':
+    #         return self._preprocessing_image_for_train(image)
+    #     elif self.data_type is 'test':
+    #         return self._preprocessing_image_for_test(image)
 
-    def _preprocessing_image_for_train(self, image):
-        """ Preprocesses the given image for training.
+    # def _preprocessing_image_for_train(self, image):
+    #     """ Preprocesses the given image for training.
 
-        Note that the actual resizing scale is sampled from
-            [`resize_size_min`, `resize_size_max`].
+    #     Note that the actual resizing scale is sampled from
+    #         [`resize_size_min`, `resize_size_max`].
 
-        Args:
-            image: A `Tensor` representing an image of arbitrary size.
-            output_height: The height of the image after preprocessing.
-            output_width: The width of the image after preprocessing.
-            padding: The amound of padding before and after each dimension of the image.
+    #     Args:
+    #         image: A `Tensor` representing an image of arbitrary size.
+    #         output_height: The height of the image after preprocessing.
+    #         output_width: The width of the image after preprocessing.
+    #         padding: The amound of padding before and after each dimension of the image.
 
-        Returns:
-            A preprocessed image.
-        """
+    #     Returns:
+    #         A preprocessed image.
+    #     """
 
-        output_height = self.output_height
-        output_width = self.output_width
-        padding = self.padding
+    #     output_height = self.output_height
+    #     output_width = self.output_width
+    #     padding = self.padding
 
-        tf.summary.image('image', tf.expand_dims(image, 0))
+    #     tf.summary.image('image', tf.expand_dims(image, 0))
 
-        # Transform the image to floats.
-        image = tf.to_float(image)
-        if padding > 0:
-            image = tf.pad(image, [[padding, padding],
-                                   [padding, padding], [0, 0]])
-        # Randomly crop a [height, width] section of the image.
-        distorted_image = tf.random_crop(image,
-                                         [output_height, output_width, 3])
+    #     # Transform the image to floats.
+    #     image = tf.to_float(image)
+    #     if padding > 0:
+    #         image = tf.pad(image, [[padding, padding],
+    #                                [padding, padding], [0, 0]])
+    #     # Randomly crop a [height, width] section of the image.
+    #     distorted_image = tf.random_crop(image,
+    #                                      [output_height, output_width, 3])
 
-        # Randomly flip the image horizontally.
-        distorted_image = tf.image.random_flip_left_right(distorted_image)
+    #     # Randomly flip the image horizontally.
+    #     distorted_image = tf.image.random_flip_left_right(distorted_image)
 
-        tf.summary.image('distorted_image', tf.expand_dims(distorted_image, 0))
+    #     tf.summary.image('distorted_image', tf.expand_dims(distorted_image, 0))
 
-        # Because these operations are not commutative, consider randomizing
-        # the order their operation.
-        distorted_image = tf.image.random_brightness(
-            distorted_image, max_delta=63)
-        distorted_image = tf.image.random_contrast(
-            distorted_image, lower=0.2, upper=1.8)
+    #     # Because these operations are not commutative, consider randomizing
+    #     # the order their operation.
+    #     distorted_image = tf.image.random_brightness(
+    #         distorted_image, max_delta=63)
+    #     distorted_image = tf.image.random_contrast(
+    #         distorted_image, lower=0.2, upper=1.8)
 
-        # Subtract off the mean and divide by the variance of the pixels.
-        return tf.image.per_image_standardization(distorted_image)
+    #     # Subtract off the mean and divide by the variance of the pixels.
+    #     return tf.image.per_image_standardization(distorted_image)
 
-    def _preprocessing_image_for_test(self, image):
-        """ Preprocesses the given image for test. """
+    # def _preprocessing_image_for_test(self, image):
+    #     """ Preprocesses the given image for test. """
 
-        output_height = self.output_height
-        output_width = self.output_width
+    #     output_height = self.output_height
+    #     output_width = self.output_width
 
-        tf.summary.image('image', tf.expand_dims(image, 0))
-        # Transform the image to floats.
-        image = tf.to_float(image)
+    #     tf.summary.image('image', tf.expand_dims(image, 0))
+    #     # Transform the image to floats.
+    #     image = tf.to_float(image)
 
-        # Resize and crop if needed.
-        resized_image = tf.image.resize_image_with_crop_or_pad(
-            image, output_width, output_height)
-        tf.summary.image('resized_image', tf.expand_dims(resized_image, 0))
+    #     # Resize and crop if needed.
+    #     resized_image = tf.image.resize_image_with_crop_or_pad(
+    #         image, output_width, output_height)
+    #     tf.summary.image('resized_image', tf.expand_dims(resized_image, 0))
 
-        # Subtract off the mean and divide by the variance of the pixels.
-        return tf.image.per_image_standardization(resized_image)
+    #     # Subtract off the mean and divide by the variance of the pixels.
+    #     return tf.image.per_image_standardization(resized_image)
 
-    def _preprocessing_label(self, label):
-        if self.data_type is 'train':
-            return self._preprocessing_label_for_train(label)
-        elif self.data_type is 'test':
-            return self._preprocessing_label_for_test(label)
+    # def _preprocessing_label(self, label):
+    #     if self.data_type is 'train':
+    #         return self._preprocessing_label_for_train(label)
+    #     elif self.data_type is 'test':
+    #         return self._preprocessing_label_for_test(label)
 
-    def _preprocessing_label_for_train(self, label):
-        return label
+    # def _preprocessing_label_for_train(self, label):
+    #     return label
 
-    def _preprocessing_label_for_test(self, label):
-        return label
+    # def _preprocessing_label_for_test(self, label):
+    #     return label
 
-    def _generate_image_label_batch(self, image, label):
+    # def _generate_image_label_batch(self, image, label):
 
-        num_preprocess_threads = self.reader_thread
-        min_queue_num = self.min_queue_num
-        shuffle = self.shuffle
-        batch_size = self.batch_size
+    #     num_preprocess_threads = self.reader_thread
+    #     min_queue_num = self.min_queue_num
+    #     shuffle = self.shuffle
+    #     batch_size = self.batch_size
 
-        if shuffle:
-            images, label_batch = tf.train.shuffle_batch(
-                tensors=[image, label],
-                batch_size=batch_size,
-                capacity=min_queue_num + 3 * batch_size,
-                min_after_dequeue=min_queue_num,
-                num_threads=num_preprocess_threads)
-        else:
-            images, label_batch = tf.train.batch(
-                tensors=[image, label],
-                batch_size=batch_size,
-                capacity=min_queue_num + 3 * batch_size,
-                num_threads=num_preprocess_threads)
+    #     if shuffle:
+    #         images, label_batch = tf.train.shuffle_batch(
+    #             tensors=[image, label],
+    #             batch_size=batch_size,
+    #             capacity=min_queue_num + 3 * batch_size,
+    #             min_after_dequeue=min_queue_num,
+    #             num_threads=num_preprocess_threads)
+    #     else:
+    #         images, label_batch = tf.train.batch(
+    #             tensors=[image, label],
+    #             batch_size=batch_size,
+    #             capacity=min_queue_num + 3 * batch_size,
+    #             num_threads=num_preprocess_threads)
 
-        tf.summary.image('images', images)
+    #     tf.summary.image('images', images)
 
-        return images, tf.reshape(label_batch, [batch_size])
+    #     return images, tf.reshape(label_batch, [batch_size])

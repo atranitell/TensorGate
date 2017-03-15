@@ -1,3 +1,29 @@
+"""AlexNet version 2.
+Described in: http://arxiv.org/pdf/1404.5997v2.pdf
+Parameters from:
+github.com/akrizhevsky/cuda-convnet2/blob/master/layers/
+layers-imagenet-1gpu.cfg
+
+Note: All the fully_connected layers have been transformed to conv2d layers.
+        To use in classification mode, resize input to 224x224. To use in fully
+        convolutional mode, set spatial_squeeze to false.
+        The LRN layers have been removed and change the initializers from
+        random_normal_initializer to xavier_initializer.
+
+Args:
+    images: a tensor of size [batch_size, height, width, channels].
+    num_classes: number of predicted classes.
+    is_training: whether or not the model is being trained.
+    dropout_keep_prob: the probability that activations are kept in the dropout
+    layers during training.
+    spatial_squeeze: whether or not should squeeze the spatial dimensions of the
+    outputs. Useful to remove unnecessary dimensions for classification.
+    scope: Optional scope for the variables.
+
+Returns:
+    the last op containing the log predictions and end_points dict.
+"""
+
 
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
@@ -5,40 +31,17 @@ from tensorflow.contrib import layers
 from tensorflow.contrib.layers.python.layers import utils
 from nets import net
 
-"""AlexNet version 2.
-    Described in: http://arxiv.org/pdf/1404.5997v2.pdf
-    Parameters from:
-    github.com/akrizhevsky/cuda-convnet2/blob/master/layers/
-    layers-imagenet-1gpu.cfg
-
-    Note: All the fully_connected layers have been transformed to conv2d layers.
-          To use in classification mode, resize input to 224x224. To use in fully
-          convolutional mode, set spatial_squeeze to false.
-          The LRN layers have been removed and change the initializers from
-          random_normal_initializer to xavier_initializer.
-
-    Args:
-      images: a tensor of size [batch_size, height, width, channels].
-      num_classes: number of predicted classes.
-      is_training: whether or not the model is being trained.
-      dropout_keep_prob: the probability that activations are kept in the dropout
-        layers during training.
-      spatial_squeeze: whether or not should squeeze the spatial dimensions of the
-        outputs. Useful to remove unnecessary dimensions for classification.
-      scope: Optional scope for the variables.
-
-    Returns:
-      the last op containing the log predictions and end_points dict.
-"""
-
 
 class alexnet(net.Net):
 
     def __init__(self):
-        pass
+        self.weight_decay = 0.0005
+        self.dropout_keep_prob = 0.9
+        self.spatial_squeeze = True
 
     def arg_scope(self):
-        weight_decay = 0.0005
+        weight_decay = self.weight_decay
+
         with arg_scope([layers.conv2d, layers.fully_connected],
                        activation_fn=tf.nn.relu,
                        biases_initializer=tf.constant_initializer(0.1),
@@ -48,8 +51,9 @@ class alexnet(net.Net):
                     return arg_sc
 
     def model(self, images, num_classes, is_training):
-        spatial_squeeze = True
-        dropout_keep_prob = 0.9
+        spatial_squeeze = self.spatial_squeeze
+        dropout_keep_prob = self.dropout_keep_prob
+
         with tf.variable_scope('alexnet', 'alexnet_v2', [images]) as sc:
             end_points_collection = sc.name + '_end_points'
             # Collect outputs for conv2d, fully_connected and max_pool2d.

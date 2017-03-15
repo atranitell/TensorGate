@@ -1,3 +1,29 @@
+"""Creates a variant of the LeNet model.
+
+Note that since the output is a set of 'logits', the values fall in the
+interval of (-infinity, infinity). Consequently, to convert the outputs to a
+probability distribution over the characters, one will need to convert them
+using the softmax function:
+
+        logits = lenet.lenet(images, is_training=False)
+        probabilities = tf.nn.softmax(logits)
+        predictions = tf.argmax(logits, 1)
+
+Args:
+    images: A batch of `Tensors` of size [batch_size, height, width, channels].
+    num_classes: the number of classes in the dataset.
+    is_training: specifies whether or not we're currently training the model.
+    This variable will determine the behaviour of the dropout layer.
+    dropout_keep_prob: the percentage of activation values that are retained.
+    prediction_fn: a function to get predictions out of logits.
+    scope: Optional variable_scope.
+
+Returns:
+    logits: the pre-softmax activations, a tensor of size
+    [batch_size, `num_classes`]
+    end_points: a dictionary from components of the network to the corresponding
+    activation.
+"""
 
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
@@ -9,10 +35,12 @@ from nets import net
 class lenet(net.Net):
 
     def __init__(self):
-        pass
+        self.weight_decay = 0.0005
+        self.dropout_keep_prob = 0.9
 
     def arg_scope(self):
-        weight_decay = 0.0
+        weight_decay = self.weight_decay
+
         with arg_scope([layers.conv2d, layers.fully_connected],
                        weights_regularizer=layers.l2_regularizer(weight_decay),
                        weights_initializer=tf.truncated_normal_initializer(
@@ -22,7 +50,8 @@ class lenet(net.Net):
 
     def model(self, images, num_classes, is_training):
         end_points = {}
-        dropout_keep_prob = 0.9
+        dropout_keep_prob = self.dropout_keep_prob
+
         with tf.variable_scope('lenet', 'LeNet', [images, num_classes]):
             net = layers.conv2d(images, 32, [5, 5], scope='conv1')
             net = layers.max_pool2d(net, [2, 2], 2, scope='pool1')

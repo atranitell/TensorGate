@@ -6,7 +6,7 @@ class Net(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def model(self):
+    def model(self, images, num_classes, is_training):
         pass
 
     @abstractmethod

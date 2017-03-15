@@ -186,7 +186,7 @@ def interface(args):
     """ interface related to command
     """
     data_name = 'avec2014'
-    net_name = 'resnet50'
+    net_name = 'cifarnet'
 
     # check model
     if isinstance(args.model, str):
