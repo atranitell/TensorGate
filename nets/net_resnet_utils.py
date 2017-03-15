@@ -23,9 +23,8 @@ implementation is more memory efficient.
 import collections
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
+from tensorflow.contrib.framework import add_arg_scope
 from tensorflow.contrib import layers
-
-slim = tf.contrib.slim
 
 
 class Block(collections.namedtuple('Block', ['scope', 'unit_fn', 'args'])):
@@ -56,7 +55,7 @@ def subsample(inputs, factor, scope=None):
     if factor == 1:
         return inputs
     else:
-        return slim.max_pool2d(inputs, [1, 1], stride=factor, scope=scope)
+        return layers.max_pool2d(inputs, [1, 1], stride=factor, scope=scope)
 
 
 def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
@@ -71,12 +70,12 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
 
     is equivalent to
 
-       net = slim.conv2d(inputs, num_outputs, 3, stride=1, padding='SAME')
+       net = layers.conv2d(inputs, num_outputs, 3, stride=1, padding='SAME')
        net = subsample(net, factor=stride)
 
     whereas
 
-       net = slim.conv2d(inputs, num_outputs, 3, stride=stride, padding='SAME')
+       net = layers.conv2d(inputs, num_outputs, 3, stride=stride, padding='SAME')
 
     is different when the input's height or width is even, which is why we add the
     current function. For more details, see ResnetUtilsTest.testConv2DSameEven().
@@ -94,8 +93,8 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
         the convolution output.
     """
     if stride == 1:
-        return slim.conv2d(inputs, num_outputs, kernel_size, stride=1, rate=rate,
-                           padding='SAME', scope=scope)
+        return layers.conv2d(inputs, num_outputs, kernel_size, stride=1, rate=rate,
+                             padding='SAME', scope=scope)
     else:
         kernel_size_effective = kernel_size + (kernel_size - 1) * (rate - 1)
         pad_total = kernel_size_effective - 1
@@ -103,11 +102,11 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
         pad_end = pad_total - pad_beg
         inputs = tf.pad(inputs,
                         [[0, 0], [pad_beg, pad_end], [pad_beg, pad_end], [0, 0]])
-        return slim.conv2d(inputs, num_outputs, kernel_size, stride=stride,
-                           rate=rate, padding='VALID', scope=scope)
+        return layers.conv2d(inputs, num_outputs, kernel_size, stride=stride,
+                             rate=rate, padding='VALID', scope=scope)
 
 
-@slim.add_arg_scope
+@add_arg_scope
 def stack_blocks_dense(net, blocks, output_stride=None,
                        outputs_collections=None):
     """Stacks ResNet `Blocks` and controls output feature density.
@@ -184,7 +183,7 @@ def stack_blocks_dense(net, blocks, output_stride=None,
                                             stride=unit_stride,
                                             rate=1)
                         current_stride *= unit_stride
-            net = slim.utils.collect_named_outputs(
+            net = layers.utils.collect_named_outputs(
                 outputs_collections, sc.name, net)
 
     if output_stride is not None and current_stride != output_stride:

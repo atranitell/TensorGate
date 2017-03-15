@@ -38,16 +38,14 @@ class Dataset(metaclass=ABCMeta):
     """
 
     def __init__(self):
-        self.preprocessing_method = ''
-        self.data_type = 'train'
-
+        pass
+        
     @abstractmethod
     def loads(self):
         pass
 
     def _generate_image_label_batch(self, image, label, shuffle,
                                     min_queue_num, batch_size, reader_thread):
-
         if shuffle:
             images, label_batch = tf.train.shuffle_batch(
                 tensors=[image, label],
@@ -69,13 +67,13 @@ class Dataset(metaclass=ABCMeta):
     def _preprocessing_image(self, preprocessing_method, data_type,
                              image, output_height, output_width):
         return preprocessing_factory.get_preprocessing(
-            self.preprocessing_method, data_type,
+            preprocessing_method, data_type,
             image, output_height, output_width)
 
-    def _preprocessing_label(self, label):
-        if self.data_type is 'train':
+    def _preprocessing_label(self, label, data_type):
+        if data_type is 'train':
             return self._preprocessing_label_for_train(label)
-        elif self.data_type is 'test':
+        elif data_type is 'test':
             return self._preprocessing_label_for_test(label)
 
     def _preprocessing_label_for_train(self, label):

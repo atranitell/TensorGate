@@ -79,7 +79,7 @@ def test(name, net_name, model_path=None):
 
             print('[TEST] Iter in %d, total test sample: %d, num_batch: %d' %
                   (int(global_step), dataset.total_num, num_iter))
-            
+
             print('[TEST] Average loss: %f, MAE: %f, RMSE: %f' %
                   (loss, mae, rmse))
 
@@ -94,6 +94,7 @@ def train(data_name, net_name, chkp_path=None):
     with tf.Graph().as_default():
         # get all param information
         dataset = datasets_factory.get_dataset(data_name, 'train')
+        
         # reset_training_path
         if chkp_path is not None:
             dataset.log.train_dir = chkp_path
@@ -155,8 +156,8 @@ def train(data_name, net_name, chkp_path=None):
         chkp_hook = tf.train.CheckpointSaverHook(
             checkpoint_dir=dataset.log.train_dir,
             save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(
-                var_list=tf.global_variables(), max_to_keep=10),
+            saver=tf.train.Saver(var_list=tf.global_variables(),
+                                 max_to_keep=10),
             checkpoint_basename=dataset.name + '.ckpt')
 
         # running operation

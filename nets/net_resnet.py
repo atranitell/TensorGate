@@ -37,11 +37,11 @@ ResNet-101 for semantic segmentation into 21 classes:
 
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
+from tensorflow.contrib.framework import add_arg_scope
 from tensorflow.contrib import layers
 
 from nets import net
 from nets import net_resnet_utils
-
 
 class resent(net.Net):
 
@@ -163,7 +163,7 @@ class resent(net.Net):
                             net, scope='predictions')
                     return net, end_points
 
-    @layers.add_arg_scope
+    @add_arg_scope
     def bottleneck(self, inputs, depth, depth_bottleneck, stride, rate=1,
                    outputs_collections=None, scope=None):
         """Bottleneck residual unit variant with BN before convolutions.

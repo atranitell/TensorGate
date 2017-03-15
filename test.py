@@ -1,6 +1,7 @@
 
 import tensorflow as tf
 
+tf.
 
 with tf.device('/gpu:0'):
     p = tf.constant(0)
