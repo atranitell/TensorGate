@@ -20,7 +20,7 @@ def test(name, net_name, model_path=None):
         dataset = datasets_factory.get_dataset(name, 'test')
         dataset.log.test_dir = model_path + '/test/'
 
-        output.print_basic_information(dataset)
+        output.print_basic_information(dataset, net_name)
 
         images, labels_orig = dataset.loads()
 

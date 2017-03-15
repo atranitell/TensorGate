@@ -26,4 +26,5 @@ def print_basic_information(dataset, net_model=None):
 
     # net_model
     if net_model != None:
-        print(phase + 'Using net model: ', net_model)
+        print(phase + 'Using net model:%s, preprocessing method: %s' %
+              (net_model, dataset.preprocessing_method))

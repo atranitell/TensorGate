@@ -10,24 +10,27 @@ def interface(args):
     """ interface related to command
     """
     data_name = 'avec2014'
-    net_name = 'cifarnet'
 
     # check model
     if isinstance(args.model, str):
         if not os.path.isdir(args.model):
             raise ValueError('Error model path: ', args.model)
 
+    # check net
+    if args.net is None:
+        raise ValueError('Without input net')
+
     # start to train
     if args.task == 'train' and args.model is None:
-        regression_train.train(data_name, net_name, chkp_path=None)
+        regression_train.train(data_name, args.net, chkp_path=None)
 
     # finetune
     elif args.task == 'train' and args.model is not None:
-        regression_train.train(data_name, net_name, args.model)
+        regression_train.train(data_name, args.net, args.model)
 
     # test
     elif args.task == 'eval' and args.model is not None:
-        regression_test.test(data_name, net_name, model_path=args.model)
+        regression_test.test(data_name, args.net, model_path=args.model)
 
     # feature
     else:

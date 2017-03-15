@@ -60,7 +60,7 @@ class Dataset(metaclass=ABCMeta):
                 capacity=min_queue_num + 3 * batch_size,
                 num_threads=reader_thread)
 
-        tf.summary.image('images', images)
+        # tf.summary.image('images', images)
 
         return images, tf.reshape(label_batch, [batch_size])
 

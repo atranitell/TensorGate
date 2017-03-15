@@ -110,13 +110,13 @@ class avec2014(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 28
-        self.output_width = 28
+        self.output_height = 224
+        self.output_width = 224
         self.reader_thread = 8
         self.min_queue_num = 4096
-        self.device = '/gpu:0'
+        self.device = '/cpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = 'vgg'
 
     def _init_train_param(self):
         self.total_num = 15660

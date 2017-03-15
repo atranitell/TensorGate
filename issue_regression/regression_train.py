@@ -25,7 +25,7 @@ def train(data_name, net_name, chkp_path=None):
         #-------------------------------------------
         with tf.name_scope('dataset'):
             dataset = datasets_factory.get_dataset(data_name, 'train')
-            output.print_basic_information(dataset)
+            output.print_basic_information(dataset, net_name)
 
             # reset_training_path
             if chkp_path is not None:
@@ -112,6 +112,7 @@ def train(data_name, net_name, chkp_path=None):
                 self.mean_loss, self.mean_mae, self.mean_mse = 0, 0, 0
 
             def before_run(self, run_context):
+                self._start_time = time.time()
                 return tf.train.SessionRunArgs(
                     [global_step, losses, err_mae, err_mse, learning_rate],
                     feed_dict=None)
@@ -130,8 +131,9 @@ def train(data_name, net_name, chkp_path=None):
                     _mae = self.mean_mae / _invl
                     _rmse = math.sqrt(self.mean_mse / _invl)
                     _lr = str(run_values.results[4])
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s.'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr))
+                    _duration = (time.time() - self._start_time) / _invl
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s., sec/batch:%.2f'
+                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse = 0, 0, 0
 
