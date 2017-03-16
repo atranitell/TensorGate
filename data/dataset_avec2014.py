@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-# ./data/datasets_data_provider.py
-#
-#    Tensorflow Version: r1.0
-#    Python Version: 3.5
-#    Update Date: 2017/03/13
-#    Author: Kai JIN
-# ==============================================================================
-
 from data import dataset
 from data import utils
 import tensorflow as tf
@@ -120,7 +112,7 @@ class avec2014(dataset.Dataset):
     def _init_train_param(self):
         self.total_num = 15660
         self.name = 'avec2014_train'
-        self.reader_thread = 8
+        self.reader_thread = 1
         self.shuffle = True
         self.data_path = '_datasets/AVEC2014/trn_list.txt'
 

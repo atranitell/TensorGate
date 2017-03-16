@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-""" ./datasets/datasets_factory.py
-    A factory-pattern class which returns classification image/label pairs
-
-    Tensorflow Version: r1.0
-    Python Version: 3.5
-    Update Date: 2017/03/13
-    Author: Kai JIN
-"""
-
 from data import dataset_cifar10
 from data import dataset_avec2014
 from data import dataset_avec2014_flow

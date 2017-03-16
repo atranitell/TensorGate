@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-# ./data/datasets_data_provider.py
-#
-#    Tensorflow Version: r1.0
-#    Python Version: 3.5
-#    Update Date: 2017/03/13
-#    Author: Kai JIN
-# ==============================================================================
-
 from data import dataset
 from data import utils
 import tensorflow as tf

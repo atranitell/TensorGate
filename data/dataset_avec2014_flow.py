@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-# ./data/datasets_data_provider.py
-#
-#    Tensorflow Version: r1.0
-#    Python Version: 3.5
-#    Update Date: 2017/03/13
-#    Author: Kai JIN
-# ==============================================================================
-
 from data import dataset
 from data import utils
 import tensorflow as tf
@@ -33,9 +25,10 @@ class avec2014_flow(dataset.Dataset):
         class log_param():
             pass
         self.log = log_param()
-        # Directory where checkpoints and event logs are written to.        
+        # Directory where checkpoints and event logs are written to.
         if self.data_type == 'train':
-            self.log.train_dir = utils.dir_log_constructor('_output/avec2014_flow_train')
+            self.log.train_dir = utils.dir_log_constructor(
+                '_output/avec2014_flow_train')
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
@@ -156,7 +149,8 @@ class avec2014_flow(dataset.Dataset):
         # construct a fifo queue
         images = tf.convert_to_tensor(image_list, dtype=tf.string)
         labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-        input_queue = tf.train.slice_input_producer([images, labels], shuffle=self.shuffle)
+        input_queue = tf.train.slice_input_producer(
+            [images, labels], shuffle=self.shuffle)
 
         # preprocessing
         # there, the avec2014 image if 'JPEG' format
