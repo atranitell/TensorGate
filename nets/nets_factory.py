@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
 
 from tensorflow.contrib.framework import arg_scope
 from nets import net_cifarnet
@@ -21,6 +24,7 @@ networks_map = {
 
 
 def check_network(name, data_type):
+    """ check network name """
     if name not in networks_map:
         raise ValueError('Unknown data_type %s' % data_type)
     if data_type == 'train':

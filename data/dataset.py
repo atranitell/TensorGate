@@ -16,10 +16,13 @@ Constant:
 Call Method:
     main->datasets_factory->(cifar10/..)->dataset
 """
-
 from abc import ABCMeta, abstractmethod
-from preprocessing import preprocessing_factory
+
 import tensorflow as tf
+from preprocessing import preprocessing_factory
+
+from data import utils
+from data import dataset_tfrecords
 
 
 class Dataset(metaclass=ABCMeta):
@@ -34,7 +37,51 @@ class Dataset(metaclass=ABCMeta):
 
     @abstractmethod
     def loads(self):
+        """ Should support at least a kind of reading method.
+            Currently, we could load from *.txt file to acuqire image list and label,
+            or we could load from *.tfrecords directly input all image and labels
+
+            loads() function will includie preprocessing method.
+            if you define the loads() exclusively, please put preprocessing in it.
+        """
         pass
+
+    def _load_data(self, data_load_method, data_path, total_num, shuffle):
+        if data_load_method == 'text':
+            return self._load_data_from_text(data_path, total_num, shuffle)
+
+        elif data_load_method == 'tfrecord':
+            return self._load_data_from_tfrecords(data_path)
+
+        else:
+            raise ValueError('Unknown data load method!')
+
+    def _load_data_from_text(self, data_path, total_num, shuffle):
+        file_list_path = data_path
+        total_num = total_num
+        image_list, label_list, load_num = utils.read_from_file(file_list_path)
+
+        if total_num != load_num:
+            raise ValueError('Loading in %d images, but setting is %d images!' %
+                             (load_num, total_num))
+
+        # construct a fifo queue
+        images = tf.convert_to_tensor(image_list, dtype=tf.string)
+        labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
+        input_queue = tf.train.slice_input_producer([images, labels], shuffle=shuffle)
+
+        # preprocessing
+        # there, the avec2014 image if 'JPEG' format
+        image_raw = tf.read_file(input_queue[0])
+        image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
+
+        # image, label, filename
+        return image_jpeg, input_queue[1], input_queue[0]
+
+    def _load_data_from_tfrecords(self, data_path):
+        dataset_tfrecord = dataset_tfrecords.tfrecord()
+        # dataset_tfrecord.process(dataset
+        return dataset_tfrecord.read_from_tfrecord(data_path)
 
     def _generate_image_label_batch(self, image, label, shuffle, min_queue_num,
                                     batch_size, reader_thread, filename=None):

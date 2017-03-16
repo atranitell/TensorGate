@@ -1,8 +1,18 @@
+# -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
+
 import os
 from datetime import datetime
 
 
 def read_from_file(file_list):
+    """ Reading images and labels from text file.
+        The format like:
+            path-to-fold/img0 0
+            path-to-fold/img1 10
+            ...
+    """
     if not os.path.isfile(file_list):
         raise ValueError('Wrong file path %s', file_list)
     imglist = []

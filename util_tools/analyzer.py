@@ -1,4 +1,7 @@
-"""Tools for analyzing the operations and variables in a TensorFlow graph."""
+# -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+    Tools for analyzing the operations and variables in a TensorFlow graph.
+"""
 
 
 def desc_tensor(var):

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
+
 from data import dataset_cifar10
 from data import dataset_avec2014
 from data import dataset_avec2014_flow
@@ -9,9 +12,6 @@ dataset_map = {
     'avec2014_flow': dataset_avec2014_flow.avec2014_flow
 }
 
-def check_dataset(name):
-    if name not in dataset_map:
-        raise ValueError('Unknown dataset %s' % name)
 
 def get_dataset(name, data_type):
     """Given a dataset name and a data_type returns a Dataset.
@@ -26,5 +26,7 @@ def get_dataset(name, data_type):
     Raises:
         ValueError: If the dataset `name` is unknown.
     """
-    check_dataset(name)
+
+    if name not in dataset_map:
+        raise ValueError('Unknown dataset %s' % name)
     return dataset_map[name](data_type)

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
+
 from data import dataset
 from data import utils
-import tensorflow as tf
 
 
 class cifar10(dataset.Dataset):
@@ -27,14 +29,13 @@ class cifar10(dataset.Dataset):
         self.log = log_param()
         # Directory where checkpoints and event logs are written to.
         if self.data_type == 'train':
-            self.log.train_dir = utils.dir_log_constructor(
-                '_output/cifar_train')
+            self.log.train_dir = utils.dir_log_constructor('_output/cifar_train')
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
         self.log.print_frequency = 50
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 500
+        self.log.save_summaries_iter = 100
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 1000
         # test iteration
@@ -105,70 +106,40 @@ class cifar10(dataset.Dataset):
         self.batch_size = 32
         self.output_height = 28
         self.output_width = 28
-        self.padding = 4
         self.min_queue_num = 1024
         self.device = '/cpu:0'
         self.num_classes = 10
-        self.preprocessing_method = 'cifarnet_preprocessing'
+        self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
         self.total_num = 50000
         self.name = 'cifar10_train'
         self.reader_thread = 8
         self.shuffle = True
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/train_list.txt'
+        self.data_load_method = 'text'
+        self.data_path = '_datasets/cifar10/train_list.txt'
 
     def _init_test_param(self):
         self.total_num = 10000
         self.name = 'cifar10_test'
-        self.reader_thread = 1
+        self.reader_thread = 8
         self.shuffle = False
-        self.data_path = 'C:/Users/jk/Desktop/Tensorflow/mood-new/Video-Mood/_datasets/cifar10/test_list.txt'
+        self.data_load_method = 'text'
+        self.data_path = '_datasets/cifar10/test_list.txt'
 
     def loads(self):
-        """ load images and labels from folder/files.
-            1) load in queue 2) preprocessing 3) output batch
+        """ load images and labels from folder/files."""
+        # load from disk
+        image, label, filename = self._load_data(
+            self.data_load_method, self.data_path, self.total_num, self.shuffle)
 
-        Note:
-            There, we will load image from train.list(like caffe)
+        # preprocessing batch size
+        image = self._preprocessing_image(self.preprocessing_method, self.data_type, image,
+                                          self.output_height, self.output_width)
 
-        Returns:
-            images: 4D tensor of [batch_size, height, wideth, channel] size.
-            labels: 1D tensor of [batch_size] size.
-        """
+        # preprocessing images
+        label = self._preprocessing_label(label, self.data_type)
 
-        file_list_path = self.data_path
-        batch_size = self.batch_size
-        total_num = self.total_num
-        image_list, label_list, load_num = utils.read_from_file(file_list_path)
-
-        if total_num != load_num:
-            raise ValueError('Loading in %d images, but setting is %d images!' %
-                             (load_num, total_num))
-
-        # construct a fifo queue
-        images = tf.convert_to_tensor(image_list, dtype=tf.string)
-        labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-        input_queue = tf.train.slice_input_producer(
-            [images, labels], shuffle=self.shuffle)
-
-        # preprocessing
-        # there, the cifar image if 'JPEG' format
-        with tf.Session() as sess:
-            tf.train.start_queue_runners(sess=sess)
-            print(sess.run(input_queue[0]))
-            raise ValueError('111')
-
-
-        image_raw = tf.read_file(input_queue[0])
-        image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
-        image = self._preprocessing_image(
-            self.preprocessing_method, self.data_type,
-            image_jpeg, self.output_height, self.output_width)
-
-        # preprocessing method
-        label = self._preprocessing_label(input_queue[1], self.data_type)
-
-        return self._generate_image_label_batch(
-            image, label, self.shuffle, self.min_queue_num,
-            self.batch_size, self.reader_thread, input_queue[0])
+        # return [images, labels, filenames] as a batch
+        return self._generate_image_label_batch(image, label, self.shuffle, self.min_queue_num,
+                                                self.batch_size, self.reader_thread, filename)

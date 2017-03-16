@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
 
 import tensorflow as tf
+
 
 def configure_learning_rate(dataset, num_samples_per_epoch, global_step):
     """Configures the learning rate.

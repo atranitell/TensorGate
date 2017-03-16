@@ -59,8 +59,7 @@ class alexnet(net.Net):
             # Collect outputs for conv2d, fully_connected and max_pool2d.
             with arg_scope([layers.conv2d, layers.fully_connected, layers.max_pool2d],
                            outputs_collections=[end_points_collection]):
-                net = layers.conv2d(images, 64, [11, 11], 4, padding='VALID',
-                                    scope='conv1')
+                net = layers.conv2d(images, 64, [11, 11], 4, padding='VALID', scope='conv1')
                 net = layers.max_pool2d(net, [3, 3], 2, scope='pool1')
                 net = layers.conv2d(net, 192, [5, 5], scope='conv2')
                 net = layers.max_pool2d(net, [3, 3], 2, scope='pool2')
@@ -71,16 +70,14 @@ class alexnet(net.Net):
 
                 # Use conv2d instead of fully_connected layers.
                 with arg_scope([layers.conv2d],
-                               weights_initializer=tf.truncated_normal_initializer(
-                                   stddev=0.005),
+                               weights_initializer=tf.truncated_normal_initializer(stddev=0.005),
                                biases_initializer=tf.constant_initializer(0.1)):
-                    net = layers.conv2d(net, 4096, [5, 5], padding='VALID',
-                                        scope='fc6')
-                    net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                         scope='dropout6')
+                    net = layers.conv2d(net, 4096, [5, 5], padding='VALID', scope='fc6')
+                    net = layers.dropout(net, dropout_keep_prob,
+                                         is_training=is_training, scope='dropout6')
                     net = layers.conv2d(net, 4096, [1, 1], scope='fc7')
-                    net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                         scope='dropout7')
+                    net = layers.dropout(net, dropout_keep_prob,
+                                         is_training=is_training, scope='dropout7')
                     net = layers.conv2d(net, num_classes, [1, 1],
                                         activation_fn=None,
                                         normalizer_fn=None,

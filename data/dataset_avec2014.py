@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
+
 from data import dataset
 from data import utils
-import tensorflow as tf
 
 
 class avec2014(dataset.Dataset):
@@ -25,7 +27,7 @@ class avec2014(dataset.Dataset):
         class log_param():
             pass
         self.log = log_param()
-        # Directory where checkpoints and event logs are written to.        
+        # Directory where checkpoints and event logs are written to.
         if self.data_type == 'train':
             self.log.train_dir = utils.dir_log_constructor('_output/avec2014_train')
         elif self.data_type == 'test':
@@ -33,7 +35,7 @@ class avec2014(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 100
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 100
+        self.log.save_summaries_iter = 500
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 5000
         # test iteration
@@ -82,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.1
+        self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -101,7 +103,7 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 32
+        self.batch_size = 64
         self.output_height = 28
         self.output_width = 28
         self.min_queue_num = 4096
@@ -112,8 +114,9 @@ class avec2014(dataset.Dataset):
     def _init_train_param(self):
         self.total_num = 15660
         self.name = 'avec2014_train'
-        self.reader_thread = 1
+        self.reader_thread = 8
         self.shuffle = True
+        self.data_load_method = 'text'  # 'text' / 'tfrecord'
         self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
     def _init_test_param(self):
@@ -121,45 +124,22 @@ class avec2014(dataset.Dataset):
         self.name = 'avec2014_test'
         self.reader_thread = 8
         self.shuffle = False
+        self.data_load_method = 'text'
         self.data_path = '_datasets/AVEC2014/tst_list.txt'
 
     def loads(self):
-        """ load images and labels from folder/files.
-            1) load in queue 2) preprocessing 3) output batch
+        """ load images and labels from folder/files."""
+        # load from disk
+        image, label, filename = self._load_data(
+            self.data_load_method, self.data_path, self.total_num, self.shuffle)
 
-        Note:
-            There, we will load image from train.list(like caffe)
+        # preprocessing batch size
+        image = self._preprocessing_image(self.preprocessing_method, self.data_type, image,
+                                          self.output_height, self.output_width)
 
-        Returns:
-            images: 4D tensor of [batch_size, height, wideth, channel] size.
-            labels: 1D tensor of [batch_size] size.
-        """
+        # preprocessing images
+        label = self._preprocessing_label(label, self.data_type)
 
-        file_list_path = self.data_path
-        batch_size = self.batch_size
-        total_num = self.total_num
-        image_list, label_list, load_num = utils.read_from_file(file_list_path)
-
-        if total_num != load_num:
-            raise ValueError('Loading in %d images, but setting is %d images!' %
-                             (load_num, total_num))
-
-        # construct a fifo queue
-        images = tf.convert_to_tensor(image_list, dtype=tf.string)
-        labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-        input_queue = tf.train.slice_input_producer([images, labels], shuffle=self.shuffle)
-
-        # preprocessing
-        # there, the avec2014 image if 'JPEG' format
-        image_raw = tf.read_file(input_queue[0])
-        image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
-        image = self._preprocessing_image(
-            self.preprocessing_method, self.data_type,
-            image_jpeg, self.output_height, self.output_width)
-
-        # preprocessing method
-        label = self._preprocessing_label(input_queue[1], self.data_type)
-
-        return self._generate_image_label_batch(
-            image, label, self.shuffle, self.min_queue_num,
-            self.batch_size, self.reader_thread, input_queue[0])
+        # return [images, labels, filenames] as a batch
+        return self._generate_image_label_batch(image, label, self.shuffle, self.min_queue_num,
+                                                self.batch_size, self.reader_thread, filename)

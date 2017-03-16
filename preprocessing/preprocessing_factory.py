@@ -14,8 +14,6 @@
       ValueError: If Preprocessing `name` is not recognized.
 """
 
-import tensorflow as tf
-
 from preprocessing import cifarnet_preprocessing
 from preprocessing import inception_preprocessing
 from preprocessing import lenet_preprocessing

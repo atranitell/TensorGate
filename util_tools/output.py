@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+""" updated: 2017/3/16
+"""
+
 import sys
 # import time
 
@@ -70,6 +74,6 @@ def print_basic_information(dataset, net_model=None):
         print(phase + 'Model running in ' + dataset.log.test_dir)
 
     # net_model
-    if net_model != None:
+    if net_model is not None:
         print(phase + 'Using net model:%s, preprocessing method: %s' %
               (net_model, dataset.preprocessing_method))
