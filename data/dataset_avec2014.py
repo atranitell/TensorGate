@@ -37,13 +37,13 @@ class avec2014(dataset.Dataset):
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 1000
+        self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 1000
+        self.log.test_interval = 500
 
     def _init_opt_param(self):
-        """The name of the optimizer: 
-        Args: 
+        """The name of the optimizer:
+        Args:
             "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
         class opt_param():
@@ -114,7 +114,7 @@ class avec2014(dataset.Dataset):
     def _init_train_param(self):
         self.total_num = 15660
         self.name = 'avec2014_train'
-        self.reader_thread = 16
+        self.reader_thread = 8
         self.shuffle = True
         self.data_load_method = 'text'  # 'text' / 'tfrecord'
         self.data_path = '_datasets/AVEC2014/trn_list.txt'

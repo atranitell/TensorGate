@@ -44,6 +44,7 @@ from tensorflow.contrib.layers.python.layers import utils
 from nets import net
 from nets import net_resnet_utils
 
+
 class resent(net.Net):
 
     def __init__(self):
@@ -51,7 +52,7 @@ class resent(net.Net):
         self.batch_norm_decay = 0.997
         self.batch_norm_epsilon = 1e-5
         self.batch_norm_scale = True
-        self.global_pool = True
+        self.global_pool = False
         self.output_stride = None
         self.resue = None
         self.include_root_block = True
@@ -213,8 +214,8 @@ class resent(net.Net):
             output = shortcut + residual
 
             return utils.collect_named_outputs(outputs_collections,
-                                                      sc.original_name_scope,
-                                                      output)
+                                               sc.original_name_scope,
+                                               output)
 
     def arg_scope(self):
         """Defines the default ResNet arg scope.
@@ -263,10 +264,6 @@ class resnet_50(resent):
 
     def model(self, images, num_classes, is_training):
         """ResNet-50 model of [1]. See resnet_v2() for arg and return description."""
-        global_pool = self.global_pool
-        output_stride = self.output_stride
-        reuse = self.resue
-
         blocks = [
             net_resnet_utils.Block(
                 'block1', self.bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
@@ -284,10 +281,6 @@ class resnet_101(resent):
 
     def model(self, images, num_classes, is_training):
         """ResNet-101 model of [1]. See resnet_v2() for arg and return description."""
-        global_pool = self.global_pool
-        output_stride = self.output_stride
-        reuse = self.resue
-
         blocks = [
             net_resnet_utils.Block(
                 'block1', self.bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
@@ -305,10 +298,6 @@ class resnet_152(resent):
 
     def model(self, images, num_classes, is_training):
         """ResNet-152 model of [1]. See resnet_v2() for arg and return description."""
-        global_pool = self.global_pool
-        output_stride = self.output_stride
-        reuse = self.resue
-
         blocks = [
             net_resnet_utils.Block(
                 'block1', self.bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
@@ -326,10 +315,6 @@ class resnet_200(resent):
 
     def model(self, images, num_classes, is_training):
         """ResNet-200 model of [2]. See resnet_v2() for arg and return description."""
-        global_pool = self.global_pool
-        output_stride = self.output_stride
-        reuse = self.resue
-
         blocks = [
             net_resnet_utils.Block(
                 'block1', self.bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),

@@ -42,8 +42,8 @@ class cifar10(dataset.Dataset):
         self.log.test_interval = 1000
 
     def _init_opt_param(self):
-        """The name of the optimizer: 
-        Args: 
+        """The name of the optimizer:
+        Args:
             "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
         class opt_param():
