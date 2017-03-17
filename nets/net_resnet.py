@@ -52,7 +52,7 @@ class resent(net.Net):
         self.batch_norm_decay = 0.997
         self.batch_norm_epsilon = 1e-5
         self.batch_norm_scale = True
-        self.global_pool = False
+        self.global_pool = True
         self.output_stride = None
         self.resue = None
         self.include_root_block = True

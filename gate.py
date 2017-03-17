@@ -4,6 +4,7 @@
 
 import os
 import argparse
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import issue_regression.train as reg_train
 import issue_regression.test as reg_test

@@ -104,12 +104,12 @@ class avec2014(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 224
-        self.output_width = 224
+        self.output_height = 299
+        self.output_width = 299
         self.min_queue_num = 1024
         self.device = '/gpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'vgg'
+        self.preprocessing_method = 'inception'
 
     def _init_train_param(self):
         self.total_num = 15660
