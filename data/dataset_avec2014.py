@@ -33,9 +33,9 @@ class avec2014(dataset.Dataset):
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
-        self.log.print_frequency = 100
+        self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 500
+        self.log.save_summaries_iter = 100
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 5000
         # test iteration
@@ -53,7 +53,7 @@ class avec2014(dataset.Dataset):
         self.opt.optimizer = 'adam'
 
         """ SGD """
-        self.opt.weight_decay = 0.00004
+        self.opt.weight_decay = 0.0001
         self.opt.momentum = 0.9
         self.opt.opt_epsilon = 1.0
 
@@ -93,7 +93,7 @@ class avec2014(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.94
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 15.0
+        self.lr.num_epochs_per_decay = 10.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -103,13 +103,13 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 64
-        self.output_height = 28
-        self.output_width = 28
-        self.min_queue_num = 4096
-        self.device = '/cpu:0'
+        self.batch_size = 32
+        self.output_height = 224
+        self.output_width = 224
+        self.min_queue_num = 1024
+        self.device = '/gpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = 'vgg'
 
     def _init_train_param(self):
         self.total_num = 15660

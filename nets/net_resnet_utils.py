@@ -25,6 +25,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.framework import add_arg_scope
 from tensorflow.contrib import layers
+from tensorflow.contrib.layers.python.layers import utils
 
 
 class Block(collections.namedtuple('Block', ['scope', 'unit_fn', 'args'])):
@@ -183,7 +184,7 @@ def stack_blocks_dense(net, blocks, output_stride=None,
                                             stride=unit_stride,
                                             rate=1)
                         current_stride *= unit_stride
-            net = layers.utils.collect_named_outputs(
+            net = utils.collect_named_outputs(
                 outputs_collections, sc.name, net)
 
     if output_stride is not None and current_stride != output_stride:

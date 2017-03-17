@@ -39,6 +39,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.framework import add_arg_scope
 from tensorflow.contrib import layers
+from tensorflow.contrib.layers.python.layers import utils
 
 from nets import net
 from nets import net_resnet_utils
@@ -156,7 +157,7 @@ class resent(net.Net):
                                             normalizer_fn=None, scope='logits')
                     # Convert end_points_collection into a dictionary of
                     # end_points.
-                    end_points = layers.utils.convert_collection_to_dict(
+                    end_points = utils.convert_collection_to_dict(
                         end_points_collection)
                     if num_classes is not None:
                         end_points['predictions'] = layers.softmax(
@@ -189,7 +190,7 @@ class resent(net.Net):
         The ResNet unit's output.
         """
         with tf.variable_scope(scope, 'bottleneck_v2', [inputs]) as sc:
-            depth_in = layers.utils.last_dimension(
+            depth_in = utils.last_dimension(
                 inputs.get_shape(), min_rank=4)
             preact = layers.batch_norm(
                 inputs, activation_fn=tf.nn.relu, scope='preact')
@@ -211,7 +212,7 @@ class resent(net.Net):
 
             output = shortcut + residual
 
-            return layers.utils.collect_named_outputs(outputs_collections,
+            return utils.collect_named_outputs(outputs_collections,
                                                       sc.original_name_scope,
                                                       output)
 

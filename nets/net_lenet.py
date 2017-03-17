@@ -61,6 +61,7 @@ class lenet(net.Net):
             end_points['Flatten'] = net
 
             net = layers.fully_connected(net, 1024, scope='fc3')
+            end_points['fc3'] = net
             net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
                                  scope='dropout3')
             logits = layers.fully_connected(net, num_classes, activation_fn=None,
