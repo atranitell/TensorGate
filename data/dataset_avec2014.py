@@ -35,11 +35,11 @@ class avec2014(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 100
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 5000
+        self.log.save_model_iter = 1000
         # test iteration
-        self.log.test_interval = 5000
+        self.log.test_interval = 1000
 
     def _init_opt_param(self):
         """The name of the optimizer: 
@@ -50,7 +50,7 @@ class avec2014(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'momentum'
+        self.opt.optimizer = 'adam'
 
         """ SGD """
         self.opt.weight_decay = 0.0001
@@ -62,7 +62,7 @@ class avec2014(dataset.Dataset):
         self.opt.adagrad_initial_accumulator_value = 0.1
 
         """ ADAMs """
-        self.opt.adam_beta1 = 0.09
+        self.opt.adam_beta1 = 0.9
         self.opt.adam_beta2 = 0.999
 
         """ FTRL """
@@ -84,10 +84,10 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.0001
+        self.lr.learning_rate = 0.1
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
-        self.lr.end_learning_rate = 0.00001
+        self.lr.end_learning_rate = 0.0001
         # The amount of label smoothing.
         self.lr.label_smoothing = 0.0
         # Learning rate decay factor
@@ -114,7 +114,7 @@ class avec2014(dataset.Dataset):
     def _init_train_param(self):
         self.total_num = 15660
         self.name = 'avec2014_train'
-        self.reader_thread = 8
+        self.reader_thread = 16
         self.shuffle = True
         self.data_load_method = 'text'  # 'text' / 'tfrecord'
         self.data_path = '_datasets/AVEC2014/trn_list.txt'

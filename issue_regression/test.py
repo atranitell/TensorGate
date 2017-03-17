@@ -34,6 +34,7 @@ def run(name, net_name, model_path=None):
             net_name, 'test', images, 1)
 
         # ATTENTION!
+        logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
         labels = tf.to_float(tf.reshape(labels_orig, [dataset.batch_size, 1]))
         labels = tf.div(labels, dataset.num_classes)
         losses = tf.nn.l2_loss([labels - logits], name='l2_loss')

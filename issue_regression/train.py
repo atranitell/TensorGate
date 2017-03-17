@@ -42,6 +42,7 @@ def run(data_name, net_name, chkp_path=None):
             net_name, 'train', images, 1)
 
         with tf.name_scope('error'):
+            logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
             labels = tf.to_float(tf.reshape(labels, [dataset.batch_size, 1]))
             labels = tf.divide(labels, dataset.num_classes)
             losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
@@ -49,6 +50,13 @@ def run(data_name, net_name, chkp_path=None):
                 input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
             err_mse = tf.reduce_mean(
                 input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
+
+        # with tf.Session() as sess:
+        #     sess.run(tf.global_variables_initializer())
+        #     tf.train.start_queue_runners(sess=sess)
+        #     print(sess.run(labels.get_shape()))
+
+        # raise ValueError(123)
 
         # add into summary
         tf.summary.scalar('err_mae', err_mae)
