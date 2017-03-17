@@ -84,10 +84,10 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.1
+        self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
-        self.lr.end_learning_rate = 0.0001
+        self.lr.end_learning_rate = 0.00001
         # The amount of label smoothing.
         self.lr.label_smoothing = 0.0
         # Learning rate decay factor

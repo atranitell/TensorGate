@@ -44,6 +44,7 @@ from tensorflow.contrib.layers.python.layers import utils
 from nets import net
 from nets import net_resnet_utils
 
+
 class resent(net.Net):
 
     def __init__(self):
@@ -153,7 +154,7 @@ class resent(net.Net):
                         net = tf.reduce_mean(
                             net, [1, 2], name='pool5', keep_dims=True)
                     if num_classes is not None:
-                        net = layers.conv2d(net, num_classes, [1, 1], activation_fn=tf.nn.sigmoid,
+                        net = layers.conv2d(net, num_classes, [1, 1], activation_fn=None,
                                             normalizer_fn=None, scope='logits')
                     # Convert end_points_collection into a dictionary of
                     # end_points.
@@ -213,8 +214,8 @@ class resent(net.Net):
             output = shortcut + residual
 
             return utils.collect_named_outputs(outputs_collections,
-                                                      sc.original_name_scope,
-                                                      output)
+                                               sc.original_name_scope,
+                                               output)
 
     def arg_scope(self):
         """Defines the default ResNet arg scope.
