@@ -48,8 +48,10 @@ def run(name, net_name, model_path=None):
 
         # raise ValueError(123)
 
-        err_mae = tf.reduce_mean(input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
-        err_mse = tf.reduce_mean(input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
+        err_mae = tf.reduce_mean(input_tensor=tf.abs(
+            (logits - labels) * dataset.num_classes), name='err_mae')
+        err_mse = tf.reduce_mean(input_tensor=tf.square(
+            (logits - labels) * dataset.num_classes), name='err_mse')
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -81,7 +83,8 @@ def run(name, net_name, model_path=None):
             # output test information
             tab = tf.constant(' ', shape=[dataset.batch_size])
             labels_str = tf.as_string(tf.reshape(labels_orig, shape=[dataset.batch_size]))
-            logits_str = tf.as_string(tf.reshape(logits * dataset.num_classes, shape=[dataset.batch_size]))
+            logits_str = tf.as_string(tf.reshape(
+                logits * dataset.num_classes, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
 
             test_infp_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
