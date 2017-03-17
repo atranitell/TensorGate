@@ -44,6 +44,7 @@ from tensorflow.contrib.layers.python.layers import utils
 from nets import net
 from nets import net_resnet_utils
 
+
 class resent(net.Net):
 
     def __init__(self):
@@ -213,8 +214,8 @@ class resent(net.Net):
             output = shortcut + residual
 
             return utils.collect_named_outputs(outputs_collections,
-                                                      sc.original_name_scope,
-                                                      output)
+                                               sc.original_name_scope,
+                                               output)
 
     def arg_scope(self):
         """Defines the default ResNet arg scope.
