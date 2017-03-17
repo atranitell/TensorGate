@@ -153,7 +153,7 @@ class resent(net.Net):
                         net = tf.reduce_mean(
                             net, [1, 2], name='pool5', keep_dims=True)
                     if num_classes is not None:
-                        net = layers.conv2d(net, num_classes, [1, 1], activation_fn=None,
+                        net = layers.conv2d(net, num_classes, [1, 1], activation_fn=tf.nn.sigmoid,
                                             normalizer_fn=None, scope='logits')
                     # Convert end_points_collection into a dictionary of
                     # end_points.

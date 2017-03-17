@@ -51,13 +51,6 @@ def run(data_name, net_name, chkp_path=None):
             err_mse = tf.reduce_mean(
                 input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
-        # with tf.Session() as sess:
-        #     sess.run(tf.global_variables_initializer())
-        #     tf.train.start_queue_runners(sess=sess)
-        #     print(sess.run(labels.get_shape()))
-
-        # raise ValueError(123)
-
         # add into summary
         tf.summary.scalar('err_mae', err_mae)
         tf.summary.scalar('err_mse', err_mse)
