@@ -50,7 +50,7 @@ class cifar10(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'adagrad'
+        self.opt.optimizer = 'momentum'
 
         """ SGD """
         self.opt.weight_decay = 0.00004

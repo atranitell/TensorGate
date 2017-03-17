@@ -39,6 +39,7 @@ import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.framework import add_arg_scope
 from tensorflow.contrib import layers
+from tensorflow.contrib.layers import utils
 
 from nets import net
 from nets import net_resnet_utils

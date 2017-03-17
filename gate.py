@@ -5,8 +5,11 @@
 import os
 import argparse
 
-import issue_regression
-import issue_classification
+import issue_regression.train as reg_train
+import issue_regression.test as reg_test
+
+import issue_classification.train as cla_train
+import issue_classification.train as cla_test
 
 
 def classification(args):
@@ -14,15 +17,15 @@ def classification(args):
     data_name = 'cifar10'
 
     if args.task == 'train' and args.model is None:
-        issue_classification.train.run(data_name, args.net, chkp_path=None)
+        cla_train.run(data_name, args.net, chkp_path=None)
 
     # finetune
     elif args.task == 'train' and args.model is not None:
-        issue_classification.train.run(data_name, args.net, args.model)
+        cla_train.run(data_name, args.net, args.model)
 
     # test
     elif args.task == 'test' and args.model is not None:
-        issue_classification.test.run(data_name, args.net, model_path=args.model)
+        cla_test.run(data_name, args.net, model_path=args.model)
 
     # feature
     else:
@@ -31,18 +34,17 @@ def classification(args):
 
 def regression(args):
     # start to train
-    data_name = 'avec2014'
 
     if args.task == 'train' and args.model is None:
-        issue_regression.train.run(data_name, args.net, chkp_path=None)
+        reg_train.run(args.data, args.net, chkp_path=None)
 
     # finetune
     elif args.task == 'train' and args.model is not None:
-        issue_regression.train.run(data_name, args.net, args.model)
+        reg_train.run(args.data, args.net, args.model)
 
     # test
     elif args.task == 'test' and args.model is not None:
-        issue_regression.test.run(data_name, args.net, model_path=args.model)
+        reg_test.run(args.data, args.net, model_path=args.model)
 
     # feature
     else:
@@ -78,5 +80,7 @@ if __name__ == '__main__':
                         help='path to model folder: automatically use newest model')
     parser.add_argument('-net', type=str, default=None, dest='net',
                         help='lenet/cifarnet')
+    parser.add_argument('-data', type=str, default='avec2014', dest='data',
+                        help='avec2014/cifar10')
     args, _ = parser.parse_known_args()
     interface(args)

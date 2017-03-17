@@ -33,9 +33,9 @@ class avec2014(dataset.Dataset):
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
-        self.log.print_frequency = 100
+        self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 500
+        self.log.save_summaries_iter = 100
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 5000
         # test iteration
@@ -50,10 +50,10 @@ class avec2014(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'adam'
+        self.opt.optimizer = 'momentum'
 
         """ SGD """
-        self.opt.weight_decay = 0.00004
+        self.opt.weight_decay = 0.0001
         self.opt.momentum = 0.9
         self.opt.opt_epsilon = 1.0
 
@@ -84,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.0001
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -106,7 +106,7 @@ class avec2014(dataset.Dataset):
         self.batch_size = 64
         self.output_height = 28
         self.output_width = 28
-        self.min_queue_num = 4096
+        self.min_queue_num = 1024
         self.device = '/cpu:0'
         self.num_classes = 100
         self.preprocessing_method = 'cifarnet'
