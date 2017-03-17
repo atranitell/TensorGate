@@ -122,7 +122,7 @@ class avec2014(dataset.Dataset):
     def _init_test_param(self):
         self.total_num = 17727
         self.name = 'avec2014_test'
-        self.reader_thread = 16
+        self.reader_thread = 8
         self.shuffle = False
         self.data_load_method = 'text'
         self.data_path = '_datasets/AVEC2014/tst_list.txt'

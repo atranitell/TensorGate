@@ -39,6 +39,7 @@ def run(name, net_name, model_path=None):
         labels = tf.div(labels, dataset.num_classes)
         losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
 
+<<<<<<< HEAD
         # with tf.Session() as sess:
         #     sess.run(tf.global_variables_initializer())
         #     tf.train.start_queue_runners(sess=sess)
@@ -52,6 +53,10 @@ def run(name, net_name, model_path=None):
             (logits - labels) * dataset.num_classes), name='err_mae')
         err_mse = tf.reduce_mean(input_tensor=tf.square(
             (logits - labels) * dataset.num_classes), name='err_mse')
+=======
+        err_mae = tf.reduce_mean(input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
+        err_mse = tf.reduce_mean(input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
+>>>>>>> parent of 6bea37a... resnet add sigmod
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
