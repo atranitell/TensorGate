@@ -37,9 +37,9 @@ class avec2014(dataset.Dataset):
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 500
+        self.log.save_model_iter = 200
         # test iteration
-        self.log.test_interval = 500
+        self.log.test_interval = 200
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -50,10 +50,10 @@ class avec2014(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'momentum'
+        self.opt.optimizer = 'adam'
 
         """ SGD """
-        self.opt.weight_decay = 0.0005
+        self.opt.weight_decay = 0.0001
         self.opt.momentum = 0.9
         self.opt.opt_epsilon = 1.0
 
@@ -93,7 +93,7 @@ class avec2014(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.94
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 2.0
+        self.lr.num_epochs_per_decay = 5.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -107,7 +107,7 @@ class avec2014(dataset.Dataset):
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 128
-        self.device = '/cpu:0'
+        self.device = '/gpu:0'
         self.num_classes = 100
         self.preprocessing_method = 'vgg'
 

@@ -37,9 +37,11 @@ def run(data_name, net_name, chkp_path=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
 
+        
         logits, end_points = nets_factory.get_network(
             net_name, 'train', images, dataset.num_classes)
 
+        logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, dataset.num_classes]))
         losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=labels, logits=logits)
 

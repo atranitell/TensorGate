@@ -33,13 +33,13 @@ class cifar10(dataset.Dataset):
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
-        self.log.print_frequency = 50
+        self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 100
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 1000
+        self.log.save_model_iter = 200
         # test iteration
-        self.log.test_interval = 1000
+        self.log.test_interval = 200
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -50,7 +50,7 @@ class cifar10(dataset.Dataset):
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'momentum'
+        self.opt.optimizer = 'adam'
 
         """ SGD """
         self.opt.weight_decay = 0.00004
@@ -87,7 +87,7 @@ class cifar10(dataset.Dataset):
         self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
-        self.lr.end_learning_rate = 0.0001
+        self.lr.end_learning_rate = 0.01
         # The amount of label smoothing.
         self.lr.label_smoothing = 0.0
         # Learning rate decay factor
@@ -109,7 +109,7 @@ class cifar10(dataset.Dataset):
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 10
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = 'vgg'
 
     def _init_train_param(self):
         self.total_num = 50000

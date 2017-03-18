@@ -8,7 +8,7 @@ class lightnet(net.Net):
 
     def __init__(self):
         self.weight_decay = 0.0001
-        self.batch_norm_decay = 0.997
+        self.batch_norm_decay = 0.9
         self.batch_norm_epsilon = 1e-5
         self.batch_norm_scale = True
 
@@ -23,11 +23,13 @@ class lightnet(net.Net):
             'epsilon': batch_norm_epsilon,
             'scale': batch_norm_scale,
             'updates_collections': tf.GraphKeys.UPDATE_OPS,
+            'zero_debias_moving_mean': True
         }
 
         with arg_scope([layers.conv2d],
                        weights_regularizer=layers.l2_regularizer(weight_decay),
-                       weights_initializer=layers.variance_scaling_initializer(),
+                       weights_initializer=tf.truncated_normal_initializer(stddev=0.005),
+                       biases_initializer=tf.constant_initializer(0.1),
                        activation_fn=tf.nn.relu,
                        normalizer_fn=layers.batch_norm,
                        normalizer_params=batch_norm_params,
