@@ -39,7 +39,7 @@ class avec2014(dataset.Dataset):
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 1000
+        self.log.test_interval = 500
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -84,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.001
+        self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -93,7 +93,7 @@ class avec2014(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.94
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 10.0
+        self.lr.num_epochs_per_decay = 2.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -104,12 +104,12 @@ class avec2014(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 28
-        self.output_width = 28
+        self.output_height = 224
+        self.output_width = 224
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = 'vgg'
 
     def _init_train_param(self):
         self.total_num = 15660
