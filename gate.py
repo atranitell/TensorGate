@@ -15,7 +15,6 @@ import issue_classification.train as cla_test
 
 def classification(args):
     # start to train
-    data_name = 'cifar10'
 
     if args.task == 'train' and args.model is None:
         cla_train.run(args.data, args.net, chkp_path=None)
@@ -50,8 +49,7 @@ def regression(args):
     # finetune
     elif args.task == 'finetune' and args.model is not None:
         reg_train.run(args.data, args.net, args.model,
-                      var_trainable=['vgg_a/fc8', 'vgg_a/fc7'],
-                      var_finetune=['vgg_a/fc8', 'vgg_a/fc7'])
+                      exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
 
     # feature
     else:

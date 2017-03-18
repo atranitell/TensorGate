@@ -15,7 +15,7 @@ from optimizer import opt_optimizer
 from util_tools import output
 
 
-def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=None):
+def run(data_name, net_name, chkp_path=None, exclusions=None):
 
     with tf.Graph().as_default():
         # -------------------------------------------
@@ -68,29 +68,24 @@ def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=No
 
         # -------------------------------------------
         # Finetune Related
-        #   if var does not appeares in var_trainable, it will not be updated.
-        #      Commonly used for fixed weights and bias for shallow layers.
         #   if var appears in var_finetune, it will not be import.
         #      Commonly used for different number of output classes.
         # -------------------------------------------
-        if var_trainable is not None:
-            variables_to_train = []
-            for var_in_net in tf.trainable_variables():
-                for var_in_list in var_trainable:
-                    if var_in_net.name.startswith(var_in_list):
-                        variables_to_train.append(var_in_net)
+        if exclusions is not None:
+            variables_to_restore = []
+            for var in tf.global_variables():
+                excluded = False
+                for exclusion in exclusions:
+                    if var.op.name.startswith(exclusion):
+                        excluded = True
+                        break
+                if not excluded:
+                    variables_to_restore.append(var)
+            saver = tf.train.Saver(var_list=variables_to_restore)
+            variables_to_train = variables_to_restore
         else:
+            saver = tf.train.Saver()
             variables_to_train = tf.trainable_variables()
-
-        if var_finetune is not None:
-            variables_to_finetune = tf.global_variables()
-            for var_in_list in var_finetune:
-                var_list = variables_to_finetune
-                variables_to_finetune = []
-                for var_in_net in var_list:
-                    if not var_in_net.name.startswith(var_in_list):
-                        variables_to_finetune.append(var_in_net)
-            saver = tf.train.Saver(var_list=variables_to_finetune)
 
         # compute gradients
         grads = tf.gradients(losses, variables_to_train)
@@ -117,8 +112,7 @@ def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=No
         summary_hook = tf.train.SummarySaverHook(
             save_steps=dataset.log.save_summaries_iter,
             output_dir=dataset.log.train_dir,
-            summary_op=tf.summary.merge_all()
-        )
+            summary_op=tf.summary.merge_all())
 
         # -------------------------------------------
         # Running Info
@@ -129,6 +123,12 @@ def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=No
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
                 self.best_iter_mae, self.best_mae = 0.0, 1000.0
                 self.best_iter_rmse, self.best_rmse = 0.0, 1000.0
+
+            def begin(self):
+                # continue to train
+                print('[INFO] Loading in layer variable list as:')
+                for v in variables_to_train:
+                    print('[NET] ', v)
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -186,21 +186,10 @@ def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=No
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path) as mon_sess:
 
-            # continue to train
             if chkp_path is not None:
                 ckpt = tf.train.get_checkpoint_state(chkp_path)
                 saver.restore(mon_sess, ckpt.model_checkpoint_path)
                 print('[TRAIN] Load checkpoint from: %s' % ckpt.model_checkpoint_path)
-
-            # output information
-            if var_finetune is not None:
-                print('[INFO] Loading in layer variable list as:')
-                for v in variables_to_finetune:
-                    print('[NET] ', v)
-
-            print('[INFO] Trainable layer variable list as:')
-            for v in variables_to_train:
-                print('[NET] ', v)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)

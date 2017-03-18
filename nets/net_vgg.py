@@ -19,6 +19,7 @@ from tensorflow.contrib.layers.python.layers import utils
 
 from nets import net
 
+
 class vgg(net.Net):
 
     def __init__(self):
@@ -67,7 +68,7 @@ class vgg_a(vgg):
             end_points_collection = sc.name + '_end_points'
             # Collect outputs for conv2d, fully_connected and max_pool2d.
             with arg_scope([layers.conv2d, layers.max_pool2d],
-                                outputs_collections=end_points_collection):
+                           outputs_collections=end_points_collection):
                 net = layers.repeat(images, 1, layers.conv2d,
                                     64, [3, 3], scope='conv1')
                 net = layers.max_pool2d(net, [2, 2], scope='pool1')
@@ -82,10 +83,10 @@ class vgg_a(vgg):
                 # Use conv2d instead of fully_connected layers.
                 net = layers.conv2d(net, 4096, [7, 7], padding='VALID', scope='fc6')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                    scope='dropout6')
+                                     scope='dropout6')
                 net = layers.conv2d(net, 4096, [1, 1], scope='fc7')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                    scope='dropout7')
+                                     scope='dropout7')
                 net = layers.conv2d(net, num_classes, [1, 1],
                                     activation_fn=None,
                                     normalizer_fn=None,
@@ -127,9 +128,9 @@ class vgg_16(vgg):
             end_points_collection = sc.name + '_end_points'
             # Collect outputs for conv2d, fully_connected and max_pool2d.
             with arg_scope([layers.conv2d, layers.fully_connected, layers.max_pool2d],
-                                outputs_collections=end_points_collection):
+                           outputs_collections=end_points_collection):
                 net = layers.repeat(images, 2, layers.conv2d,
-                                64, [3, 3], scope='conv1')
+                                    64, [3, 3], scope='conv1')
                 net = layers.max_pool2d(net, [2, 2], scope='pool1')
                 net = layers.repeat(net, 2, layers.conv2d, 128, [3, 3], scope='conv2')
                 net = layers.max_pool2d(net, [2, 2], scope='pool2')
@@ -142,14 +143,14 @@ class vgg_16(vgg):
                 # Use conv2d instead of fully_connected layers.
                 net = layers.conv2d(net, 4096, [7, 7], padding='VALID', scope='fc6')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                scope='dropout6')
+                                     scope='dropout6')
                 net = layers.conv2d(net, 4096, [1, 1], scope='fc7')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                scope='dropout7')
+                                     scope='dropout7')
                 net = layers.conv2d(net, num_classes, [1, 1],
-                                activation_fn=None,
-                                normalizer_fn=None,
-                                scope='fc8')
+                                    activation_fn=None,
+                                    normalizer_fn=None,
+                                    scope='fc8')
                 # Convert end_points_collection into a end_point dict.
                 end_points = utils.convert_collection_to_dict(
                     end_points_collection)
@@ -187,33 +188,33 @@ class vgg_19(vgg):
             end_points_collection = sc.name + '_end_points'
             # Collect outputs for conv2d, fully_connected and max_pool2d.
             with arg_scope([layers.conv2d, layers.fully_connected, layers.max_pool2d],
-                                outputs_collections=end_points_collection):
+                           outputs_collections=end_points_collection):
                 net = layers.repeat(images, 2, layers.conv2d, 64, [3, 3], scope='conv1')
                 net = layers.max_pool2d(net, [2, 2], scope='pool1')
                 net = layers.repeat(net, 2, layers.conv2d, 128,
-                                  [3, 3], scope='conv2')
+                                    [3, 3], scope='conv2')
                 net = layers.max_pool2d(net, [2, 2], scope='pool2')
                 net = layers.repeat(net, 4, layers.conv2d, 256,
-                                  [3, 3], scope='conv3')
+                                    [3, 3], scope='conv3')
                 net = layers.max_pool2d(net, [2, 2], scope='pool3')
                 net = layers.repeat(net, 4, layers.conv2d, 512,
-                                  [3, 3], scope='conv4')
+                                    [3, 3], scope='conv4')
                 net = layers.max_pool2d(net, [2, 2], scope='pool4')
                 net = layers.repeat(net, 4, layers.conv2d, 512,
-                                  [3, 3], scope='conv5')
+                                    [3, 3], scope='conv5')
                 net = layers.max_pool2d(net, [2, 2], scope='pool5')
                 # Use conv2d instead of fully_connected layers.
                 net = layers.conv2d(
                     net, 4096, [7, 7], padding='VALID', scope='fc6')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                   scope='dropout6')
+                                     scope='dropout6')
                 net = layers.conv2d(net, 4096, [1, 1], scope='fc7')
                 net = layers.dropout(net, dropout_keep_prob, is_training=is_training,
-                                   scope='dropout7')
+                                     scope='dropout7')
                 net = layers.conv2d(net, num_classes, [1, 1],
-                                  activation_fn=None,
-                                  normalizer_fn=None,
-                                  scope='fc8')
+                                    activation_fn=None,
+                                    normalizer_fn=None,
+                                    scope='fc8')
                 # Convert end_points_collection into a end_point dict.
                 end_points = utils.convert_collection_to_dict(
                     end_points_collection)
