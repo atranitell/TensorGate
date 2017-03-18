@@ -28,7 +28,6 @@ Returns:
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
-from tensorflow.contrib import metrics
 from nets import net
 
 
