@@ -131,3 +131,5 @@ def run(name, net_name, model_path=None):
             # -------------------------------------------
             coord.request_stop()
             coord.join(threads, stop_grace_period_secs=10)
+
+            return mae, rmse

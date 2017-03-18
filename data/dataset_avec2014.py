@@ -39,7 +39,7 @@ class avec2014(dataset.Dataset):
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 500
+        self.log.test_interval = 1000
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -103,13 +103,13 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 16
-        self.output_height = 224
-        self.output_width = 224
+        self.batch_size = 32
+        self.output_height = 28
+        self.output_width = 28
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 100
-        self.preprocessing_method = 'inception'
+        self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
         self.total_num = 15660

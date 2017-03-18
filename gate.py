@@ -18,15 +18,15 @@ def classification(args):
     data_name = 'cifar10'
 
     if args.task == 'train' and args.model is None:
-        cla_train.run(data_name, args.net, chkp_path=None)
+        cla_train.run(args.data, args.net, chkp_path=None)
 
     # finetune
     elif args.task == 'train' and args.model is not None:
-        cla_train.run(data_name, args.net, args.model)
+        cla_train.run(args.data, args.net, args.model)
 
     # test
     elif args.task == 'test' and args.model is not None:
-        cla_test.run(data_name, args.net, model_path=args.model)
+        cla_test.run(args.data, args.net, model_path=args.model)
 
     # feature
     else:
@@ -39,13 +39,19 @@ def regression(args):
     if args.task == 'train' and args.model is None:
         reg_train.run(args.data, args.net, chkp_path=None)
 
-    # finetune
+    # re_train
     elif args.task == 'train' and args.model is not None:
         reg_train.run(args.data, args.net, args.model)
 
     # test
     elif args.task == 'test' and args.model is not None:
         reg_test.run(args.data, args.net, model_path=args.model)
+
+    # finetune
+    elif args.task == 'finetune' and args.model is not None:
+        reg_train.run(args.data, args.net, args.model,
+                      var_trainable=['vgg_a/fc8', 'vgg_a/fc7'],
+                      var_finetune=['vgg_a/fc8', 'vgg_a/fc7'])
 
     # feature
     else:
@@ -76,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('-target', type=str, default='regression', dest='target',
                         help='regression/classification')
     parser.add_argument('-task', type=str, default='train', dest='task',
-                        help='train/eval/finetune/feature')
+                        help='train/teset/finetune/feature')
     parser.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
     parser.add_argument('-net', type=str, default=None, dest='net',

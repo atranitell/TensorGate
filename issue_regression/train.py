@@ -15,7 +15,7 @@ from optimizer import opt_optimizer
 from util_tools import output
 
 
-def run(data_name, net_name, chkp_path=None):
+def run(data_name, net_name, chkp_path=None, var_trainable=None, var_finetune=None):
 
     with tf.Graph().as_default():
         # -------------------------------------------
@@ -51,13 +51,6 @@ def run(data_name, net_name, chkp_path=None):
             err_mse = tf.reduce_mean(
                 input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
-        # with tf.Session() as sess:
-        #     sess.run(tf.global_variables_initializer())
-        #     tf.train.start_queue_runners(sess=sess)
-        #     print(sess.run(labels.get_shape()))
-
-        # raise ValueError(123)
-
         # add into summary
         tf.summary.scalar('err_mae', err_mae)
         tf.summary.scalar('err_mse', err_mse)
@@ -73,8 +66,33 @@ def run(data_name, net_name, chkp_path=None):
             optimizer = opt_optimizer.configure_optimizer(
                 dataset, learning_rate)
 
+        # -------------------------------------------
+        # Finetune Related
+        #   if var does not appeares in var_trainable, it will not be updated.
+        #      Commonly used for fixed weights and bias for shallow layers.
+        #   if var appears in var_finetune, it will not be import.
+        #      Commonly used for different number of output classes.
+        # -------------------------------------------
+        if var_trainable is not None:
+            variables_to_train = []
+            for var_in_net in tf.trainable_variables():
+                for var_in_list in var_trainable:
+                    if var_in_net.name.startswith(var_in_list):
+                        variables_to_train.append(var_in_net)
+        else:
+            variables_to_train = tf.trainable_variables()
+
+        if var_finetune is not None:
+            variables_to_finetune = tf.global_variables()
+            for var_in_list in var_finetune:
+                var_list = variables_to_finetune
+                variables_to_finetune = []
+                for var_in_net in var_list:
+                    if not var_in_net.name.startswith(var_in_list):
+                        variables_to_finetune.append(var_in_net)
+            saver = tf.train.Saver(var_list=variables_to_finetune)
+
         # compute gradients
-        variables_to_train = tf.trainable_variables()
         grads = tf.gradients(losses, variables_to_train)
         train_op = optimizer.apply_gradients(
             zip(grads, variables_to_train),
@@ -90,7 +108,7 @@ def run(data_name, net_name, chkp_path=None):
             checkpoint_dir=dataset.log.train_dir,
             save_steps=dataset.log.save_model_iter,
             saver=tf.train.Saver(var_list=tf.global_variables(),
-                                 max_to_keep=10),
+                                 max_to_keep=10000),
             checkpoint_basename=dataset.name + '.ckpt')
 
         # -------------------------------------------
@@ -109,6 +127,8 @@ def run(data_name, net_name, chkp_path=None):
 
             def __init__(self):
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
+                self.best_iter_mae, self.best_mae = 0.0, 1000.0
+                self.best_iter_rmse, self.best_rmse = 0.0, 1000.0
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -134,14 +154,28 @@ def run(data_name, net_name, chkp_path=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s, time:%.2fms'
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, '
+                    format_str += 'lr:%s, time:%.2fms.'
                     print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
-                    reg_test.run(data_name, net_name, dataset.log.train_dir)
+                    test_start_time = time.time()
+                    test_mae, test_rmse = reg_test.run(data_name, net_name, dataset.log.train_dir)
+                    test_duration = time.time() - test_start_time
+
+                    if test_mae < self.best_mae:
+                        self.best_mae = test_mae
+                        self.best_iter_mae = cur_iter
+                    if test_rmse < self.best_rmse:
+                        self.best_rmse = test_rmse
+                        self.best_iter_rmse = cur_iter
+
+                    print('[TEST] Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
+                          (test_duration, self.best_mae, self.best_iter_mae,
+                           self.best_rmse, self.best_iter_rmse))
 
         # -------------------------------------------
         # Start to train
@@ -151,6 +185,22 @@ def run(data_name, net_name, chkp_path=None):
                 save_summaries_steps=0,
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path) as mon_sess:
+
+            # continue to train
+            if chkp_path is not None:
+                ckpt = tf.train.get_checkpoint_state(chkp_path)
+                saver.restore(mon_sess, ckpt.model_checkpoint_path)
+                print('[TRAIN] Load checkpoint from: %s' % ckpt.model_checkpoint_path)
+
+            # output information
+            if var_finetune is not None:
+                print('[INFO] Loading in layer variable list as:')
+                for v in variables_to_finetune:
+                    print('[NET] ', v)
+
+            print('[INFO] Trainable layer variable list as:')
+            for v in variables_to_train:
+                print('[NET] ', v)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
