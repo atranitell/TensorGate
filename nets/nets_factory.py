@@ -9,6 +9,7 @@ from nets import net_alexnet
 from nets import net_resnet
 from nets import net_vgg
 from nets import net_inception_resnet_v2
+from nets import net_lightnet
 
 networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
@@ -21,7 +22,8 @@ networks_map = {
     'vgg_a': net_vgg.vgg_a(),
     'vgg_16': net_vgg.vgg_16(),
     'vgg_19': net_vgg.vgg_19(),
-    'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2()
+    'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2(),
+    'lightnet': net_lightnet.lightnet()
 }
 
 

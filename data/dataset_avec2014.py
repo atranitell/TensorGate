@@ -107,7 +107,7 @@ class avec2014(dataset.Dataset):
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 128
-        self.device = '/gpu:0'
+        self.device = '/cpu:0'
         self.num_classes = 100
         self.preprocessing_method = 'vgg'
 
