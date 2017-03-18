@@ -104,10 +104,10 @@ class cifar10(dataset.Dataset):
 
     def _init_common_param(self):
         self.batch_size = 32
-        self.output_height = 28
-        self.output_width = 28
-        self.min_queue_num = 1024
-        self.device = '/cpu:0'
+        self.output_height = 224
+        self.output_width = 224
+        self.min_queue_num = 128
+        self.device = '/gpu:0'
         self.num_classes = 10
         self.preprocessing_method = 'cifarnet'
 

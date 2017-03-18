@@ -15,6 +15,7 @@ www.robots.ox.ac.uk/~vgg/research/very_deep/
 import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
+from tensorflow.contrib.layers.python.layers import utils
 
 from nets import net
 
@@ -90,7 +91,7 @@ class vgg_a(vgg):
                                     normalizer_fn=None,
                                     scope='fc8')
                 # Convert end_points_collection into a end_point dict.
-                end_points = layers.utils.convert_collection_to_dict(
+                end_points = utils.convert_collection_to_dict(
                     end_points_collection)
                 if spatial_squeeze:
                     net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
@@ -150,7 +151,7 @@ class vgg_16(vgg):
                                 normalizer_fn=None,
                                 scope='fc8')
                 # Convert end_points_collection into a end_point dict.
-                end_points = layers.utils.convert_collection_to_dict(
+                end_points = utils.convert_collection_to_dict(
                     end_points_collection)
                 if spatial_squeeze:
                     net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
@@ -214,7 +215,7 @@ class vgg_19(vgg):
                                   normalizer_fn=None,
                                   scope='fc8')
                 # Convert end_points_collection into a end_point dict.
-                end_points = layers.utils.convert_collection_to_dict(
+                end_points = utils.convert_collection_to_dict(
                     end_points_collection)
                 if spatial_squeeze:
                     net = tf.squeeze(net, [1, 2], name='fc8/squeezed')

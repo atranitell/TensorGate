@@ -44,16 +44,16 @@ class avec2014(dataset.Dataset):
     def _init_opt_param(self):
         """The name of the optimizer:
         Args:
-            "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
+            "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprop"
         """
         class opt_param():
             pass
         self.opt = opt_param()
 
-        self.opt.optimizer = 'adam'
+        self.opt.optimizer = 'momentum'
 
         """ SGD """
-        self.opt.weight_decay = 0.0001
+        self.opt.weight_decay = 0.0005
         self.opt.momentum = 0.9
         self.opt.opt_epsilon = 1.0
 
@@ -84,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.001
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -103,10 +103,10 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 32
-        self.output_height = 299
-        self.output_width = 299
-        self.min_queue_num = 1024
+        self.batch_size = 16
+        self.output_height = 224
+        self.output_width = 224
+        self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 100
         self.preprocessing_method = 'inception'

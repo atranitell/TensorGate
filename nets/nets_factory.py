@@ -21,7 +21,7 @@ networks_map = {
     'vgg_a': net_vgg.vgg_a(),
     'vgg_16': net_vgg.vgg_16(),
     'vgg_19': net_vgg.vgg_19(),
-    'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2_net()
+    'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2()
 }
 
 
