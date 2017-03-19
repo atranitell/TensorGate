@@ -41,7 +41,6 @@ def run(name, net_name, model_path=None):
         labels = tf.div(labels, dataset.num_classes)
         losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
 
-
         # vars_list = tf.model_variables()
 
         # with tf.Session() as sess:
@@ -50,7 +49,7 @@ def run(name, net_name, model_path=None):
         #     for var in vars_list:
         #         print(var.name)
         #         print(sess.run(tf.reduce_mean(var)))
-            
+
         #     # print(sess.run(labels.get_shape()))
         #     # print(sess.run(logits.get_shape()))
         #     print(sess.run(labels))
@@ -127,7 +126,6 @@ def run(name, net_name, model_path=None):
             rmse = math.sqrt(1.0 * rmse / num_iter)
             mae = 1.0 * mae / num_iter
 
-
             # -------------------------------------------
             # output
             # -------------------------------------------
@@ -138,7 +136,7 @@ def run(name, net_name, model_path=None):
             # -------------------------------------------
             # Especially for avec2014
             # -------------------------------------------
-            if name == 'avec2014' or name == 'avec2014_flow':
+            if name.find('avec') >= 0:
                 mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_infp_path)
                 print('[TEST] Loss:%.2f, video_mae:%.2f, video_rmse:%.2f' % (loss, mae, rmse))
 

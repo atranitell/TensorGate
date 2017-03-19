@@ -2,6 +2,7 @@
 
 import tensorflow as tf
 
+
 def preprocess_image(image, output_height, output_width, is_training):
     """Preprocesses the given image.
 
