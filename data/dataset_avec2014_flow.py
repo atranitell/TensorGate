@@ -33,13 +33,13 @@ class avec2014_flow(dataset.Dataset):
         elif self.data_type == 'test':
             self.log.test_dir = None
         # The frequency with which logs are print.
-        self.log.print_frequency = 100
+        self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 500
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 2000
+        self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 2000
+        self.log.test_interval = 500
 
     def _init_opt_param(self):
         """The name of the optimizer: 
@@ -62,7 +62,7 @@ class avec2014_flow(dataset.Dataset):
         self.opt.adagrad_initial_accumulator_value = 0.1
 
         """ ADAMs """
-        self.opt.adam_beta1 = 0.09
+        self.opt.adam_beta1 = 0.9
         self.opt.adam_beta2 = 0.999
 
         """ FTRL """
@@ -82,18 +82,18 @@ class avec2014_flow(dataset.Dataset):
         self.lr = opt()
         # Specifies how the learning rate is decayed. One of "fixed",
         # "exponential", or "polynomial"
-        self.lr.learning_rate_decay_type = 'fixed'
+        self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
         self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
-        self.lr.end_learning_rate = 0.0001
+        self.lr.end_learning_rate = 0.00001
         # The amount of label smoothing.
         self.lr.label_smoothing = 0.0
         # Learning rate decay factor
-        self.lr.learning_rate_decay_factor = 0.94
+        self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 2.0
+        self.lr.num_epochs_per_decay = 10.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -103,12 +103,12 @@ class avec2014_flow(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 32
-        self.output_height = 28
-        self.output_width = 28
-        self.min_queue_num = 4096
-        self.device = '/cpu:0'
-        self.num_classes = 100
+        self.batch_size = 64
+        self.output_height = 224
+        self.output_width = 224
+        self.min_queue_num = 128
+        self.device = '/gpu:0'
+        self.num_classes = 63
         self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):

@@ -52,13 +52,21 @@ class lightnet(net.Net):
                     net = layers.conv2d(block_in, 64, [1, 1], 1)
                     net = layers.conv2d(net, 64, [3, 3], 1)
                     branch_1_0 = layers.conv2d(net, 256, [1, 1], 1)
-                with tf.variable_scope('branch_1_1'):
-                    branch_1_1 = layers.conv2d(block_in, 256, [1, 1], 1)
-                with tf.variable_scope('branch_1_2'):
-                    net = layers.avg_pool2d(block_in, [3, 3], 1)
-                    branch_1_2 = layers.conv2d(net, 256, [1, 1], 1)
-                net = tf.concat(axis=3, values=[branch_1_0, branch_1_1, branch_1_2])
-                block_in = layers.conv2d(net, 768, [1, 1], 1)
+                net = tf.concat(axis=3, values=[branch_1_0, block_in])
+                block_in = layers.conv2d(net, 128, [1, 1], 1)
+
+            # with tf.variable_scope('block1'):
+            #     with tf.variable_scope('branch_1_0'):
+            #         net = layers.conv2d(block_in, 64, [1, 1], 1)
+            #         net = layers.conv2d(net, 64, [3, 3], 1)
+            #         branch_1_0 = layers.conv2d(net, 256, [1, 1], 1)
+            #     with tf.variable_scope('branch_1_1'):
+            #         branch_1_1 = layers.conv2d(block_in, 256, [1, 1], 1)
+            #     with tf.variable_scope('branch_1_2'):
+            #         net = layers.avg_pool2d(block_in, [3, 3], 1)
+            #         branch_1_2 = layers.conv2d(net, 256, [1, 1], 1)
+            #     net = tf.concat(axis=3, values=[branch_1_0, branch_1_1, branch_1_2])
+            #     block_in = layers.conv2d(net, 768, [1, 1], 1)
 
             block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
@@ -68,7 +76,7 @@ class lightnet(net.Net):
                     net = layers.conv2d(net, 64, [3, 3], 1)
                     branch_2_0 = layers.conv2d(net, 256, [1, 1], 1)
                 net = tf.concat(axis=3, values=[branch_2_0, block_in])
-                block_in = layers.conv2d(net, 1024, [1, 1], 1)
+                block_in = layers.conv2d(net, 256, [1, 1], 1)
 
             block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
@@ -78,7 +86,7 @@ class lightnet(net.Net):
                     net = layers.conv2d(net, 64, [3, 3], 1)
                     branch_3_0 = layers.conv2d(net, 256, [1, 1], 1)
                 net = tf.concat(axis=3, values=[branch_3_0, block_in])
-                block_in = layers.conv2d(net, 1024, [1, 1], 1)
+                block_in = layers.conv2d(net, 512, [1, 1], 1)
 
             block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
@@ -123,6 +131,15 @@ class lightnet(net.Net):
 
             block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
-            logits = tf.reduce_mean(block_in, [1, 2, 3])
+            logits = layers.fully_connected(
+                block_in, num_classes,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1 / 1024.0),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            # logits = tf.reduce_mean(block_in, [1, 2, 3])
 
         return logits, end_points

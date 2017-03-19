@@ -4,8 +4,6 @@
 
 import os
 import math
-import re
-import numpy as np
 
 import tensorflow as tf
 
@@ -13,7 +11,7 @@ from nets import nets_factory
 from data import datasets_factory
 from util_tools import output
 
-import dataset_avec2014_utils
+from data import dataset_avec2014_utils
 
 
 def run(name, net_name, model_path=None):
@@ -140,9 +138,9 @@ def run(name, net_name, model_path=None):
             # -------------------------------------------
             # Especially for avec2014
             # -------------------------------------------
-            if name == 'avec2014':
-                mae, rmse = get_accurate_from_file(test_infp_path)
-                print('[TEST] Loss:%.2f, file_mae:%.2f, file_rmse:%.2f' % (loss, mae, rmse))
+            if name == 'avec2014' or name == 'avec2014_flow':
+                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_infp_path)
+                print('[TEST] Loss:%.2f, video_mae:%.2f, video_rmse:%.2f' % (loss, mae, rmse))
 
             # -------------------------------------------
             # terminate all threads

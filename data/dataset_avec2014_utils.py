@@ -1,12 +1,16 @@
-def get_avec_accurate_from_file(path):
+import re
+import numpy as np
+
+
+def get_accurate_from_file(path):
 
     res_label = {}
     res_logit = {}
     res_fp = open(path, 'r')
 
     for line in res_fp:
-        r1 = re.findall('frames/(.*?)_Freeform_video', line)
-        r2 = re.findall('frames/(.*?)_Northwind_video', line)
+        r1 = re.findall('/(.*?)_Freeform_video', line)
+        r2 = re.findall('/(.*?)_Northwind_video', line)
 
         if r1:
             res = r1[0]

@@ -109,7 +109,7 @@ class avec2014(dataset.Dataset):
         self.output_width = 224
         self.min_queue_num = 128
         self.device = '/gpu:0'
-        self.num_classes = 100
+        self.num_classes = 63
         self.preprocessing_method = 'vgg'
 
     def _init_train_param(self):
