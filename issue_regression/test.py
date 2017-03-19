@@ -4,12 +4,16 @@
 
 import os
 import math
+import re
+import numpy as np
 
 import tensorflow as tf
 
 from nets import nets_factory
 from data import datasets_factory
 from util_tools import output
+
+import dataset_avec2014_utils
 
 
 def run(name, net_name, model_path=None):
@@ -31,7 +35,7 @@ def run(name, net_name, model_path=None):
         # Network
         # -------------------------------------------
         logits, end_points = nets_factory.get_network(
-            net_name, 'test', images, 1)
+            net_name, 'train', images, 1)
 
         # ATTENTION!
         logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
@@ -125,13 +129,20 @@ def run(name, net_name, model_path=None):
             rmse = math.sqrt(1.0 * rmse / num_iter)
             mae = 1.0 * mae / num_iter
 
+
             # -------------------------------------------
             # output
             # -------------------------------------------
             print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
                   (int(global_step), dataset.total_num, num_iter))
-
             print('[TEST] Loss:%.2f, mae:%.2f, rmse:%.2f' % (loss, mae, rmse))
+
+            # -------------------------------------------
+            # Especially for avec2014
+            # -------------------------------------------
+            if name == 'avec2014':
+                mae, rmse = get_accurate_from_file(test_infp_path)
+                print('[TEST] Loss:%.2f, file_mae:%.2f, file_rmse:%.2f' % (loss, mae, rmse))
 
             # -------------------------------------------
             # terminate all threads

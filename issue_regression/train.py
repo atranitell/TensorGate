@@ -2,6 +2,7 @@
 """ updated: 2017/3/16
 """
 
+import os
 import time
 import math
 
@@ -23,12 +24,15 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         with tf.name_scope('dataset'):
             dataset = datasets_factory.get_dataset(data_name, 'train')
-            output.print_basic_information(dataset, net_name)
 
             # reset_training_path
             if chkp_path is not None:
+                os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
-
+            
+            # ouput information
+            output.print_basic_information(dataset, net_name)
+            
             # get data
             images, labels, _ = dataset.loads()
 
@@ -176,12 +180,15 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
                     print('[TEST] Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
                           (test_duration, self.best_mae, self.best_iter_mae,
                            self.best_rmse, self.best_iter_rmse))
-
+        
+        # record running information
+        running_hook = running_hook()
+        
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
-                hooks=[chkp_hook, summary_hook, running_hook()],
+                hooks=[chkp_hook, summary_hook, running_hook],
                 save_summaries_steps=0,
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path) as mon_sess:

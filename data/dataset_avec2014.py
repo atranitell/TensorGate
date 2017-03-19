@@ -37,9 +37,9 @@ class avec2014(dataset.Dataset):
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 200
+        self.log.save_model_iter = 500
         # test iteration
-        self.log.test_interval = 200
+        self.log.test_interval = 500
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -87,13 +87,14 @@ class avec2014(dataset.Dataset):
         self.lr.learning_rate = 0.01
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
-        self.lr.end_learning_rate = 0.00001
+        self.lr.end_learning_rate = 0.000001
         # The amount of label smoothing.
         self.lr.label_smoothing = 0.0
         # Learning rate decay factor
-        self.lr.learning_rate_decay_factor = 0.94
+        self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 5.0
+        # 64-244.6/epoch
+        self.lr.num_epochs_per_decay = 20.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -103,7 +104,7 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 32
+        self.batch_size = 64
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 128
@@ -120,7 +121,7 @@ class avec2014(dataset.Dataset):
         self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
     def _init_test_param(self):
-        self.total_num = 17727
+        self.total_num = 17727 #17727 # 1814
         self.name = 'avec2014_test'
         self.reader_thread = 8
         self.shuffle = False
