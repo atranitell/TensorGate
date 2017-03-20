@@ -136,7 +136,8 @@ def run(name, net_name, model_path=None):
             # -------------------------------------------
             # Especially for avec2014
             # -------------------------------------------
-            if name.find('avec') >= 0:
+            # if name.find('avec') >= 0:
+            if name == 'avec2014' or name == 'avec2014_flow':
                 mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_infp_path)
                 print('[TEST] Loss:%.2f, video_mae:%.2f, video_rmse:%.2f' % (loss, mae, rmse))
 

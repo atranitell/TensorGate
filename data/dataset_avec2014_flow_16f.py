@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """ updated: 2017/3/16
 """
+import os
+import random
+import numpy as np
+from PIL import Image
+
 import tensorflow as tf
 from data import dataset
 from data import utils
@@ -105,66 +110,93 @@ class avec2014_flow_16f(dataset.Dataset):
     def _init_common_param(self):
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 4
-        self.batch_size = 16
+        self.min_queue_num = 128
+        self.batch_size = 1
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
-        self.total_num = 6368000
+        self.total_num = 199
         self.name = 'avec2014_flow_16f_train'
-        self.reader_thread = 1
-        self.shuffle = False
+        self.reader_thread = 16
+        self.shuffle = True
         self.data_load_method = 'text'
-        self.data_path = '_datasets/AVEC2014/seq_trn_flow_16.txt'
+        self.data_path = '_datasets/AVEC2014/pp_trn_flow.txt'
 
     def _init_test_param(self):
-        self.total_num = 1600
+        self.total_num = 100
         self.name = 'avec2014_flow_16f_test'
-        self.reader_thread = 1
+        self.reader_thread = 16
         self.shuffle = False
         self.data_load_method = 'text'
-        self.data_path = '_datasets/AVEC2014/seq_tst_flow_16.txt'
+        self.data_path = '_datasets/AVEC2014/pp_trn_flow.txt'
+
+    def load_from_files(self):
+        """ Load data from file """
+        fold_list = []
+        label_list = []
+
+        with open(self.data_path, 'r') as fp:
+            for line in fp:
+                r = line.split(' ')
+                if len(r) <= 1:
+                    continue
+                fold_list.append(r[0])
+                label_list.append(int(r[1]))
+
+        folds = tf.convert_to_tensor(fold_list, dtype=tf.string)
+        labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
+
+        return folds, labels
+
+    def load_images_from_fold(self, foldpath):
+        # default choose 16
+        channels = 16
+        foldpath_str = str(foldpath, encoding='utf-8')
+        fold_path_abs = os.path.join('_datasets/AVEC2014', foldpath_str)
+        img_list = []
+        for fs in os.listdir(fold_path_abs):
+            if len(fs.split('.jpg')) > 1:
+                img_list.append(fs)
+        # generate idx without reptitious
+        img_indice = random.sample([i for i in range(len(img_list))], channels)
+        # generate
+        img_selected_list = []
+        for idx in range(channels):
+            img_path = os.path.join(fold_path_abs, img_list[img_indice[idx]])
+            img_selected_list.append(img_path)
+        img_selected_list.sort()
+        # compression to (256,256,3*16)
+        combine = np.asarray(Image.open(img_selected_list[0]))
+        for idx, img in enumerate(img_selected_list):
+            if idx == 0:
+                continue
+            img_content = np.asarray(Image.open(img))
+            combine = np.dstack((combine, img_content))
+        return combine
 
     def loads(self):
         """ load images and labels from folder/files."""
         # load from disk
-        file_list_path = self.data_path
-        total_num = self.total_num
-
-        print('[INFO] System is loading the imgages')
-        image_list, label_list, load_num = utils.read_from_file(file_list_path)
-        print('[INFO] Has finished loading imgages.')
-
-        if total_num != load_num:
-            raise ValueError('Loading in %d images, but setting is %d images!' %
-                             (load_num, total_num))
-
+        folds, labels = self.load_from_files()
         # construct a fifo queue
-        images = tf.convert_to_tensor(image_list, dtype=tf.string)
-        labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-        input_queue = tf.train.slice_input_producer([images, labels], shuffle=self.shuffle)
+        foldname, label = tf.train.slice_input_producer([folds, labels], shuffle=self.shuffle)
 
-        # preprocessing
-        image_raw = tf.read_file(input_queue[0])
-        image = tf.to_float(tf.image.decode_jpeg(image_raw, channels=3))
-        label = input_queue[1]
-        filename = input_queue[0]
+        image = tf.py_func(self.load_images_from_fold, [foldname], tf.uint8)
+        image = tf.reshape(image, shape=[256, 256, 48])
 
         if self.data_type == 'train':
-            distorted_image = tf.random_crop(image, [self.output_height, self.output_width, 3])
+            distorted_image = tf.random_crop(image, [self.output_height, self.output_width, 48])
             out_image = tf.image.random_flip_left_right(distorted_image)
             # distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
             # distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
         elif self.data_type == 'test':
-            # image = tf.decode_raw(image_raw, out_type=tf.uint8)
-            # image = tf.to_float(tf.reshape(image, shape=[256, 256, 48]))
             out_image = tf.image.resize_image_with_crop_or_pad(
                 image, self.output_height, self.output_width)
             # tf.summary.image('resized_image', tf.expand_dims(resized_image, 0))
-            # Subtract off the mean and divide by the variance of the pixels.
 
+        # Subtract off the mean and divide by the variance of the pixels.
         image = tf.image.per_image_standardization(out_image)
 
         # preprocessing images
@@ -172,4 +204,4 @@ class avec2014_flow_16f(dataset.Dataset):
 
         # return [images, labels, filenames] as a batch
         return self._generate_image_label_batch(image, label, self.shuffle, self.min_queue_num,
-                                                self.batch_size, self.reader_thread, filename)
+                                                self.batch_size, self.reader_thread, foldname)
