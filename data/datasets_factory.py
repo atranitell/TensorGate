@@ -4,12 +4,14 @@
 
 from data import dataset_cifar10
 from data import dataset_avec2014
+from data import dataset_avec2014_16f
 from data import dataset_avec2014_flow
 from data import dataset_avec2014_flow_16f
 
 dataset_map = {
     'cifar10': dataset_cifar10.cifar10,
     'avec2014': dataset_avec2014.avec2014,
+    'avec2014_16f': dataset_avec2014_16f,
     'avec2014_flow': dataset_avec2014_flow.avec2014_flow,
     'avec2014_flow_16f': dataset_avec2014_flow_16f.avec2014_flow_16f
 }
