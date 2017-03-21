@@ -1,0 +1,34 @@
+{
+    "name": "avec2014-ensemble",
+    "ensemble_type":"avg",
+    "list": [
+        {
+            "model": "lightnet_flow_5401",
+            "desc": "null",
+            "type": "seq",
+            "path": "data/5401.txt",
+            "ensemble": false
+        },
+        {
+            "model": "cifarnet_1801",
+            "desc": "null",
+            "type": "img",
+            "path": "data/1801.txt",
+            "ensemble": true
+        },
+        {
+            "model": "lightnet_flow_6401",
+            "desc": "null",
+            "type": "seq",
+            "path": "data/6401.txt",
+            "ensemble": false
+        },
+        {
+            "model": "alexnet_7501",
+            "desc": "null",
+            "type": "img",
+            "path": "data/7501.txt",
+            "ensemble": true
+        }
+    ]
+}
