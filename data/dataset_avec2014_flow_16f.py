@@ -41,7 +41,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 1
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 200
         # test iteration
@@ -99,7 +99,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 1000.0
+        self.lr.num_epochs_per_decay = 5000.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
