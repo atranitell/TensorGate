@@ -103,13 +103,14 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
         # add into summary
         tf.summary.scalar('lr', learning_rate)
         
-        for idx, v in enumerate(grads):
-            tf.summary.scalar(
-                name='mean_'+str(idx), tensor=tf.reduce_mean(v))
-            tf.summary.scalar(
-                name='max_'+str(idx), tensor=tf.reduce_max(v))
-            tf.summary.scalar(
-                name='sum_'+str(idx), tensor=tf.reduce_sum(v))
+        with tf.name_scope('grads'):
+            for idx, v in enumerate(grads):
+                tf.summary.scalar(
+                    name='mean_'+str(idx), tensor=tf.reduce_mean(v))
+                tf.summary.scalar(
+                    name='max_'+str(idx), tensor=tf.reduce_max(v))
+                tf.summary.scalar(
+                    name='sum_'+str(idx), tensor=tf.reduce_sum(v))
                 
         # -------------------------------------------
         # Check point

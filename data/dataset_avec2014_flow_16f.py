@@ -41,7 +41,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 1
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 200
         # test iteration
@@ -99,7 +99,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 1000.0
+        self.lr.num_epochs_per_decay = 5000.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -129,10 +129,10 @@ class avec2014_flow_16f(dataset.Dataset):
         self.batch_size = 1
         self.total_num = 100
         self.name = 'avec2014_flow_16f_test'
-        self.reader_thread = 16
+        self.reader_thread = 1
         self.shuffle = False
         self.data_load_method = 'text'
-        self.data_path = '_datasets/AVEC2014/pp_trn_flow.txt'
+        self.data_path = '_datasets/AVEC2014/pp_tst_flow.txt'
 
     def load_from_files(self):
         """ Load data from file """
@@ -167,9 +167,13 @@ class avec2014_flow_16f(dataset.Dataset):
         invl = math.floor(len(img_list) / float(channels))
         start = 0
         img_indice = []
+
         for _ in range(channels):
             end = start + invl
-            img_indice.append(random.randint(start, end-1))
+            if self.data_type == 'train':
+                img_indice.append(random.randint(start, end-1))
+            elif self.data_type == 'test':
+                img_indice.append(start)
             start = end
 
         # generate
@@ -181,7 +185,6 @@ class avec2014_flow_16f(dataset.Dataset):
 
         # for line in img_selected_list:
         #     print(line)
-        
         # raise ValueError(123)
 
         # compression to (256,256,3*16)
