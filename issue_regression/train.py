@@ -29,10 +29,10 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
             if chkp_path is not None:
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
-            
+
             # ouput information
             output.print_basic_information(dataset, net_name)
-            
+
             # get data
             images, labels, _ = dataset.loads()
 
@@ -93,13 +93,24 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
 
         # compute gradients
         grads = tf.gradients(losses, variables_to_train)
+       
+        # mean = tf.reduce
+        grads_mean_list = []
         train_op = optimizer.apply_gradients(
             zip(grads, variables_to_train),
             global_step=global_step, name='train_step')
 
         # add into summary
         tf.summary.scalar('lr', learning_rate)
-
+        
+        for idx, v in enumerate(grads):
+            tf.summary.scalar(
+                name='mean_'+str(idx), tensor=tf.reduce_mean(v))
+            tf.summary.scalar(
+                name='max_'+str(idx), tensor=tf.reduce_max(v))
+            tf.summary.scalar(
+                name='sum_'+str(idx), tensor=tf.reduce_sum(v))
+                
         # -------------------------------------------
         # Check point
         # -------------------------------------------
@@ -160,14 +171,16 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
                     # (if 1 GPU, it is a batch)
                     format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, '
                     format_str += 'lr:%s, time:%.2fms.'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    print(format_str %
+                          (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     test_start_time = time.time()
-                    test_mae, test_rmse = reg_test.run(data_name, net_name, dataset.log.train_dir)
+                    test_mae, test_rmse = reg_test.run(
+                        data_name, net_name, dataset.log.train_dir)
                     test_duration = time.time() - test_start_time
 
                     if test_mae < self.best_mae:
@@ -180,15 +193,16 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
                     print('[TEST] Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
                           (test_duration, self.best_mae, self.best_iter_mae,
                            self.best_rmse, self.best_iter_rmse))
-        
+
         # record running information
         running_hook = running_hook()
-        
+
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
-                hooks=[chkp_hook, summary_hook, running_hook],
+                hooks=[chkp_hook, summary_hook, running_hook,
+                       tf.train.NanTensorHook(losses)],
                 save_summaries_steps=0,
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path) as mon_sess:
@@ -196,7 +210,8 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
             if chkp_path is not None:
                 ckpt = tf.train.get_checkpoint_state(chkp_path)
                 saver.restore(mon_sess, ckpt.model_checkpoint_path)
-                print('[TRAIN] Load checkpoint from: %s' % ckpt.model_checkpoint_path)
+                print('[TRAIN] Load checkpoint from: %s' %
+                      ckpt.model_checkpoint_path)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)

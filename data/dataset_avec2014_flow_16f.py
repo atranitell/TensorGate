@@ -3,6 +3,7 @@
 """
 import os
 import random
+import math
 import numpy as np
 from PIL import Image
 
@@ -40,11 +41,11 @@ class avec2014_flow_16f(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 20
+        self.log.save_summaries_iter = 1
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 100
+        self.log.save_model_iter = 200
         # test iteration
-        self.log.test_interval = 100
+        self.log.test_interval = 200
 
     def _init_opt_param(self):
         """The name of the optimizer: 
@@ -58,7 +59,7 @@ class avec2014_flow_16f(dataset.Dataset):
         self.opt.optimizer = 'adam'
 
         """ SGD """
-        self.opt.weight_decay = 0.00004
+        self.opt.weight_decay = 0.0001
         self.opt.momentum = 0.9
         self.opt.opt_epsilon = 1.0
 
@@ -98,7 +99,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 10.0
+        self.lr.num_epochs_per_decay = 1000.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -111,12 +112,12 @@ class avec2014_flow_16f(dataset.Dataset):
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 128
-        self.batch_size = 1
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = 'cifarnet'
 
     def _init_train_param(self):
+        self.batch_size = 32
         self.total_num = 199
         self.name = 'avec2014_flow_16f_train'
         self.reader_thread = 16
@@ -125,6 +126,7 @@ class avec2014_flow_16f(dataset.Dataset):
         self.data_path = '_datasets/AVEC2014/pp_trn_flow.txt'
 
     def _init_test_param(self):
+        self.batch_size = 1
         self.total_num = 100
         self.name = 'avec2014_flow_16f_test'
         self.reader_thread = 16
@@ -159,14 +161,29 @@ class avec2014_flow_16f(dataset.Dataset):
         for fs in os.listdir(fold_path_abs):
             if len(fs.split('.jpg')) > 1:
                 img_list.append(fs)
+
         # generate idx without reptitious
-        img_indice = random.sample([i for i in range(len(img_list))], channels)
+        # img_indice = random.sample([i for i in range(len(img_list))], channels)
+        invl = math.floor(len(img_list) / float(channels))
+        start = 0
+        img_indice = []
+        for _ in range(channels):
+            end = start + invl
+            img_indice.append(random.randint(start, end-1))
+            start = end
+
         # generate
         img_selected_list = []
         for idx in range(channels):
             img_path = os.path.join(fold_path_abs, img_list[img_indice[idx]])
             img_selected_list.append(img_path)
         img_selected_list.sort()
+
+        # for line in img_selected_list:
+        #     print(line)
+        
+        # raise ValueError(123)
+
         # compression to (256,256,3*16)
         combine = np.asarray(Image.open(img_selected_list[0]))
         for idx, img in enumerate(img_selected_list):
