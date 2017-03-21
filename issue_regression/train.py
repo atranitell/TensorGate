@@ -55,11 +55,6 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
             err_mse = tf.reduce_mean(
                 input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
-        # add into summary
-        tf.summary.scalar('err_mae', err_mae)
-        tf.summary.scalar('err_mse', err_mse)
-        tf.summary.scalar('loss', losses)
-
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
@@ -93,42 +88,41 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
 
         # compute gradients
         grads = tf.gradients(losses, variables_to_train)
-       
-        # mean = tf.reduce
-        grads_mean_list = []
         train_op = optimizer.apply_gradients(
             zip(grads, variables_to_train),
             global_step=global_step, name='train_step')
 
-        # add into summary
-        tf.summary.scalar('lr', learning_rate)
-        
-        with tf.name_scope('grads'):
-            for idx, v in enumerate(grads):
-                tf.summary.scalar(
-                    name='mean_'+str(idx), tensor=tf.reduce_mean(v))
-                tf.summary.scalar(
-                    name='max_'+str(idx), tensor=tf.reduce_max(v))
-                tf.summary.scalar(
-                    name='sum_'+str(idx), tensor=tf.reduce_sum(v))
-                
         # -------------------------------------------
         # Check point
         # -------------------------------------------
         chkp_hook = tf.train.CheckpointSaverHook(
             checkpoint_dir=dataset.log.train_dir,
             save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(var_list=tf.global_variables(),
-                                 max_to_keep=10000),
+            saver=tf.train.Saver(var_list=tf.global_variables(), max_to_keep=10000),
             checkpoint_basename=dataset.name + '.ckpt')
 
         # -------------------------------------------
         # Summary Function
         # -------------------------------------------
+        with tf.name_scope('train'):
+            tf.summary.scalar('lr', learning_rate)
+            tf.summary.scalar('err_mae', err_mae)
+            tf.summary.scalar('err_mse', err_mse)
+            tf.summary.scalar('loss', losses)
+
+        with tf.name_scope('grads'):
+            for idx, v in enumerate(grads):
+                prefix = variables_to_train[idx].name
+                tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(v))
+                tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(v))
+                tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(v))
+
         summary_hook = tf.train.SummarySaverHook(
             save_steps=dataset.log.save_summaries_iter,
             output_dir=dataset.log.train_dir,
             summary_op=tf.summary.merge_all())
+
+        summary_test = tf.summary.FileWriter(dataset.log.train_dir)
 
         # -------------------------------------------
         # Running Info
@@ -172,8 +166,7 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
                     # (if 1 GPU, it is a batch)
                     format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, '
                     format_str += 'lr:%s, time:%.2fms.'
-                    print(format_str %
-                          (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
@@ -181,7 +174,7 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     test_start_time = time.time()
                     test_mae, test_rmse = reg_test.run(
-                        data_name, net_name, dataset.log.train_dir)
+                        data_name, net_name, dataset.log.train_dir, summary_test)
                     test_duration = time.time() - test_start_time
 
                     if test_mae < self.best_mae:
