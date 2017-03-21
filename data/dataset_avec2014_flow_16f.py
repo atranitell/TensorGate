@@ -129,10 +129,10 @@ class avec2014_flow_16f(dataset.Dataset):
         self.batch_size = 1
         self.total_num = 100
         self.name = 'avec2014_flow_16f_test'
-        self.reader_thread = 16
+        self.reader_thread = 1
         self.shuffle = False
         self.data_load_method = 'text'
-        self.data_path = '_datasets/AVEC2014/pp_trn_flow.txt'
+        self.data_path = '_datasets/AVEC2014/pp_tst_flow.txt'
 
     def load_from_files(self):
         """ Load data from file """
@@ -167,9 +167,13 @@ class avec2014_flow_16f(dataset.Dataset):
         invl = math.floor(len(img_list) / float(channels))
         start = 0
         img_indice = []
+
         for _ in range(channels):
             end = start + invl
-            img_indice.append(random.randint(start, end-1))
+            if self.data_type == 'train':
+                img_indice.append(random.randint(start, end-1))
+            elif self.data_type == 'test':
+                img_indice.append(start)
             start = end
 
         # generate
@@ -181,7 +185,6 @@ class avec2014_flow_16f(dataset.Dataset):
 
         # for line in img_selected_list:
         #     print(line)
-        
         # raise ValueError(123)
 
         # compression to (256,256,3*16)

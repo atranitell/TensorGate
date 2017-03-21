@@ -41,21 +41,6 @@ def run(name, net_name, model_path=None):
         labels = tf.div(labels, dataset.num_classes)
         losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
 
-        # vars_list = tf.model_variables()
-
-        # with tf.Session() as sess:
-        #     sess.run(tf.global_variables_initializer())
-        #     tf.train.start_queue_runners(sess=sess)
-        #     for var in vars_list:
-        #         print(var.name)
-        #         print(sess.run(tf.reduce_mean(var)))
-
-        #     # print(sess.run(labels.get_shape()))
-        #     # print(sess.run(logits.get_shape()))
-        #     print(sess.run(labels))
-
-        # raise ValueError(123)
-
         err_mae = tf.reduce_mean(input_tensor=tf.abs(
             (logits - labels) * dataset.num_classes), name='err_mae')
         err_mse = tf.reduce_mean(input_tensor=tf.square(
