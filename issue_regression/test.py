@@ -14,7 +14,7 @@ from util_tools import output
 from data import dataset_avec2014_utils
 
 
-def run(name, net_name, model_path=None):
+def run(name, net_name, model_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
         # -------------------------------------------
@@ -125,6 +125,15 @@ def run(name, net_name, model_path=None):
             if name == 'avec2014' or name == 'avec2014_flow':
                 mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_infp_path)
                 print('[TEST] Loss:%.2f, video_mae:%.2f, video_rmse:%.2f' % (loss, mae, rmse))
+
+            # -------------------------------------------
+            # Summary
+            # -------------------------------------------
+            summary = tf.Summary()
+            with tf.name_scope('test'):
+                summary.value.add(tag='MAE', simple_value=mae)
+                summary.value.add(tag='RMSE', simple_value=rmse)
+                summary_writer.add_summary(summary, global_step)
 
             # -------------------------------------------
             # terminate all threads
