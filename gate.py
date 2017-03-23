@@ -12,6 +12,8 @@ import issue_regression.test as reg_test
 import issue_classification.train as cla_train
 import issue_classification.train as cla_test
 
+import issue_regression.train_fuse as reg_train_fuse
+
 
 def classification(args):
     # start to train
@@ -37,6 +39,9 @@ def regression(args):
 
     if args.task == 'train' and args.model is None:
         reg_train.run(args.data, args.net, chkp_path=None)
+
+    if args.task == 'train_fuse' and args.model is None:
+        reg_train_fuse.run(args.data, args.net, chkp_path=None)
 
     # re_train
     elif args.task == 'train' and args.model is not None:

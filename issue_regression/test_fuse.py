@@ -41,8 +41,9 @@ def run(name, net_name, model_path=None, summary_writer=None):
         # ATTENTION!
         logits1 = tf.to_float(tf.reshape(logits1, [dataset.batch_size, 1]))
         logits2 = tf.to_float(tf.reshape(logits2, [dataset.batch_size, 1]))
-        logits = tf.divide(tf.add(logits1, logits2), 2)
-        
+        # logits = tf.divide(tf.add(logits1, logits2), 2)
+        logits = logits1
+
         labels = tf.to_float(tf.reshape(labels_orig, [dataset.batch_size, 1]))
         labels = tf.div(labels, dataset.num_classes)
 

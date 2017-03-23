@@ -84,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.001
+        self.lr.learning_rate = 0.0025
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.000001
@@ -94,7 +94,7 @@ class avec2014(dataset.Dataset):
         self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
         # 64-244.6/epoch
-        self.lr.num_epochs_per_decay = 20.0
+        self.lr.num_epochs_per_decay = 2000.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.
@@ -104,10 +104,10 @@ class avec2014(dataset.Dataset):
         self.lr.moving_average_decay = None
 
     def _init_common_param(self):
-        self.batch_size = 64
+        self.batch_size = 32
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 128
+        self.min_queue_num = 2048
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = 'vgg'

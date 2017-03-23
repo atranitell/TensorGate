@@ -7,7 +7,7 @@ import time
 import math
 
 import tensorflow as tf
-import issue_regression.test as reg_test
+import issue_regression.test_fuse as reg_test
 
 from tensorflow.contrib import framework
 from nets import nets_factory
@@ -53,7 +53,8 @@ def run(data_name, net_name, chkp_path=None, exclusions=None):
             logits1 = tf.to_float(tf.reshape(logits1, [dataset.batch_size, 1]))
             logits2 = tf.to_float(tf.reshape(logits2, [dataset.batch_size, 1]))
 
-            logits = tf.divide(tf.add(logits1, logits2), 2)
+            # logits = tf.divide(tf.add(logits1, logits2), 2)
+            logits = logits1
             labels = tf.to_float(tf.reshape(labels, [dataset.batch_size, 1]))
             labels = tf.divide(labels, dataset.num_classes)
 
