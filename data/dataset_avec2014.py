@@ -35,11 +35,11 @@ class avec2014(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 20
+        self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 500
+        self.log.save_model_iter = 200
         # test iteration
-        self.log.test_interval = 500
+        self.log.test_interval = 200
 
     def _init_opt_param(self):
         """The name of the optimizer:
@@ -84,7 +84,7 @@ class avec2014(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.001
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.000001

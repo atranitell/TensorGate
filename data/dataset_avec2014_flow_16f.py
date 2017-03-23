@@ -41,7 +41,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 20
+        self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 200
         # test iteration
@@ -90,7 +90,7 @@ class avec2014_flow_16f(dataset.Dataset):
         # "exponential", or "polynomial"
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.1
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -114,7 +114,7 @@ class avec2014_flow_16f(dataset.Dataset):
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = ''
 
     def _init_train_param(self):
         self.batch_size = 32
@@ -207,8 +207,8 @@ class avec2014_flow_16f(dataset.Dataset):
         image = tf.reshape(image, shape=[256, 256, 48])
 
         if self.data_type == 'train':
-            distorted_image = tf.random_crop(image, [self.output_height, self.output_width, 48])
-            out_image = tf.image.random_flip_left_right(distorted_image)
+            out_image = tf.random_crop(image, [self.output_height, self.output_width, 48])
+            # out_image = tf.image.random_flip_left_right(distorted_image)
             # distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
             # distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
         elif self.data_type == 'test':
