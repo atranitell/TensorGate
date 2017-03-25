@@ -131,14 +131,20 @@ def get_ensemble_value(json_file_path):
         if val['ensemble'] is True:
             res_list.append((res_dict))
 
-    print('%-20s %5s  %5s  %7s' % ('model name:', 'mae', 'rmse', 'ensemble'))
-    for line in res:
-        print('%-20s  %-2.3f  %-2.3f  %-7s' % (line, res[line][1], res[line][2], str(res[line][0])))
+    print('%-30s %5s     %5s    %7s' %
+          ('model name:', 'mae', 'rmse', 'ensemble'))
 
+    for line in res:
+        if res[line][2] >= 10:
+            print('%-30s  %-.3f     %-.3f    %-7s' %
+                  (line, res[line][1], res[line][2], str(res[line][0])))
+        else:
+            print('%-30s  %-.3f     %-.3f     %-7s' %
+                  (line, res[line][1], res[line][2], str(res[line][0])))
     # ensemble
     ensemble = {}
     get_ensemble_avg(ensemble, res_list)
-    print('\n%-20s  %-2.3f  %-2.3f' %
+    print('\n%-30s  %-.3f     %-.3f' %
           ('ensemble_avg', ensemble['avg_res'][0],  ensemble['avg_res'][1]))
 
 get_ensemble_value('list.json')
