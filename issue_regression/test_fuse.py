@@ -32,14 +32,25 @@ def run(name, net_name, model_path=None, summary_writer=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        logits, end_points = nets_factory.get_network(
-            net_name, 'test', images, 1)
+        logits1, end_points1 = nets_factory.get_network(
+            'lightnet', 'test', images, 1)
+
+        logits2, end_points2 = nets_factory.get_network(
+            'alexnet', 'test', images, 1)
 
         # ATTENTION!
-        logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
+        logits1 = tf.to_float(tf.reshape(logits1, [dataset.batch_size, 1]))
+        logits2 = tf.to_float(tf.reshape(logits2, [dataset.batch_size, 1]))
+        # logits = tf.divide(tf.add(logits1, logits2), 2)
+        logits = logits1
+
         labels = tf.to_float(tf.reshape(labels_orig, [dataset.batch_size, 1]))
         labels = tf.div(labels, dataset.num_classes)
-        losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
+
+        losses1 = tf.nn.l2_loss([labels - logits1], name='l2_loss_1')
+        losses2 = tf.nn.l2_loss([labels - logits2], name='l2_loss_2')
+
+        losses = losses1 + losses2
 
         err_mae = tf.reduce_mean(input_tensor=tf.abs(
             (logits - labels) * dataset.num_classes), name='err_mae')

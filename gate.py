@@ -12,6 +12,8 @@ import issue_regression.test as reg_test
 import issue_classification.train as cla_train
 import issue_classification.train as cla_test
 
+import issue_regression.train_fuse as reg_train_fuse
+
 
 def classification(args):
     # start to train
@@ -37,6 +39,9 @@ def regression(args):
 
     if args.task == 'train' and args.model is None:
         reg_train.run(args.data, args.net, chkp_path=None)
+
+    if args.task == 'train_fuse' and args.model is None:
+        reg_train_fuse.run(args.data, args.net, chkp_path=None)
 
     # re_train
     elif args.task == 'train' and args.model is not None:
@@ -80,12 +85,12 @@ if __name__ == '__main__':
     parser.add_argument('-target', type=str, default='regression', dest='target',
                         help='regression/classification')
     parser.add_argument('-task', type=str, default='train', dest='task',
-                        help='train/teset/finetune/feature')
+                        help='train/train_fuse/teset/finetune/feature')
     parser.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
     parser.add_argument('-net', type=str, default=None, dest='net',
                         help='lenet/cifarnet')
-    parser.add_argument('-data', type=str, default='avec2014', dest='data',
+    parser.add_argument('-data', type=str, default=None, dest='data',
                         help='avec2014/cifar10')
     args, _ = parser.parse_known_args()
     interface(args)

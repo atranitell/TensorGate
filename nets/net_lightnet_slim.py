@@ -3,15 +3,19 @@ from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
 from nets import net
 
+from tensorflow.python.ops import standard_ops
 
-class lightnet(net.Net):
+
+class lightnet_slim(net.Net):
 
     def __init__(self):
-        self.weight_decay = 0.0001
+        self.weight_decay = 0.0005
 
     def arg_scope(self):
         with arg_scope([layers.conv2d],
-                       weights_regularizer=layers.l2_regularizer(self.weight_decay),
+                       weights_regularizer=layers.sum_regularizer([
+                           layers.l1_regularizer(self.weight_decay),
+                           layers.l2_regularizer(self.weight_decay)]),
                        weights_initializer=tf.truncated_normal_initializer(stddev=0.05),
                        biases_initializer=tf.constant_initializer(0.1),
                        activation_fn=tf.nn.relu,

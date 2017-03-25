@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/16
+""" updated: 2017/3/23
 """
 
+import os
 import time
 import math
 
 import tensorflow as tf
-import issue_regression.test as reg_test
+import issue_regression.test_fuse as reg_test
 
 from tensorflow.contrib import framework
 from nets import nets_factory
@@ -14,13 +15,8 @@ from data import datasets_factory
 from optimizer import opt_optimizer
 from util_tools import output
 
-# concat ops
-# from tensorflow.python.ops import array_ops
-# from tensorflow.contrib.framework import arg_scope
-# from tensorflow.contrib import layers
 
-
-def run(data_name, net_name, chkp_path=None):
+def run(data_name, net_name, chkp_path=None, exclusions=None):
 
     with tf.Graph().as_default():
         # -------------------------------------------
@@ -28,11 +24,14 @@ def run(data_name, net_name, chkp_path=None):
         # -------------------------------------------
         with tf.name_scope('dataset'):
             dataset = datasets_factory.get_dataset(data_name, 'train')
-            output.print_basic_information(dataset, net_name)
 
             # reset_training_path
             if chkp_path is not None:
+                os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
+
+            # ouput information
+            output.print_basic_information(dataset, net_name)
 
             # get data
             images, labels, _ = dataset.loads()
@@ -43,38 +42,31 @@ def run(data_name, net_name, chkp_path=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
 
-        logits_cifarnet, cifarnet = nets_factory.get_network(
-            'cifarnet', 'train', images, 1)
+        logits1, end_points1 = nets_factory.get_network(
+            'lightnet', 'train', images, 1)
 
-        logits_lenet, lenet = nets_factory.get_network(
-            'lenet', 'train', images, 1)
+        logits2, end_points2 = nets_factory.get_network(
+            'alexnet', 'train', images, 1)
 
-        # net = array_ops.concat([cifarnet['logits'], lenet['Logits']], 1)
-
-        # with arg_scope([layers.fully_connected],
-        #                biases_initializer=tf.constant_initializer(0.1),
-        #                weights_initializer=tf.truncated_normal_initializer(stddev=0.04),
-        #                weights_regularizer=layers.l2_regularizer(0.0001),
-        #                activation_fn=tf.nn.relu):
-        #     logits = layers.fully_connected(net, 1, scope='last')
         with tf.name_scope('error'):
+
+            logits1 = tf.to_float(tf.reshape(logits1, [dataset.batch_size, 1]))
+            logits2 = tf.to_float(tf.reshape(logits2, [dataset.batch_size, 1]))
+
+            # logits = tf.divide(tf.add(logits1, logits2), 2)
+            logits = logits1
             labels = tf.to_float(tf.reshape(labels, [dataset.batch_size, 1]))
             labels = tf.divide(labels, dataset.num_classes)
 
-            loss_cifarnet = tf.nn.l2_loss([labels - logits_cifarnet], name='l2_loss_cifarnet')
-            loss_lenet = tf.nn.l2_loss([labels - logits_lenet], name='l2_loss_lenet')
+            losses1 = tf.nn.l2_loss([labels - logits1], name='l2_loss_1')
+            losses2 = tf.nn.l2_loss([labels - logits2], name='l2_loss_2')
 
-            losses = loss_cifarnet + loss_lenet
+            losses = losses1 + losses2
 
-            error = (logits_cifarnet + logits_lenet - 2.0 * labels) * dataset.num_classes / 2.0
-
-            err_mae = tf.reduce_mean(input_tensor=tf.abs(error, name='err_mae'))
-            err_mse = tf.reduce_mean(input_tensor=tf.square(error, name='err_mse'))
-
-        # add into summary
-        tf.summary.scalar('err_mae', err_mae)
-        tf.summary.scalar('err_mse', err_mse)
-        tf.summary.scalar('loss', losses)
+            err_mae = tf.reduce_mean(
+                input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
+            err_mse = tf.reduce_mean(
+                input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
         # -------------------------------------------
         # Gradients
@@ -86,15 +78,32 @@ def run(data_name, net_name, chkp_path=None):
             optimizer = opt_optimizer.configure_optimizer(
                 dataset, learning_rate)
 
+        # -------------------------------------------
+        # Finetune Related
+        #   if var appears in var_finetune, it will not be import.
+        #      Commonly used for different number of output classes.
+        # -------------------------------------------
+        if exclusions is not None:
+            variables_to_restore = []
+            for var in tf.global_variables():
+                excluded = False
+                for exclusion in exclusions:
+                    if var.op.name.startswith(exclusion):
+                        excluded = True
+                        break
+                if not excluded:
+                    variables_to_restore.append(var)
+            saver = tf.train.Saver(var_list=variables_to_restore)
+            variables_to_train = variables_to_restore
+        else:
+            saver = tf.train.Saver()
+            variables_to_train = tf.trainable_variables()
+
         # compute gradients
-        variables_to_train = tf.trainable_variables()
         grads = tf.gradients(losses, variables_to_train)
         train_op = optimizer.apply_gradients(
             zip(grads, variables_to_train),
             global_step=global_step, name='train_step')
-
-        # add into summary
-        tf.summary.scalar('lr', learning_rate)
 
         # -------------------------------------------
         # Check point
@@ -102,18 +111,35 @@ def run(data_name, net_name, chkp_path=None):
         chkp_hook = tf.train.CheckpointSaverHook(
             checkpoint_dir=dataset.log.train_dir,
             save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(var_list=tf.global_variables(),
-                                 max_to_keep=10),
+            saver=tf.train.Saver(
+                var_list=tf.global_variables(), max_to_keep=10000),
             checkpoint_basename=dataset.name + '.ckpt')
 
         # -------------------------------------------
         # Summary Function
         # -------------------------------------------
+        with tf.name_scope('train'):
+            tf.summary.scalar('lr', learning_rate)
+            tf.summary.scalar('err_mae', err_mae)
+            tf.summary.scalar('err_mse', err_mse)
+            tf.summary.scalar('loss', losses)
+
+        with tf.name_scope('grads'):
+            for idx, v in enumerate(grads):
+                prefix = variables_to_train[idx].name
+                tf.summary.scalar(name=prefix + '_mean',
+                                  tensor=tf.reduce_mean(v))
+                tf.summary.scalar(name=prefix + '_max',
+                                  tensor=tf.reduce_max(v))
+                tf.summary.scalar(name=prefix + '_sum',
+                                  tensor=tf.reduce_sum(v))
+
         summary_hook = tf.train.SummarySaverHook(
             save_steps=dataset.log.save_summaries_iter,
             output_dir=dataset.log.train_dir,
-            summary_op=tf.summary.merge_all()
-        )
+            summary_op=tf.summary.merge_all())
+
+        summary_test = tf.summary.FileWriter(dataset.log.train_dir)
 
         # -------------------------------------------
         # Running Info
@@ -122,6 +148,14 @@ def run(data_name, net_name, chkp_path=None):
 
             def __init__(self):
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
+                self.best_iter_mae, self.best_mae = 0.0, 1000.0
+                self.best_iter_rmse, self.best_rmse = 0.0, 1000.0
+
+            def begin(self):
+                # continue to train
+                print('[INFO] Loading in layer variable list as:')
+                for v in variables_to_train:
+                    print('[NET] ', v)
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -147,23 +181,49 @@ def run(data_name, net_name, chkp_path=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, lr:%s, time:%.2fms'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, '
+                    format_str += 'lr:%s, time:%.2fms.'
+                    print(format_str %
+                          (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
-                    reg_test.run(data_name, net_name, dataset.log.train_dir)
+                    test_start_time = time.time()
+                    test_mae, test_rmse = reg_test.run(
+                        data_name, net_name, dataset.log.train_dir, summary_test)
+                    test_duration = time.time() - test_start_time
+
+                    if test_mae < self.best_mae:
+                        self.best_mae = test_mae
+                        self.best_iter_mae = cur_iter
+                    if test_rmse < self.best_rmse:
+                        self.best_rmse = test_rmse
+                        self.best_iter_rmse = cur_iter
+
+                    print('[TEST] Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
+                          (test_duration, self.best_mae, self.best_iter_mae,
+                           self.best_rmse, self.best_iter_rmse))
+
+        # record running information
+        running_hook = running_hook()
 
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
-                hooks=[chkp_hook, summary_hook, running_hook()],
+                hooks=[chkp_hook, summary_hook, running_hook,
+                       tf.train.NanTensorHook(losses)],
                 save_summaries_steps=0,
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path) as mon_sess:
+
+            if chkp_path is not None:
+                ckpt = tf.train.get_checkpoint_state(chkp_path)
+                saver.restore(mon_sess, ckpt.model_checkpoint_path)
+                print('[TRAIN] Load checkpoint from: %s' %
+                      ckpt.model_checkpoint_path)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
