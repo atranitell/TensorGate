@@ -1,96 +1,95 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/16
+""" All interface to access the framework
 """
 
 import os
 import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import issue_regression.train as reg_train
-import issue_regression.test as reg_test
-
-import issue_classification.train as cla_train
-import issue_classification.train as cla_test
-
-import issue_regression.train_fuse as reg_train_fuse
+import issue.image.regression as img_regression
+import issue.image.classification as img_classification
 
 
-def classification(args):
-    # start to train
-
-    if args.task == 'train' and args.model is None:
-        cla_train.run(args.data, args.net, chkp_path=None)
-
-    # finetune
-    elif args.task == 'train' and args.model is not None:
-        cla_train.run(args.data, args.net, args.model)
-
-    # test
-    elif args.task == 'test' and args.model is not None:
-        cla_test.run(args.data, args.net, model_path=args.model)
-
-    # feature
-    else:
-        raise ValueError('Error task type ', args.task)
+def raise_invalid_input(*config):
+    """ Check input if none
+    """
+    for arg in config:
+        if arg is None:
+            raise ValueError('Input is None type, Please check again.')
 
 
-def regression(args):
-    # start to train
+def classification_for_image(config):
+    """ classification for image
+    """
 
-    if args.task == 'train' and args.model is None:
-        reg_train.run(args.data, args.net, chkp_path=None)
+    if config.task == 'train':
+        raise_invalid_input(config.dataset, config.net)
+        img_classification.train(config.dataset, config.net)
 
-    if args.task == 'train_fuse' and args.model is None:
-        reg_train_fuse.run(args.data, args.net, chkp_path=None)
-
-    # re_train
-    elif args.task == 'train' and args.model is not None:
-        reg_train.run(args.data, args.net, args.model)
+    # continue to train
+    elif config.task == 'train_continue':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_classification.train(config.dataset, config.net, config.model)
 
     # test
-    elif args.task == 'test' and args.model is not None:
-        reg_test.run(args.data, args.net, model_path=args.model)
+    elif config.task == 'test':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_classification.test(config.dataset, config.net, config.model)
 
-    # finetune
-    elif args.task == 'finetune' and args.model is not None:
-        reg_train.run(args.data, args.net, args.model,
-                      exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
-
-    # feature
     else:
-        raise ValueError('Error task type ', args.task)
+        raise ValueError('Error task type %s' % config.task)
 
 
-def interface(args):
+def regression_for_image(config):
+    """ Regression for image
+    """
+    # train from start
+    if config.task == 'train':
+        raise_invalid_input(config.dataset, config.net)
+        img_regression.train(config.dataset, config.net)
+
+    # train continue
+    elif config.task == 'train_continue':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.train(config.dataset, config.net, config.model)
+
+    # test all samples once
+    elif config.task == 'test':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.test(config.dataset, config.net, config.model)
+
+    # train from saved model and fixed some layers
+    elif config.task == 'finetune':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.train(config.dataset, config.net, config.model,
+                             exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
+    else:
+        raise ValueError('Error task type: %s' % config.task)
+
+
+def interface(config):
     """ interface related to command
     """
-    # check model
-    if isinstance(args.model, str):
-        if not os.path.isdir(args.model):
-            raise ValueError('Error model path: ', args.model)
+    print('[INFO] ', config)
 
-    # check net
-    if args.net is None:
-        raise ValueError('Without input net')
+    if config.target == 'regression':
+        regression_for_image(config)
 
-    if args.target == 'regression':
-        regression(args)
-
-    if args.target == 'classification':
-        classification(args)
+    if config.target == 'classification':
+        classification_for_image(config)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-target', type=str, default='regression', dest='target',
+    PARSER = argparse.ArgumentParser()
+    PARSER.add_argument('-target', type=str, default='regression', dest='target',
                         help='regression/classification')
-    parser.add_argument('-task', type=str, default='train', dest='task',
-                        help='train/train_fuse/teset/finetune/feature')
-    parser.add_argument('-model', type=str, default=None, dest='model',
+    PARSER.add_argument('-task', type=str, default=None, dest='task',
+                        help='train/train_continue/test/finetune/feature')
+    PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
-    parser.add_argument('-net', type=str, default=None, dest='net',
+    PARSER.add_argument('-net', type=str, default=None, dest='net',
                         help='lenet/cifarnet')
-    parser.add_argument('-data', type=str, default=None, dest='data',
+    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
                         help='avec2014/cifar10')
-    args, _ = parser.parse_known_args()
-    interface(args)
+    ARGS, _ = PARSER.parse_known_args()
+    interface(ARGS)
