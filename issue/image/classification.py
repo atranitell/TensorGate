@@ -99,6 +99,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Summary Function
         # -------------------------------------------
         with tf.name_scope('train'):
+            tf.summary.scalar('iter', global_step)
             tf.summary.scalar('lr', learning_rate)
             tf.summary.scalar('err', err)
             tf.summary.scalar('loss', loss)
@@ -153,7 +154,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, acc:%.2f, lr:%s, time:%.2fms'
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms'
                     print(format_str % (cur_iter, _loss, _err, _lr, _duration))
                     # set zero
                     self.loss, self.err, self.duration = 0, 0, 0
@@ -241,9 +242,9 @@ def test(name, net_name, model_path=None, summary_writer=None):
             labels_str = tf.as_string(tf.reshape(labels_orig, shape=[dataset.batch_size]))
             logits_str = tf.as_string(tf.reshape(predictions, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
-            test_infp_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
-            test_info_fp = open(test_infp_path, 'wb')
-            print('[TEST] Output file in %s.' % test_infp_path)
+            test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
+            test_info_fp = open(test_info_path, 'wb')
+            print('[TEST] Output file in %s.' % test_info_path)
 
             # progressive bar
             progress_bar = utils.Progressive(min_scale=2.0)
@@ -275,13 +276,13 @@ def test(name, net_name, model_path=None, summary_writer=None):
             print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
                   (int(global_step), dataset.total_num, num_iter))
 
-            print('[TEST] Loss:%.4f, acc:%.2f' % (output_loss, output_err))
+            print('[TEST] Loss:%.4f, acc:%.4f' % (output_loss, output_err))
 
             summary = tf.Summary()
-            with tf.name_scope('test'):
-                summary.value.add(tag='acc', simple_value=output_err)
-                summary.value.add(tag='loss', simple_value=output_loss)
-                summary_writer.add_summary(summary, global_step)
+            summary.value.add(tag='test/iter', simple_value=int(global_step))
+            summary.value.add(tag='test/acc', simple_value=output_err)
+            summary.value.add(tag='test/loss', simple_value=output_loss)
+            summary_writer.add_summary(summary, global_step)
 
             # -------------------------------------------
             # terminate all threads

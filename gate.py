@@ -22,12 +22,12 @@ def classification_for_image(config):
     """ classification for image
     """
 
-    if config.task == 'train':
+    if config.task == 'train' and config.model is None:
         raise_invalid_input(config.dataset, config.net)
         img_classification.train(config.dataset, config.net)
 
     # continue to train
-    elif config.task == 'train_continue':
+    elif config.task == 'train' and config.model is not None:
         raise_invalid_input(config.dataset, config.net, config.model)
         img_classification.train(config.dataset, config.net, config.model)
 
@@ -44,12 +44,12 @@ def regression_for_image(config):
     """ Regression for image
     """
     # train from start
-    if config.task == 'train':
+    if config.task == 'train' and config.model is None:
         raise_invalid_input(config.dataset, config.net)
         img_regression.train(config.dataset, config.net)
 
     # train continue
-    elif config.task == 'train_continue':
+    elif config.task == 'train' and config.model is not None:
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression.train(config.dataset, config.net, config.model)
 

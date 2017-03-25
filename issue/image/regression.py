@@ -15,7 +15,6 @@ from gate import utils
 from gate import data
 from gate import net
 
-# from issue.image.regression.test import test
 from gate.data import dataset_avec2014_utils
 
 
@@ -106,6 +105,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Summary Function
         # -------------------------------------------
         with tf.name_scope('train'):
+            # iter must be the first scalar
+            tf.summary.scalar('iter', global_step)
             tf.summary.scalar('lr', learning_rate)
             tf.summary.scalar('err_mae', err_mae)
             tf.summary.scalar('err_mse', err_mse)
@@ -165,7 +166,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.2f, rmse:%.2f, '
+                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, '
                     format_str += 'lr:%s, time:%.2fms.'
                     print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
@@ -278,10 +279,10 @@ def test(name, net_name, model_path=None, summary_writer=None):
                 logits * dataset.num_classes, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
 
-            test_infp_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
+            test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
 
-            test_info_fp = open(test_infp_path, 'wb')
-            print('[TEST] Output file in %s.' % test_infp_path)
+            test_info_fp = open(test_info_path, 'wb')
+            print('[TEST] Output file in %s.' % test_info_path)
 
             # progressive bar
             progress_bar = utils.Progressive(min_scale=2.0)
@@ -314,23 +315,24 @@ def test(name, net_name, model_path=None, summary_writer=None):
             # -------------------------------------------
             print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
                   (int(global_step), dataset.total_num, num_iter))
-            print('[TEST] Loss:%.4f, mae:%.2f, rmse:%.2f' % (loss, mae, rmse))
+            print('[TEST] Loss:%.4f, mae:%.4f, rmse:%.4f' % (loss, mae, rmse))
 
             # -------------------------------------------
             # Especially for avec2014
             # -------------------------------------------
             if name == 'avec2014' or name == 'avec2014_flow':
-                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_infp_path)
-                print('[TEST] Loss:%.4f, video_mae:%.2f, video_rmse:%.2f' % (loss, mae, rmse))
+                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_info_path)
+                print('[TEST] Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' % (loss, mae, rmse))
 
             # -------------------------------------------
             # Summary
             # -------------------------------------------
             summary = tf.Summary()
-            with tf.name_scope('test'):
-                summary.value.add(tag='MAE', simple_value=mae)
-                summary.value.add(tag='RMSE', simple_value=rmse)
-                summary_writer.add_summary(summary, global_step)
+            summary.value.add(tag='test/iter', simple_value=int(global_step))
+            summary.value.add(tag='test/mae', simple_value=mae)
+            summary.value.add(tag='test/rmse', simple_value=rmse)
+            summary.value.add(tag='test/loss', simple_value=loss)
+            summary_writer.add_summary(summary, global_step)
 
             # -------------------------------------------
             # terminate all threads

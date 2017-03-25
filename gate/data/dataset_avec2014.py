@@ -121,7 +121,7 @@ class avec2014(dataset.Dataset):
         self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
     def _init_test_param(self):
-        self.total_num = 17727 #17727 # 1814
+        self.total_num = 17727
         self.name = 'avec2014_test'
         self.reader_thread = 8
         self.shuffle = False
