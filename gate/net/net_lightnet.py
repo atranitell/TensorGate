@@ -66,6 +66,8 @@ class lightnet(net.Net):
 
         block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
+        end_points['end_avg_pool'] = block_in
+        
         logits = layers.fully_connected(
             block_in, num_classes,
             biases_initializer=tf.zeros_initializer(),

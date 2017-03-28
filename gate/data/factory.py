@@ -7,6 +7,7 @@ from gate.data import dataset_avec2014
 from gate.data import dataset_avec2014_16f
 from gate.data import dataset_avec2014_flow
 from gate.data import dataset_avec2014_flow_16f
+from gate.data import dataset_avec2014_fuse_16f
 from gate.data import dataset_mnist
 
 dataset_map = {
@@ -16,6 +17,7 @@ dataset_map = {
     'avec2014_16f': dataset_avec2014_16f.avec2014_16f,
     'avec2014_flow': dataset_avec2014_flow.avec2014_flow,
     'avec2014_flow_16f': dataset_avec2014_flow_16f.avec2014_flow_16f
+    'avec2014_fuse_16f': dataset_avec2014_fuse_16f.avec2014_fuse_16f
 }
 
 

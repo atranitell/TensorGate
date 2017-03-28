@@ -39,6 +39,34 @@ def classification_for_image(config):
     else:
         raise ValueError('Error task type %s' % config.task)
 
+def regression_fuse_for_image(config):
+    """ Regression for image
+    """
+    config.dataset = 'avec2014_fuse_16f'
+    config.net = 'lightnet'
+
+    # train from start
+    if config.task == 'train' and config.model is None:
+        raise_invalid_input(config.dataset, config.net)
+        img_regression.train(config.dataset, config.net)
+
+    # train continue
+    elif config.task == 'train' and config.model is not None:
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.train(config.dataset, config.net, config.model)
+
+    # test all samples once
+    elif config.task == 'test':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.test(config.dataset, config.net, config.model)
+
+    # train from saved model and fixed some layers
+    elif config.task == 'finetune':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.train(config.dataset, config.net, config.model,
+                             exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
+    else:
+        raise ValueError('Error task type: %s' % config.task)
 
 def regression_for_image(config):
     """ Regression for image
@@ -78,11 +106,14 @@ def interface(config):
     if config.target == 'classification':
         classification_for_image(config)
 
+    if config.target == 'regression_fuse':
+        regression_fuse_for_image(config)
+
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument('-target', type=str, default='regression', dest='target',
-                        help='regression/classification')
+                        help='regression/classification/regression_fuse')
     PARSER.add_argument('-task', type=str, default=None, dest='task',
                         help='train/train_continue/test/finetune/feature')
     PARSER.add_argument('-model', type=str, default=None, dest='model',

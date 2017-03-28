@@ -91,3 +91,7 @@ ENV/
 _datasets/
 _output/
 _project/
+
+
+# for mac
+.DS_Store
