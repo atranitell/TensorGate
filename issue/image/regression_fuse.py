@@ -16,6 +16,7 @@ from gate import data
 from gate import net
 
 from gate.data import dataset_avec2014_utils
+from tensorflow.contrib import layers
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
@@ -45,17 +46,17 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             global_step = framework.create_global_step()
 
         _, end_points_img = net.factory.get_network(
-            net_name, 'train', images, 1)
+            'lightnet', 'train', images, 1)
 
         _, end_points_flow = net.factory.get_network(
-            net_name, 'train', flows, 1)
+            'lightnet_r', 'train', flows, 1)
 
         # -------------------------------------------
         # FUSE for lightnet
         # -------------------------------------------
 
         # check the axis
-        block_in = tf.concat(axis=2, values=[end_points_img['end_avg_pool'], end_points_flow['end_avg_pool']])
+        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'], end_points_flow['end_avg_pool']])
 
         logits = layers.fully_connected(
             block_in, 1,
@@ -64,7 +65,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 stddev=1 / 2048.0),
             weights_regularizer=None,
             activation_fn=None,
-            scope='logits')    
+            scope='logits_fuse')    
 
         with tf.name_scope('error'):
             logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
@@ -105,6 +106,9 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             saver = tf.train.Saver()
             variables_to_train = tf.trainable_variables()
 
+        for v in variables_to_train:
+            print('[NET] ', v)
+
         # compute gradients
         grads = tf.gradients(losses, variables_to_train)
         train_op = optimizer.apply_gradients(
@@ -131,12 +135,12 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             tf.summary.scalar('err_mse', err_mse)
             tf.summary.scalar('loss', losses)
 
-        with tf.name_scope('grads'):
-            for idx, v in enumerate(grads):
-                prefix = variables_to_train[idx].name
-                tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(v))
-                tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(v))
-                tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(v))
+        # with tf.name_scope('grads'):
+        #     for idx, v in enumerate(grads):
+        #         prefix = variables_to_train[idx].name
+        #         tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(v))
+        #         tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(v))
+        #         tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(v))
 
         summary_hook = tf.train.SummarySaverHook(
             save_steps=dataset.log.save_summaries_iter,
@@ -154,12 +158,6 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
                 self.best_iter_mae, self.best_mae = 0.0, 1000.0
                 self.best_iter_rmse, self.best_rmse = 0.0, 1000.0
-
-            def begin(self):
-                # continue to train
-                print('[INFO] Loading in layer variable list as:')
-                for v in variables_to_train:
-                    print('[NET] ', v)
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -235,9 +233,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 def test(name, net_name, model_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
-        # -------------------------------------------
-        # Preparing the dataset
-        # -------------------------------------------
+
         dataset = data.factory.get_dataset(name, 'test')
         dataset.log.test_dir = model_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
@@ -245,13 +241,32 @@ def test(name, net_name, model_path=None, summary_writer=None):
 
         utils.info.print_basic_information(dataset, net_name)
 
-        images, labels_orig, filenames = dataset.loads()
+        images, flows, labels_orig, filenames = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        logits, end_points = net.factory.get_network(
-            net_name, 'test', images, 1)
+        _, end_points_img = net.factory.get_network(
+            'lightnet', 'test', images, 1)
+
+        _, end_points_flow = net.factory.get_network(
+            'lightnet_r', 'test', flows, 1)
+
+        # -------------------------------------------
+        # FUSE for lightnet
+        # -------------------------------------------
+
+        # check the axis
+        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'], end_points_flow['end_avg_pool']])
+
+        logits = layers.fully_connected(
+            block_in, 1,
+            biases_initializer=tf.zeros_initializer(),
+            weights_initializer=tf.truncated_normal_initializer(
+                stddev=1 / 2048.0),
+            weights_regularizer=None,
+            activation_fn=None,
+            scope='logits_fuse')
 
         # ATTENTION!
         logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))

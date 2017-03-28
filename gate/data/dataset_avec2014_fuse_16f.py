@@ -166,8 +166,8 @@ class avec2014_fuse_16f(dataset.Dataset):
         img_fold_path_abs = os.path.join('_datasets/AVEC2014', img_fold_path)
         flow_fold_path_abs = os.path.join('_datasets/AVEC2014', flow_fold_path)
 
-        img_list = [ v for fs in os.listdir(img_fold_path_abs) if len(fs.split('.jpg')) > 1 ]
-        flow_list = [ v for fs in os.listdir(flow_fold_path_abs) if len(fs.split('.jpg')) > 1 ]
+        img_list = [ fs for fs in os.listdir(img_fold_path_abs) if len(fs.split('.jpg')) > 1 ]
+        flow_list = [ fs for fs in os.listdir(flow_fold_path_abs) if len(fs.split('.jpg')) > 1 ]
 
         # pay attention, please keep the image and flow images
         #   is same number(frame id) in same people in a folder
@@ -221,11 +221,11 @@ class avec2014_fuse_16f(dataset.Dataset):
         img_fold, flow_fold, label = tf.train.slice_input_producer([imgs_fold, flows_fold, labels], shuffle=self.shuffle)
         # process image
         # stack in same point for images and flows
-        image, flow = tf.py_func(self.assemble_pair_from_fold, [img_fold, flow_fold], tf.uint8)
-        image = tf.reshape(image, shape=[256, 256, 48])
-        flow = tf.reshape(flow, shape=[256, 256, 48])
+        image, flow = tf.py_func(self.assemble_pair_from_fold, [img_fold, flow_fold], [tf.uint8, tf.uint8])
+        image = tf.to_float(tf.reshape(image, shape=[256, 256, 48]))
+        flow = tf.to_float(tf.reshape(flow, shape=[256, 256, 48]))
 
-        if self.data_type == 'train'
+        if self.data_type == 'train':
             # for normal image
             distorted_image = tf.random_crop(image, [self.output_height, self.output_width, 48])
             distorted_image = tf.image.random_flip_left_right(distorted_image)

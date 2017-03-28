@@ -7,6 +7,7 @@ import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import issue.image.regression as img_regression
+import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 
 
@@ -48,22 +49,22 @@ def regression_fuse_for_image(config):
     # train from start
     if config.task == 'train' and config.model is None:
         raise_invalid_input(config.dataset, config.net)
-        img_regression.train(config.dataset, config.net)
+        img_regression_fuse.train(config.dataset, config.net)
 
     # train continue
     elif config.task == 'train' and config.model is not None:
         raise_invalid_input(config.dataset, config.net, config.model)
-        img_regression.train(config.dataset, config.net, config.model)
+        img_regression_fuse.train(config.dataset, config.net, config.model)
 
     # test all samples once
     elif config.task == 'test':
         raise_invalid_input(config.dataset, config.net, config.model)
-        img_regression.test(config.dataset, config.net, config.model)
+        img_regression_fuse.test(config.dataset, config.net, config.model)
 
     # train from saved model and fixed some layers
     elif config.task == 'finetune':
         raise_invalid_input(config.dataset, config.net, config.model)
-        img_regression.train(config.dataset, config.net, config.model,
+        img_regression_fuse.train(config.dataset, config.net, config.model,
                              exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
     else:
         raise ValueError('Error task type: %s' % config.task)

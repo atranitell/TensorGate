@@ -4,7 +4,7 @@ from tensorflow.contrib import layers
 from gate.net import net
 
 
-class lightnet(net.Net):
+class lightnet_r(net.Net):
 
     def __init__(self):
         self.weight_decay = 0.0001
@@ -23,7 +23,7 @@ class lightnet(net.Net):
 
         end_points = {}
 
-        with tf.variable_scope('light_net'):
+        with tf.variable_scope('light_net_r'):
 
             net = layers.conv2d(images, 64, [7, 7], 2)
             block_in = layers.max_pool2d(net, [3, 3], 2)
