@@ -2,13 +2,13 @@
 """ updated: 2017/3/16
 """
 
-from gate.data import dataset_cifar10
-from gate.data import dataset_avec2014
-from gate.data import dataset_avec2014_16f
-from gate.data import dataset_avec2014_flow
-from gate.data import dataset_avec2014_flow_16f
-from gate.data import dataset_avec2014_fuse_16f
-from gate.data import dataset_mnist
+from gate.datains import dataset_cifar10
+from gate.datains import dataset_avec2014
+from gate.datains import dataset_avec2014_16f
+from gate.datains import dataset_avec2014_flow
+from gate.datains import dataset_avec2014_flow_16f
+from gate.datains import dataset_avec2014_fuse_16f
+from gate.datains import dataset_mnist
 
 dataset_map = {
     'mnist': dataset_mnist.mnist,
@@ -37,4 +37,4 @@ def get_dataset(name, data_type):
 
     if name not in dataset_map:
         raise ValueError('Unknown dataset %s' % name)
-    return dataset_map[name](data_type)
+    return dataset_map[name](data_type, name)

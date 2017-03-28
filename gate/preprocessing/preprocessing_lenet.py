@@ -16,7 +16,7 @@ def preprocess_image(image, output_height, output_width, is_training):
     Returns:
       A preprocessed image.
     """
-    with tf.name_scope('preprocessing'):
+    with tf.name_scope('lenet'):
         image = tf.to_float(image)
         image = tf.image.resize_image_with_crop_or_pad(
             image, output_width, output_height)

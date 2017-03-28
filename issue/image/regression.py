@@ -12,10 +12,10 @@ from tensorflow.contrib import framework
 
 from gate import updater
 from gate import utils
-from gate import data
+from gate import datains
 from gate import net
 
-from gate.data import dataset_avec2014_utils
+from gate.datains import dataset_avec2014_utils
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
@@ -25,7 +25,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Initail Data related
         # -------------------------------------------
         with tf.name_scope('dataset'):
-            dataset = data.factory.get_dataset(data_name, 'train')
+            dataset = datains.factory.get_dataset(data_name, 'train')
 
             # reset_training_path
             if chkp_path is not None:
@@ -219,7 +219,7 @@ def test(name, net_name, model_path=None, summary_writer=None):
         # -------------------------------------------
         # Preparing the dataset
         # -------------------------------------------
-        dataset = data.factory.get_dataset(name, 'test')
+        dataset = datains.factory.get_dataset(name, 'test')
         dataset.log.test_dir = model_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)

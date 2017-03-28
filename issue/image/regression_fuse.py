@@ -12,10 +12,9 @@ from tensorflow.contrib import framework
 
 from gate import updater
 from gate import utils
-from gate import data
+from gate import datains
 from gate import net
 
-from gate.data import dataset_avec2014_utils
 from tensorflow.contrib import layers
 
 
@@ -26,7 +25,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Initail Data related
         # -------------------------------------------
         with tf.name_scope('dataset'):
-            dataset = data.factory.get_dataset(data_name, 'train')
+            dataset = datains.factory.get_dataset(data_name, 'train')
 
             # reset_training_path
             if chkp_path is not None:
@@ -37,7 +36,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             utils.info.print_basic_information(dataset, net_name)
 
             # get data
-            images, flows, labels, _ = dataset.loads()
+            images, flows, labels, _, _ = dataset.loads()
 
         # -------------------------------------------
         # Network
@@ -46,17 +45,18 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             global_step = framework.create_global_step()
 
         _, end_points_img = net.factory.get_network(
-            'lightnet', 'train', images, 1)
+            net_name, 'train', images, 1, '_pair1')
 
         _, end_points_flow = net.factory.get_network(
-            'lightnet_r', 'train', flows, 1)
+            net_name, 'train', flows, 1, '_pair2')
 
         # -------------------------------------------
         # FUSE for lightnet
         # -------------------------------------------
 
         # check the axis
-        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'], end_points_flow['end_avg_pool']])
+        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'],
+                                             end_points_flow['end_avg_pool']])
 
         logits = layers.fully_connected(
             block_in, 1,
@@ -65,7 +65,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 stddev=1 / 2048.0),
             weights_regularizer=None,
             activation_fn=None,
-            scope='logits_fuse')    
+            scope='logits_fuse')
 
         with tf.name_scope('error'):
             logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
@@ -158,6 +158,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
                 self.best_iter_mae, self.best_mae = 0.0, 1000.0
                 self.best_iter_rmse, self.best_rmse = 0.0, 1000.0
+                self._start_time = 0
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -234,30 +235,31 @@ def test(name, net_name, model_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
 
-        dataset = data.factory.get_dataset(name, 'test')
+        dataset = datains.factory.get_dataset(name, 'test')
         dataset.log.test_dir = model_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
         utils.info.print_basic_information(dataset, net_name)
 
-        images, flows, labels_orig, filenames = dataset.loads()
+        images, flows, labels_orig, filenames, _ = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
         _, end_points_img = net.factory.get_network(
-            'lightnet', 'test', images, 1)
+            net_name, 'train', images, 1, '_pair1')
 
         _, end_points_flow = net.factory.get_network(
-            'lightnet_r', 'test', flows, 1)
+            net_name, 'train', flows, 1, '_pair2')
 
         # -------------------------------------------
         # FUSE for lightnet
         # -------------------------------------------
 
         # check the axis
-        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'], end_points_flow['end_avg_pool']])
+        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'],
+                                             end_points_flow['end_avg_pool']])
 
         logits = layers.fully_connected(
             block_in, 1,
@@ -350,13 +352,6 @@ def test(name, net_name, model_path=None, summary_writer=None):
             print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
                   (int(global_step), dataset.total_num, num_iter))
             print('[TEST] Loss:%.4f, mae:%.4f, rmse:%.4f' % (loss, mae, rmse))
-
-            # -------------------------------------------
-            # Especially for avec2014
-            # -------------------------------------------
-            if name == 'avec2014' or name == 'avec2014_flow':
-                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_info_path)
-                print('[TEST] Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' % (loss, mae, rmse))
 
             # -------------------------------------------
             # Summary

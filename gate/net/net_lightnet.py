@@ -23,7 +23,7 @@ class lightnet(net.Net):
 
         end_points = {}
 
-        with tf.variable_scope('light_net'):
+        with tf.variable_scope('lightnet'):
 
             net = layers.conv2d(images, 64, [7, 7], 2)
             block_in = layers.max_pool2d(net, [3, 3], 2)
@@ -69,7 +69,7 @@ class lightnet(net.Net):
             block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
             end_points['end_avg_pool'] = block_in
-            
+
             logits = layers.fully_connected(
                 block_in, num_classes,
                 biases_initializer=tf.zeros_initializer(),

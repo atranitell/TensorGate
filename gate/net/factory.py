@@ -2,6 +2,7 @@
 """ updated: 2017/3/16
 """
 
+import tensorflow as tf
 from tensorflow.contrib.framework import arg_scope
 from gate.net import net_cifarnet
 from gate.net import net_lenet
@@ -13,7 +14,6 @@ from gate.net import net_lightnet
 from gate.net import net_lightnet_bn
 from gate.net import net_lightnet_wd
 from gate.net import net_lightnet_slim
-from gate.net import net_lightnet_r
 
 networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
@@ -30,8 +30,7 @@ networks_map = {
     'lightnet': net_lightnet.lightnet(),
     'lightnet_bn': net_lightnet_bn.lightnet_bn(),
     'lightnet_wd': net_lightnet_wd.lightnet_wd(),
-    'lightnet_slim': net_lightnet_slim.lightnet_slim(),
-    'lightnet_r': net_lightnet_r.lightnet_r()
+    'lightnet_slim': net_lightnet_slim.lightnet_slim()
 }
 
 
@@ -45,9 +44,10 @@ def check_network(name, data_type):
         return False
 
 
-def get_network(name, data_type, images, num_classes):
+def get_network(name, data_type, images, num_classes, name_scope=''):
     """ get specified network """
     is_training = check_network(name, data_type)
     net = networks_map[name]
-    with arg_scope(net.arg_scope()):
-        return net.model(images, num_classes, is_training)
+    with tf.variable_scope('net'+name_scope):
+        with arg_scope(net.arg_scope()):
+            return net.model(images, num_classes, is_training)
