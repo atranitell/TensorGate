@@ -23,10 +23,10 @@ class avec2014_fuse_16f():
         self.name = name
 
         if data_type == 'train':
-            self.batch_size = 4
+            self.batch_size = 32
             self.total_num = 199
             self.name = self.name + '_train'
-            self.reader_thread = 1
+            self.reader_thread = 16
             self.shuffle = True
             self.data_path = '_datasets/AVEC2014/pp_fuse_trn.txt'
 
@@ -45,7 +45,7 @@ class avec2014_fuse_16f():
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 64
+        self.min_queue_num = 32
         self.data_load_method = 'single_video_from_text'
         self.channels = 16
         self.device = '/gpu:0'
@@ -108,7 +108,7 @@ class avec2014_fuse_16f():
         self.lr = param()
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.02
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
