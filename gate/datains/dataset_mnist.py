@@ -24,7 +24,7 @@ class mnist():
             self.batch_size = 32
             self.total_num = 55000
             self.name = self.name + '_train'
-            self.reader_thread = 16
+            self.reader_thread = 32
             self.shuffle = True
             self.data_path = '_datasets/mnist/train.txt'
 

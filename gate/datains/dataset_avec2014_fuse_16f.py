@@ -26,7 +26,7 @@ class avec2014_fuse_16f():
             self.batch_size = 4
             self.total_num = 199
             self.name = self.name + '_train'
-            self.reader_thread = 1
+            self.reader_thread = 32
             self.shuffle = True
             self.data_path = '_datasets/AVEC2014/pp_fuse_trn.txt'
 
@@ -67,7 +67,7 @@ class avec2014_fuse_16f():
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 20
+        self.log.save_summaries_iter = 5
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 200
         # test iteration

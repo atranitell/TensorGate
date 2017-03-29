@@ -17,6 +17,8 @@ from gate import net
 
 from tensorflow.contrib import layers
 
+from tensorflow.python.client import timeline
+
 
 def get_loss(end_points1, end_points2, labels, num_class, batch_size):
     with tf.name_scope('loss'):
@@ -175,12 +177,15 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # record running information
         running_hook = Running_Hook()
 
+        config = tf.ConfigProto(allow_soft_placement=True)
+        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
+
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
                 hooks=[chkp_hook, summary_hook, running_hook, tf.train.NanTensorHook(losses)],
-                config=tf.ConfigProto(allow_soft_placement=True),
+                config=config,
                 checkpoint_dir=chkp_path,
                 save_checkpoint_secs=None,
                 save_summaries_steps=None) as mon_sess:
@@ -188,8 +193,21 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             if chkp_path is not None:
                 snapshot.restore(mon_sess, chkp_path, saver)
 
+            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            run_metadata = tf.RunMetadata()
+
+            _iter = 0
+
             while not mon_sess.should_stop():
-                mon_sess.run(train_op)
+                _iter += 1
+                if _iter % 1000 == 0:
+                    mon_sess.run(train_op, options=run_options, run_metadata=run_metadata)
+                    tl = timeline.Timeline(run_metadata.step_stats)
+                    ctf = tl.generate_chrome_trace_format()
+                    with open('timeline_' + str(_iter) + '.json', 'w') as f:
+                        f.write(ctf)
+                else:
+                    mon_sess.run(train_op)
 
 
 def test(name, net_name, chkp_path=None, summary_writer=None):

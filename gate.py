@@ -6,6 +6,8 @@ import os
 import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+import tensorflow as tf
+
 import issue.image.regression as img_regression
 import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
@@ -103,14 +105,16 @@ def interface(config):
     """
     print('[INFO] ', config)
 
-    if config.target == 'regression':
-        regression_for_image(config)
+    with tf.device('/gpu:0'):
 
-    if config.target == 'classification':
-        classification_for_image(config)
+        if config.target == 'regression':
+            regression_for_image(config)
 
-    if config.target == 'regression_fuse':
-        regression_fuse_for_image(config)
+        if config.target == 'classification':
+            classification_for_image(config)
+
+        if config.target == 'regression_fuse':
+            regression_fuse_for_image(config)
 
 
 if __name__ == '__main__':

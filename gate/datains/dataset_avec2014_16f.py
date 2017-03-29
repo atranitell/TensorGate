@@ -22,10 +22,10 @@ class avec2014_16f():
         self.name = name
 
         if data_type == 'train':
-            self.batch_size = 32
+            self.batch_size = 2
             self.total_num = 199
             self.name = self.name + '_train'
-            self.reader_thread = 1
+            self.reader_thread = 32
             self.shuffle = True
             self.data_path = '_datasets/AVEC2014/pp_trn.txt'
 
@@ -63,7 +63,7 @@ class avec2014_16f():
             self.log.test_dir = None
 
         # The frequency with which logs are print.
-        self.log.print_frequency = 1
+        self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.

@@ -24,7 +24,7 @@ class avec2014():
             self.batch_size = 32
             self.total_num = 15660
             self.name = self.name + '_train'
-            self.reader_thread = 16
+            self.reader_thread = 32
             self.shuffle = True
             self.data_path = '_datasets/AVEC2014/trn_list.txt'
 
