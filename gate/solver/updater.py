@@ -12,7 +12,7 @@ class Updater():
                 dataset, dataset.total_num, global_step)
             self.optimizer = solver.updater_optimizer.configure(dataset, self.learning_rate)
         
-        with tf.name_scope('train'):
+        with tf.name_scope('updater'):
             tf.summary.scalar('lr', self.learning_rate)
 
         if exclusions is not None:

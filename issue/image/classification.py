@@ -47,9 +47,10 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=labels, logits=logits)
 
-        predictions = tf.to_int32(tf.argmax(logits, axis=1))
-        err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
-        loss = tf.reduce_mean(losses)
+        with tf.name_scope('error'):
+            predictions = tf.to_int32(tf.argmax(logits, axis=1))
+            err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
+            loss = tf.reduce_mean(losses)
 
         with tf.name_scope('train'):
             tf.summary.scalar('iter', global_step)
