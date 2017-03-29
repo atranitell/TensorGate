@@ -25,7 +25,7 @@ class avec2014_16f():
             self.batch_size = 32
             self.total_num = 199
             self.name = self.name + '_train'
-            self.reader_thread = 16
+            self.reader_thread = 1
             self.shuffle = True
             self.data_path = '_datasets/AVEC2014/pp_trn.txt'
 
@@ -44,7 +44,7 @@ class avec2014_16f():
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 1024
+        self.min_queue_num = 128
         self.data_load_method = 'single_video_from_text'
         self.channels = 16
         self.device = '/gpu:0'
@@ -63,7 +63,7 @@ class avec2014_16f():
             self.log.test_dir = None
 
         # The frequency with which logs are print.
-        self.log.print_frequency = 20
+        self.log.print_frequency = 1
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.

@@ -45,7 +45,7 @@ class avec2014_fuse_16f():
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 1024
+        self.min_queue_num = 64
         self.data_load_method = 'single_video_from_text'
         self.channels = 16
         self.device = '/gpu:0'
@@ -67,7 +67,7 @@ class avec2014_fuse_16f():
         # The frequency with which logs are print.
         self.log.print_frequency = 20
         # The frequency with which summaries are saved, in iteration.
-        self.log.save_summaries_iter = 2
+        self.log.save_summaries_iter = 20
         # The frequency with which the model is saved, in iteration.
         self.log.save_model_iter = 200
         # test iteration

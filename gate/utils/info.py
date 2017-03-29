@@ -28,6 +28,7 @@ def print_basic_information(dataset, net_model=None):
         print(phase + 'Model running in ' + dataset.log.test_dir)
 
     # net_model
-    if net_model is not None:
-        print(phase + 'Using net model:%s, preprocessing method: %s' %
-              (net_model, dataset.preprocessing_method1))
+    # if net_model is not None:
+    #     if dataset.preprocessing_method1 is not None:
+    #         print(phase + 'Using net model:%s, preprocessing method: %s' %
+    #             (net_model, dataset.preprocessing_method1))

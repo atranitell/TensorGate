@@ -8,7 +8,7 @@ import math
 import tensorflow as tf
 from tensorflow.contrib import framework
 
-from gate import updater
+from gate import solver
 from gate import utils
 from gate import datains
 from gate import net
@@ -51,72 +51,26 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
         loss = tf.reduce_mean(losses)
 
+        with tf.name_scope('train'):
+            tf.summary.scalar('iter', global_step)
+            tf.summary.scalar('err', err)
+            tf.summary.scalar('loss', loss)
+
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        # optimizer
-        with tf.device(dataset.device):
-            learning_rate = updater.learning_rate.configure(dataset, dataset.total_num, global_step)
-            optimizer = updater.optimizer.configure(dataset, learning_rate)
-
-        # -------------------------------------------
-        # Finetune Related
-        #   if var appears in var_finetune, it will not be import.
-        #      Commonly used for different number of output classes.
-        # -------------------------------------------
-        if exclusions is not None:
-            variables_to_restore = []
-            for var in tf.global_variables():
-                excluded = False
-                for exclusion in exclusions:
-                    if var.op.name.startswith(exclusion):
-                        excluded = True
-                        break
-                if not excluded:
-                    variables_to_restore.append(var)
-            saver = tf.train.Saver(var_list=variables_to_restore)
-            variables_to_train = variables_to_restore
-        else:
-            saver = tf.train.Saver()
-            variables_to_train = tf.trainable_variables()
-
-        # compute gradients
-        grads = tf.gradients(losses, variables_to_train)
-        train_op = optimizer.apply_gradients(
-            zip(grads, variables_to_train),
-            global_step=global_step, name='train_step')
+        net_updater = solver.Updater(dataset, global_step, losses, exclusions)
+        learning_rate = net_updater.get_learning_rate()
+        saver = net_updater.get_variables_saver()
+        train_op = net_updater.get_train_op()
 
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        chkp_hook = tf.train.CheckpointSaverHook(
-            checkpoint_dir=dataset.log.train_dir,
-            save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(var_list=tf.global_variables(), max_to_keep=10000),
-            checkpoint_basename=dataset.name + '.ckpt')
-
-        # -------------------------------------------
-        # Summary Function
-        # -------------------------------------------
-        with tf.name_scope('train'):
-            tf.summary.scalar('iter', global_step)
-            tf.summary.scalar('lr', learning_rate)
-            tf.summary.scalar('err', err)
-            tf.summary.scalar('loss', loss)
-
-        with tf.name_scope('grads'):
-            for idx, v in enumerate(grads):
-                prefix = variables_to_train[idx].name
-                tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(v))
-                tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(v))
-                tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(v))
-
-        summary_hook = tf.train.SummarySaverHook(
-            save_steps=dataset.log.save_summaries_iter,
-            output_dir=dataset.log.train_dir,
-            summary_op=tf.summary.merge_all())
-
-        summary_test = tf.summary.FileWriter(dataset.log.train_dir)
+        snapshot = solver.Snapshot()
+        chkp_hook = snapshot.get_chkp_hook(dataset)
+        summary_hook = snapshot.get_summary_hook(dataset)
+        summary_test = snapshot.get_summary_test(dataset)
 
         # -------------------------------------------
         # Running Info
@@ -125,12 +79,6 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             def __init__(self):
                 self.loss, self.err, self.duration = 0, 0, 0
-
-            def begin(self):
-                # continue to train
-                print('[INFO] Loading in layer variable list as:')
-                for v in variables_to_train:
-                    print('[NET] ', v)
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -174,23 +122,20 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 save_summaries_steps=None) as mon_sess:
 
             if chkp_path is not None:
-                ckpt = tf.train.get_checkpoint_state(chkp_path)
-                saver.restore(mon_sess, ckpt.model_checkpoint_path)
-                print('[TRAIN] Load checkpoint from: %s' %
-                      ckpt.model_checkpoint_path)
+                snapshot.restore(mon_sess, chkp_path, saver)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
 
 
-def test(name, net_name, model_path=None, summary_writer=None):
+def test(name, net_name, chkp_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
         # -------------------------------------------
         # Preparing the dataset
         # -------------------------------------------
         dataset = datains.factory.get_dataset(name, 'test')
-        dataset.log.test_dir = model_path + '/test/'
+        dataset.log.test_dir = chkp_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
@@ -215,13 +160,8 @@ def test(name, net_name, model_path=None, summary_writer=None):
             # -------------------------------------------
             # restore from checkpoint
             # -------------------------------------------
-            ckpt = tf.train.get_checkpoint_state(model_path)
-            if ckpt and ckpt.model_checkpoint_path:
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-                print('[TEST] Load checkpoint from: %s' % ckpt.model_checkpoint_path)
-            else:
-                print('[TEST] Non checkpoint file found in %s' % ckpt.model_checkpoint_path)
+            snapshot = solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
 
             # -------------------------------------------
             # start queue from runner

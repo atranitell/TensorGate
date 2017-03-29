@@ -25,8 +25,8 @@ class lightnet(net.Net):
 
         with tf.variable_scope('lightnet'):
 
-            net = layers.conv2d(images, 64, [7, 7], 2)
-            block_in = layers.max_pool2d(net, [3, 3], 2)
+            block_in = layers.conv2d(images, 64, [7, 7], 2)
+            block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
             with tf.variable_scope('block1'):
                 with tf.variable_scope('branch_1_0'):
@@ -78,5 +78,7 @@ class lightnet(net.Net):
                 weights_regularizer=None,
                 activation_fn=None,
                 scope='logits')
+
+            end_points['logits'] = logits
 
             return logits, end_points

@@ -49,14 +49,14 @@ def load_single_video_frame_from_text(data_path, channels=16, is_training=True, 
 def load_pair_video_frame_from_text(data_path, channels=16, is_training=True, shuffle=True):
     """ load pair video sequence from a folder
     """
-    fold_0, fold_1, labels = data_entry.read_pair_folds_from_text_list_with_label(data_path)
+    fold_1, fold_2, labels = data_entry.read_pair_folds_from_text_list_with_label(data_path)
 
     # construct a fifo queue
-    fold_0_path, fold_1_path, label = tf.train.slice_input_producer(
-        [fold_0, fold_1, labels], shuffle=shuffle)
+    fold_1_path, fold_2_path, label = tf.train.slice_input_producer(
+        [fold_1, fold_2, labels], shuffle=shuffle)
 
     img1, img2 = tf.py_func(data_loader_for_video.compress_pair_multi_imgs_to_one,
-                            [fold_0_path, fold_1_path, channels, is_training],
+                            [fold_1_path, fold_2_path, channels, is_training],
                             [tf.uint8, tf.uint8])
 
-    return img1, img2, label, fold_0_path, fold_1_path
+    return img1, img2, label, fold_1_path, fold_2_path

@@ -10,12 +10,35 @@ import math
 import tensorflow as tf
 from tensorflow.contrib import framework
 
-from gate import updater
+from gate import solver
 from gate import utils
 from gate import datains
 from gate import net
 
 from tensorflow.contrib import layers
+
+
+def get_loss(end_points1, end_points2, labels, num_class, batch_size):
+    with tf.name_scope('loss'):
+        # check the axis
+        block_in = tf.concat(axis=3, values=[end_points1['end_avg_pool'],
+                                             end_points2['end_avg_pool']])
+
+        logits = layers.fully_connected(
+            block_in, 1,
+            biases_initializer=tf.zeros_initializer(),
+            weights_initializer=tf.truncated_normal_initializer(
+                stddev=1 / 2048.0),
+            weights_regularizer=None,
+            activation_fn=None,
+            scope='logits_fuse')
+
+        logits = tf.to_float(tf.reshape(logits, [batch_size, 1]))
+        _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
+        _labels = tf.divide(_labels, num_class)
+        loss = tf.nn.l2_loss([_labels - logits], name='l2_loss')
+
+        return logits, _labels, loss
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
@@ -44,110 +67,51 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
 
-        _, end_points_img = net.factory.get_network(
+        _, end_points1 = net.factory.get_network(
             net_name, 'train', images, 1, '_pair1')
 
-        _, end_points_flow = net.factory.get_network(
+        _, end_points2 = net.factory.get_network(
             net_name, 'train', flows, 1, '_pair2')
+
+        # delete unnessary node
+        ex_logits_1 = utils.string.clip_last_sub_string(end_points1['logits'].op.name)
+        ex_logits_2 = utils.string.clip_last_sub_string(end_points2['logits'].op.name)
+        exclusions = [ex_logits_1, ex_logits_2]
 
         # -------------------------------------------
         # FUSE for lightnet
         # -------------------------------------------
-
-        # check the axis
-        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'],
-                                             end_points_flow['end_avg_pool']])
-
-        logits = layers.fully_connected(
-            block_in, 1,
-            biases_initializer=tf.zeros_initializer(),
-            weights_initializer=tf.truncated_normal_initializer(
-                stddev=1 / 2048.0),
-            weights_regularizer=None,
-            activation_fn=None,
-            scope='logits_fuse')
+        logits, labels, losses = get_loss(end_points1, end_points2, labels,
+                                          dataset.num_classes, dataset.batch_size)
 
         with tf.name_scope('error'):
-            logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
-            labels = tf.to_float(tf.reshape(labels, [dataset.batch_size, 1]))
-            labels = tf.divide(labels, dataset.num_classes)
-            losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
             err_mae = tf.reduce_mean(
                 input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
             err_mse = tf.reduce_mean(
                 input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
 
-        # -------------------------------------------
-        # Gradients
-        # -------------------------------------------
-        # optimizer
-        with tf.device(dataset.device):
-            learning_rate = updater.learning_rate.configure(dataset, dataset.total_num, global_step)
-            optimizer = updater.optimizer.configure(dataset, learning_rate)
-
-        # -------------------------------------------
-        # Finetune Related
-        #   if var appears in var_finetune, it will not be import.
-        #      Commonly used for different number of output classes.
-        # -------------------------------------------
-        if exclusions is not None:
-            variables_to_restore = []
-            for var in tf.global_variables():
-                excluded = False
-                for exclusion in exclusions:
-                    if var.op.name.startswith(exclusion):
-                        excluded = True
-                        break
-                if not excluded:
-                    variables_to_restore.append(var)
-            saver = tf.train.Saver(var_list=variables_to_restore)
-            variables_to_train = variables_to_restore
-        else:
-            saver = tf.train.Saver()
-            variables_to_train = tf.trainable_variables()
-
-        for v in variables_to_train:
-            print('[NET] ', v)
-
-        # compute gradients
-        grads = tf.gradients(losses, variables_to_train)
-        train_op = optimizer.apply_gradients(
-            zip(grads, variables_to_train),
-            global_step=global_step, name='train_step')
-
-        # -------------------------------------------
-        # Check point
-        # -------------------------------------------
-        chkp_hook = tf.train.CheckpointSaverHook(
-            checkpoint_dir=dataset.log.train_dir,
-            save_steps=dataset.log.save_model_iter,
-            saver=tf.train.Saver(var_list=tf.global_variables(), max_to_keep=10000),
-            checkpoint_basename=dataset.name + '.ckpt')
-
-        # -------------------------------------------
-        # Summary Function
-        # -------------------------------------------
         with tf.name_scope('train'):
             # iter must be the first scalar
             tf.summary.scalar('iter', global_step)
-            tf.summary.scalar('lr', learning_rate)
             tf.summary.scalar('err_mae', err_mae)
             tf.summary.scalar('err_mse', err_mse)
             tf.summary.scalar('loss', losses)
 
-        # with tf.name_scope('grads'):
-        #     for idx, v in enumerate(grads):
-        #         prefix = variables_to_train[idx].name
-        #         tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(v))
-        #         tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(v))
-        #         tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(v))
+        # -------------------------------------------
+        # Gradients
+        # -------------------------------------------
+        net_updater = solver.Updater(dataset, global_step, losses, exclusions)
+        learning_rate = net_updater.get_learning_rate()
+        saver = net_updater.get_variables_saver()
+        train_op = net_updater.get_train_op()
 
-        summary_hook = tf.train.SummarySaverHook(
-            save_steps=dataset.log.save_summaries_iter,
-            output_dir=dataset.log.train_dir,
-            summary_op=tf.summary.merge_all())
-
-        summary_test = tf.summary.FileWriter(dataset.log.train_dir)
+        # -------------------------------------------
+        # Check point
+        # -------------------------------------------
+        snapshot = solver.Snapshot()
+        chkp_hook = snapshot.get_chkp_hook(dataset)
+        summary_hook = snapshot.get_summary_hook(dataset)
+        summary_test = snapshot.get_summary_test(dataset)
 
         # -------------------------------------------
         # Running Info
@@ -222,21 +186,18 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 save_summaries_steps=None) as mon_sess:
 
             if chkp_path is not None:
-                ckpt = tf.train.get_checkpoint_state(chkp_path)
-                saver.restore(mon_sess, ckpt.model_checkpoint_path)
-                print('[TRAIN] Load checkpoint from: %s' %
-                      ckpt.model_checkpoint_path)
+                snapshot.restore(mon_sess, chkp_path, saver)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
 
 
-def test(name, net_name, model_path=None, summary_writer=None):
+def test(name, net_name, chkp_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
 
         dataset = datains.factory.get_dataset(name, 'test')
-        dataset.log.test_dir = model_path + '/test/'
+        dataset.log.test_dir = chkp_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
@@ -247,34 +208,17 @@ def test(name, net_name, model_path=None, summary_writer=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        _, end_points_img = net.factory.get_network(
+        _, end_points1 = net.factory.get_network(
             net_name, 'train', images, 1, '_pair1')
 
-        _, end_points_flow = net.factory.get_network(
+        _, end_points2 = net.factory.get_network(
             net_name, 'train', flows, 1, '_pair2')
 
         # -------------------------------------------
         # FUSE for lightnet
         # -------------------------------------------
-
-        # check the axis
-        block_in = tf.concat(axis=3, values=[end_points_img['end_avg_pool'],
-                                             end_points_flow['end_avg_pool']])
-
-        logits = layers.fully_connected(
-            block_in, 1,
-            biases_initializer=tf.zeros_initializer(),
-            weights_initializer=tf.truncated_normal_initializer(
-                stddev=1 / 2048.0),
-            weights_regularizer=None,
-            activation_fn=None,
-            scope='logits_fuse')
-
-        # ATTENTION!
-        logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, 1]))
-        labels = tf.to_float(tf.reshape(labels_orig, [dataset.batch_size, 1]))
-        labels = tf.div(labels, dataset.num_classes)
-        losses = tf.nn.l2_loss([labels - logits], name='l2_loss')
+        logits, labels, losses = get_loss(end_points1, end_points2, labels_orig,
+                                          dataset.num_classes, dataset.batch_size)
 
         err_mae = tf.reduce_mean(input_tensor=tf.abs(
             (logits - labels) * dataset.num_classes), name='err_mae')
@@ -286,13 +230,8 @@ def test(name, net_name, model_path=None, summary_writer=None):
             # -------------------------------------------
             # restore from checkpoint
             # -------------------------------------------
-            ckpt = tf.train.get_checkpoint_state(model_path)
-            if ckpt and ckpt.model_checkpoint_path:
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
-                print('[TEST] Load checkpoint from: %s' % ckpt.model_checkpoint_path)
-            else:
-                print('[TEST] Non checkpoint file found in %s' % ckpt.model_checkpoint_path)
+            snapshot = solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
 
             # -------------------------------------------
             # start queue from runner

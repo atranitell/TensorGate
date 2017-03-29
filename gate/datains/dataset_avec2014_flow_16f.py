@@ -44,7 +44,7 @@ class avec2014_flow_16f():
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 1024
+        self.min_queue_num = 128
         self.data_load_method = 'single_video_from_text'
         self.channels = 16
         self.device = '/gpu:0'
