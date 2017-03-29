@@ -26,7 +26,8 @@ def get_loss(end_points, logits, labels, num_classes, batch_size):
         _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
         _labels = tf.divide(_labels, num_classes)
         losses = tf.nn.l2_loss([_labels - logits], name='l2_loss')
-        return logits, _labels, losses
+        loss = tf.reduce_mean(losses, name='l2_per_loss')
+        return logits, _labels, loss
 
 
 def get_error(logits, labels, num_classes):
