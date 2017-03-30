@@ -95,3 +95,4 @@ _project/
 
 # for mac
 .DS_Store
+.vscode
