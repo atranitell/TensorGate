@@ -105,16 +105,14 @@ def interface(config):
     """
     print('[INFO] ', config)
 
-    with tf.device('/gpu:0'):
+    if config.target == 'regression':
+        regression_for_image(config)
 
-        if config.target == 'regression':
-            regression_for_image(config)
+    if config.target == 'classification':
+        classification_for_image(config)
 
-        if config.target == 'classification':
-            classification_for_image(config)
-
-        if config.target == 'regression_fuse':
-            regression_fuse_for_image(config)
+    if config.target == 'regression_fuse':
+        regression_fuse_for_image(config)
 
 
 if __name__ == '__main__':

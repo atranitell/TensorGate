@@ -23,7 +23,7 @@ class avec2014_fuse_16f():
         self.name = name
 
         if data_type == 'train':
-            self.batch_size = 32
+            self.batch_size = 16
             self.total_num = 199
             self.name = self.name + '_train'
             self.reader_thread = 32
@@ -46,7 +46,7 @@ class avec2014_fuse_16f():
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 32
-        self.data_load_method = 'single_video_from_text'
+        self.data_load_method = 'pair_video_from_text'
         self.channels = 16
         self.device = '/gpu:0'
         self.num_classes = 63
@@ -69,14 +69,14 @@ class avec2014_fuse_16f():
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 5
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 200
+        self.log.save_model_iter = 100
         # test iteration
-        self.log.test_interval = 200
+        self.log.test_interval = 100
 
         """ "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
         self.opt = param()
-        self.opt.optimizer = 'adam'
+        self.opt.optimizer = 'momentum'
 
         """ SGD """
         self.opt.weight_decay = 0.0001
@@ -108,7 +108,7 @@ class avec2014_fuse_16f():
         self.lr = param()
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.02
+        self.lr.learning_rate = 0.002
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001

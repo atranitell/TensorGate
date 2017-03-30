@@ -17,8 +17,6 @@ from gate import net
 
 from gate.datains import dataset_avec2014_utils
 
-from tensorflow.python.client import timeline
-
 
 def get_loss(end_points, logits, labels, num_classes, batch_size):
     with tf.name_scope('loss'):
@@ -26,8 +24,7 @@ def get_loss(end_points, logits, labels, num_classes, batch_size):
         _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
         _labels = tf.divide(_labels, num_classes)
         losses = tf.nn.l2_loss([_labels - logits], name='l2_loss')
-        loss = tf.reduce_mean(losses, name='l2_per_loss')
-        return logits, _labels, loss
+        return logits, _labels, losses
 
 
 def get_error(logits, labels, num_classes):
@@ -132,7 +129,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     # (if 1 GPU, it is a batch)
                     format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, '
                     format_str += 'lr:%s, time:%.2fms.'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    print(format_str %
+                          (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
@@ -157,15 +155,13 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # record running information
         running_hook = Running_Hook()
 
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
-
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
-                hooks=[chkp_hook, summary_hook, running_hook, tf.train.NanTensorHook(losses)],
-                config=config,
+                hooks=[chkp_hook, summary_hook, running_hook,
+                       tf.train.NanTensorHook(losses)],
+                config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path,
                 save_checkpoint_secs=None,
                 save_summaries_steps=None) as mon_sess:
@@ -173,21 +169,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
             if chkp_path is not None:
                 snapshot.restore(mon_sess, chkp_path, saver)
 
-            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-            run_metadata = tf.RunMetadata()
-
-            _iter = 0
-
             while not mon_sess.should_stop():
-                _iter += 1
-                if _iter % 1000 == 0:
-                    mon_sess.run(train_op, options=run_options, run_metadata=run_metadata)
-                    tl = timeline.Timeline(run_metadata.step_stats)
-                    ctf = tl.generate_chrome_trace_format()
-                    with open('timeline_' + str(_iter) + '.json', 'w') as f:
-                        f.write(ctf)
-                else:
-                    mon_sess.run(train_op)
+                mon_sess.run(train_op)
 
 
 def test(name, net_name, chkp_path=None, summary_writer=None):
@@ -230,7 +213,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             coord = tf.train.Coordinator()
             threads = []
             for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(qr.create_threads(sess, coord=coord, daemon=True, start=True))
+                threads.extend(qr.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
 
             # -------------------------------------------
             # Initial some variables
@@ -240,12 +224,14 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
             # output test information
             tab = tf.constant(' ', shape=[dataset.batch_size])
-            labels_str = tf.as_string(tf.reshape(labels_orig, shape=[dataset.batch_size]))
+            labels_str = tf.as_string(tf.reshape(
+                labels_orig, shape=[dataset.batch_size]))
             logits_str = tf.as_string(tf.reshape(
                 logits * dataset.num_classes, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
 
-            test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
+            test_info_path = os.path.join(
+                dataset.log.test_dir, '%s.txt' % global_step)
 
             test_info_fp = open(test_info_path, 'wb')
             print('[TEST] Output file in %s.' % test_info_path)
@@ -260,7 +246,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
                 if coord.should_stop():
                     break
                 # running session to acuqire value
-                _loss, _mae, _rmse, _info = sess.run([losses, err_mae, err_mse, test_batch_info])
+                _loss, _mae, _rmse, _info = sess.run(
+                    [losses, err_mae, err_mse, test_batch_info])
                 loss += _loss
                 mae += _mae
                 rmse += _rmse
@@ -287,8 +274,10 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # Especially for avec2014
             # -------------------------------------------
             if name == 'avec2014' or name == 'avec2014_flow':
-                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(test_info_path)
-                print('[TEST] Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' % (loss, mae, rmse))
+                mae, rmse = dataset_avec2014_utils.get_accurate_from_file(
+                    test_info_path)
+                print('[TEST] Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' %
+                      (loss, mae, rmse))
 
             # -------------------------------------------
             # Summary

@@ -62,7 +62,7 @@ def get_tags(target, data_type):
     """
 
     if target is 'regression' and data_type is 'train':
-        tags = ['train/lr', 'train/err_mae', 'train/err_mse', 'train/loss']
+        tags = ['updater/lr', 'train/err_mae', 'train/err_mse', 'train/loss']
         iter_tag = 'train/iter'
 
     elif target is 'regression' and data_type is 'test':

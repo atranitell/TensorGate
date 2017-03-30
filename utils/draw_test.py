@@ -14,7 +14,7 @@ tags, iter_tag = tfevents.get_tags('regression', 'train')
 
 # parse data
 values = tfevents.get_image_summary(
-    '_output/cifar_train_201703251903', tags, iter_tag)
+    '_output/avec2014_16f_train_201703292117', tags, iter_tag)
 
 # transfer data to draw
 info = tfevents.get_info_data(values, tags, iter_tag)
