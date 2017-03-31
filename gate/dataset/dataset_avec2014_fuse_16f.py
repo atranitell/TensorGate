@@ -23,7 +23,7 @@ class avec2014_fuse_16f():
         self.name = name
 
         if data_type == 'train':
-            self.batch_size = 16
+            self.batch_size = 2
             self.total_num = 199
             self.name = self.name + '_train'
             self.reader_thread = 32
@@ -76,7 +76,7 @@ class avec2014_fuse_16f():
         """ "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
         self.opt = param()
-        self.opt.optimizer = 'momentum'
+        self.opt.optimizer = 'adam'
 
         """ SGD """
         self.opt.weight_decay = 0.0001
@@ -108,7 +108,7 @@ class avec2014_fuse_16f():
         self.lr = param()
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.002
+        self.lr.learning_rate = 0.1
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001

@@ -1,6 +1,5 @@
 
 from gate.solver.updater import Updater
-from gate.solver.updater_fuse import Updater_fuse
 
 from gate.solver import updater_learning_rate
 from gate.solver import updater_optimizer

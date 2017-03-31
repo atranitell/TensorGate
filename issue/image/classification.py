@@ -57,10 +57,12 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        net_updater = gate.solver.Updater(dataset, global_step, losses, exclusions)
-        learning_rate = net_updater.get_learning_rate()
-        saver = net_updater.get_variables_saver()
-        train_op = net_updater.get_train_op()
+        updater = gate.solver.Updater()
+        updater.init_default_updater(dataset, global_step, losses, exclusions)
+
+        learning_rate = updater.get_learning_rate()
+        saver = updater.get_variables_saver()
+        train_op = updater.get_train_op()
 
         # -------------------------------------------
         # Check point

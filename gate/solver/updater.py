@@ -1,35 +1,51 @@
 
 import tensorflow as tf
 from gate import solver
+from gate import utils
 
 
 class Updater():
+    """ Updater
+    """
 
-    def __init__(self, method, weight_summary=True, grad_summary=True,
-                 weight_hist=False, grad_hist=False, **kwarg):
+    def __init__(self):
+        self.learning_rate = None
+        self.optimizer = None
+        self.grads = None
+        self.saver = None
+        self.train_op = None
+        self.variables_to_train = None
 
-        if method == 'fuse':
-            pass
-        else:
-            self._init_default_updater(kwarg)
+    def get_learning_rate(self, dataset=None, global_step=None):
+        if self.learning_rate is not None:
+            return self.learning_rate
+        utils.check.raise_none_param(dataset, global_step)
+        return solver.updater_learning_rate.configure(
+            dataset, dataset.total_num, global_step)
 
-        # summary
-        self._summary_gard(grad_summary, grad_hist)
-        self._summary_weight(weight_summary, weight_hist)
+    def get_optimizer(self, dataset=None):
+        if self.optimizer is not None:
+            return self.optimizer
+        utils.check.raise_none_param(dataset, self.learning_rate)
+        return solver.updater_optimizer.configure(
+            dataset, self.learning_rate)
 
-    def _init_default_updater(self, dataset=None, global_step=None,
-                              losses=None, exclusions=None):
-        """
-        """
-        with tf.device(dataset.device):
-            self.learning_rate = solver.updater_learning_rate.configure(
-                dataset, dataset.total_num, global_step)
-            self.optimizer = solver.updater_optimizer.configure(
-                dataset, self.learning_rate)
+    def get_gradients(self, losses=None):
+        if self.grads is not None:
+            return self.grads
+        utils.check.raise_none_param(losses, self.optimizer)
+        return self.optimizer.compute_gradients(losses)
 
-        with tf.name_scope('updater'):
-            tf.summary.scalar('lr', self.learning_rate)
+    def get_train_op(self, global_step=None):
+        if self.train_op is not None:
+            return self.train_op
+        utils.check.raise_none_param(global_step, self.optimizer, self.grads)
+        return self.optimizer.apply_gradients(
+            self.grads, global_step=global_step, name='train_step')
 
+    def get_trainable_list(self, exclusions=None):
+        if self.variables_to_train is not None:
+            return self.variables_to_train
         if exclusions is not None:
             variables_to_restore = []
             for var in tf.global_variables():
@@ -40,63 +56,80 @@ class Updater():
                         break
                 if not excluded:
                     variables_to_restore.append(var)
-            self.saver = tf.train.Saver(var_list=variables_to_restore)
-            self.variables_to_train = variables_to_restore
+            variables_to_train = variables_to_restore
         else:
-            self.saver = tf.train.Saver()
-            self.variables_to_train = tf.trainable_variables()
+            variables_to_train = tf.trainable_variables()
+        return variables_to_train
 
-        print('[NET] Variables will be trained as list:')
-        for v in self.variables_to_train:
-            print('[NET] ', v)
+    def get_variables_saver(self):
+        if self.saver is not None:
+            return self.saver
+        utils.check.raise_none_param(self.variables_to_train)
+        return tf.train.Saver(var_list=self.variables_to_train)
 
-        # self.grads = tf.gradients(losses, self.variables_to_train)
-        self.grads = self.optimizer.compute_gradients(losses)
-        self.train_op = self.optimizer.apply_gradients(
-            self.grads, global_step=global_step, name='train_step')
+    def init_default_updater(self, dataset, global_step,
+                             losses, exclusions=None):
+        """ init_default_updater
+        """
+        self.learning_rate = self.get_learning_rate(dataset, global_step)
+        self.optimizer = self.get_optimizer(dataset)
 
-    def _init_layerwise_updater(self, dataset=None, global_step=None,
-                                losses=None, exclusions=None):
+        self.variables_to_train = self.get_trainable_list(exclusions)
+        self.saver = self.get_variables_saver()
+
+        self.grads = self.get_gradients(losses)
+        self.train_op = self.get_train_op(global_step)
+
+        # print info
+        self.print_trainable_list()
+
+        # summary related
+        self._summary_lr()
+        self._summary_grad()
+        self._summary_weight()
+
+    def init_layerwise_updater(self, dataset, global_step,
+                               losses, exclusions=None):
         """ The updater method will adjust learning rate
                 for every variables in according to different lr.
         """
-        with tf.device(dataset.device):
-            self.learning_rate = solver.updater_learning_rate.configure(
-                dataset, dataset.total_num, global_step)
-            self.optimizer = solver.updater_optimizer.configure(
-                dataset, self.learning_rate)
+        # acquire trainable list
+        self.variables_to_train = self.get_trainable_list(exclusions)
+        self.saver = self.get_variables_saver()
 
-        with tf.name_scope('updater'):
-            tf.summary.scalar('lr', self.learning_rate)
+        # setting layerwise coff
+        lr_coeff = {}
+        for weight in self.variables_to_train:
+            if weight.op.name.find('flow') > 0:
+                lr_coeff[weight.op.name] = 0.1
 
-        if exclusions is not None:
-            variables_to_restore = []
-            for var in tf.global_variables():
-                excluded = False
-                for exclusion in exclusions:
-                    if var.op.name.startswith(exclusion):
-                        excluded = True
-                        break
-                if not excluded:
-                    variables_to_restore.append(var)
-            self.saver = tf.train.Saver(var_list=variables_to_restore)
-            self.variables_to_train = variables_to_restore
-        else:
-            self.saver = tf.train.Saver()
-            self.variables_to_train = tf.trainable_variables()
+        self.learning_rate = self.get_learning_rate(dataset, global_step)
+        self.optimizer = self.get_optimizer(dataset)
 
-        print('[NET] Variables will be trained as list:')
-        for v in self.variables_to_train:
-            print('[NET] ', v)
+        gradients = self.optimizer.compute_gradients(losses)
+        # adjust grads according to layerwise
+        self.grads = []
+        for grad, var in gradients:
+            if var.op.name in lr_coeff and grad is not None:
+                print('[LR COEFF]', lr_coeff[var.op.name], var.op.name)
+                grad *= lr_coeff[var.op.name]
+            self.grads.append((grad, var))
+        # start to train
+        self.train_op = self.get_train_op(global_step)
 
-        # self.grads = tf.gradients(losses, self.variables_to_train)
-        self.grads = self.optimizer.compute_gradients(losses)
-        self.train_op = self.optimizer.apply_gradients(
-            self.grads, global_step=global_step, name='train_step')
+        # print info
+        self.print_trainable_list()
+        # self.print_grads_list()
 
-    def _moving_average_decay(self):
+        # add to summary
+        self._summary_lr()
+        self._summary_grad()
+        self._summary_weight()
+
+    def _moving_average_decay(self, dataset, global_step):
         """
         """
+        raise ValueError('This function has not realized!')
         # if dataset.lr.moving_average_decay:
         #     variable_averages = tf.train.ExponentialMovingAverage(
         #         dataset.lr.moving_average_decay, global_step)
@@ -107,50 +140,51 @@ class Updater():
 
         # with tf.control_dependencies([apply_grad_op, maintain_averages_op]):
         #     self.train_op = tf.no_op(name='train')
-        raise ValueError('This function has not realized!')
 
-    def _summary_gard(self, grad_summary, grad_hist):
+    def _summary_grad(self, grad_summary=True, grad_hist=False):
         """ input:
                 self.grad
         """
         with tf.name_scope('grads'):
-            if grad_summary:
-                for grad, v in self.grads:
-                    prefix = v.op.name
-                    if prefix.find('global_step') == 0:
-                        continue
-                    tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(grad))
-                    tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(grad))
-                    tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(grad))
-            # Add histograms for gradients.
-            if grad_hist:
-                for grad, var in self.grads:
-                    if grad is not None:
-                        tf.summary.histogram(var.op.name + '/gradients', grad)
+            for grad, var in self.grads:
 
-    def _summary_weight(self, weight_summary, weight_hist):
+                prefix = var.op.name
+                if prefix.find('global_step') == 0 or grad is None:
+                    continue
+
+                if grad_summary:
+                    tf.summary.scalar(var.op.name + '_mean', tf.reduce_mean(grad))
+                    tf.summary.scalar(var.op.name + '_max', tf.reduce_max(grad))
+                    tf.summary.scalar(var.op.name + '_sum', tf.reduce_sum(grad))
+
+                if grad_hist:
+                    tf.summary.histogram(var.op.name + '/gradients', grad)
+
+    def _summary_weight(self, weight_summary=True, weight_hist=False):
         with tf.name_scope('weights'):
-            if weight_summary:
-                for weight in tf.trainable_variables():
-                    prefix = weight.op.name
-                    if prefix.find('global_step') == 0:
-                        continue
-                    tf.summary.scalar(name=prefix + '_mean', tensor=tf.reduce_mean(weight))
-                    tf.summary.scalar(name=prefix + '_max', tensor=tf.reduce_max(weight))
-                    tf.summary.scalar(name=prefix + '_sum', tensor=tf.reduce_sum(weight))
-            # Add histograms for trainable variables.
-            if weight_hist:
-                for weight in tf.trainable_variables():
+            for weight in tf.trainable_variables():
+                prefix = weight.op.name
+                if prefix.find('global_step') == 0 or weight is None:
+                    continue
+
+                if weight_summary:
+                    tf.summary.scalar(weight.op.name + '_mean', tf.reduce_mean(weight))
+                    tf.summary.scalar(weight.op.name + '_max', tf.reduce_max(weight))
+                    tf.summary.scalar(weight.op.name + '_sum', tf.reduce_sum(weight))
+
+                # Add histograms for trainable variables.
+                if weight_hist:
                     tf.summary.histogram(weight.op.name, weight)
 
-    def get_variables_to_train(self):
-        return self.variables_to_train
+    def _summary_lr(self, lr_summary=True):
+        tf.summary.scalar('lr', self.learning_rate)
 
-    def get_variables_saver(self):
-        return self.saver
+    def print_trainable_list(self):
+        print('[NET] Variables will be trained as list:')
+        for weight in self.variables_to_train:
+            print('[NET] ', weight)
 
-    def get_learning_rate(self):
-        return self.learning_rate
-
-    def get_train_op(self):
-        return self.train_op
+    def print_grads_list(self):
+        print('[GRAD] Gradients will be trained as list:')
+        for grad, var in self.grads:
+            print('[GRAD] ', grad)

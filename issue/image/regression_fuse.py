@@ -15,28 +15,48 @@ from tensorflow.contrib import layers
 import gate
 
 
-def get_loss(end_points1, end_points2, labels, num_class, batch_size):
-    with tf.name_scope('loss'):
-        # check the axis
-        block_in = tf.concat(axis=3, values=[end_points1['end_avg_pool'],
-                                             end_points2['end_avg_pool']])
+def get_loss(logits, labels, num_class, batch_size):
+    """
+    """
+    logits = tf.to_float(tf.reshape(logits, [batch_size, 1]))
+    _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
+    _labels = tf.divide(_labels, num_class)
+    losses = tf.nn.l2_loss([_labels - logits], name='l2_loss')
 
-        logits = layers.fully_connected(
-            block_in, 1,
-            biases_initializer=tf.zeros_initializer(),
-            weights_initializer=tf.truncated_normal_initializer(
-                stddev=1 / 2048.0),
-            weights_regularizer=None,
-            activation_fn=None,
-            scope='logits_fuse')
+    return logits, _labels, losses
 
-        logits = tf.to_float(tf.reshape(logits, [batch_size, 1]))
-        _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
-        _labels = tf.divide(_labels, num_class)
-        losses = tf.nn.l2_loss([_labels - logits], name='l2_loss')
-        loss = tf.reduce_mean(losses, name='l2_per_loss')
 
-        return logits, _labels, loss
+def get_network(dataset, net_name, images, flows):
+    """
+    """
+    # get network
+    _, end_points1 = gate.net.factory.get_network(
+        net_name, 'train', images, 1, '_image')
+    _, end_points2 = gate.net.factory.get_network(
+        net_name, 'train', flows, 1, '_flow')
+
+    # check the axis
+    block_in = tf.concat(axis=3, values=[end_points1['end_avg_pool'],
+                                         end_points2['end_avg_pool']])
+
+    logits = layers.fully_connected(
+        block_in, 1,
+        biases_initializer=tf.zeros_initializer(),
+        weights_initializer=tf.truncated_normal_initializer(
+            stddev=1 / 2048.0),
+        weights_regularizer=None,
+        activation_fn=None,
+        scope='logits_fuse')
+
+    return logits, end_points1, end_points2
+
+
+def get_error(logits, labels, num_classes):
+    err_mae = tf.reduce_mean(
+        input_tensor=tf.abs((logits - labels) * num_classes), name='err_mae')
+    err_mse = tf.reduce_mean(
+        input_tensor=tf.square((logits - labels) * num_classes), name='err_mse')
+    return err_mae, err_mse
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
@@ -62,32 +82,35 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        with tf.device(dataset.device):
+        with tf.name_scope('net'):
+            # get global step
             global_step = framework.create_global_step()
 
-        _, end_points1 = gate.net.factory.get_network(
-            net_name, 'train', images, 1, '_pair1')
+            # including fuse network
+            logits, end_points1, end_points2 = get_network(
+                dataset, net_name, images, flows)
 
-        _, end_points2 = gate.net.factory.get_network(
-            net_name, 'train', flows, 1, '_pair2')
-
-        # delete unnessary node
-        ex_logits_1 = gate.utils.string.clip_last_sub_string(end_points1['logits'].op.name)
-        ex_logits_2 = gate.utils.string.clip_last_sub_string(end_points2['logits'].op.name)
-        exclusions = [ex_logits_1, ex_logits_2]
+            # delete unnessary node
+            ex_logits_1 = gate.utils.string.clip_last_sub_string(end_points1['logits'].op.name)
+            ex_logits_2 = gate.utils.string.clip_last_sub_string(end_points2['logits'].op.name)
+            exclusions = [ex_logits_1, ex_logits_2]
 
         # -------------------------------------------
-        # FUSE for lightnet
+        # Loss
         # -------------------------------------------
-        logits, labels, losses = get_loss(end_points1, end_points2, labels,
-                                          dataset.num_classes, dataset.batch_size)
+        with tf.name_scope('loss'):
+            logits, labels, losses = get_loss(
+                logits, labels, dataset.num_classes, dataset.batch_size)
 
+        # -------------------------------------------
+        # Error
+        # -------------------------------------------
         with tf.name_scope('error'):
-            err_mae = tf.reduce_mean(
-                input_tensor=tf.abs((logits - labels) * dataset.num_classes), name='err_mae')
-            err_mse = tf.reduce_mean(
-                input_tensor=tf.square((logits - labels) * dataset.num_classes), name='err_mse')
+            err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
 
+        # -------------------------------------------
+        # Summary
+        # -------------------------------------------
         with tf.name_scope('train'):
             # iter must be the first scalar
             tf.summary.scalar('iter', global_step)
@@ -98,10 +121,13 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        net_updater = gate.solver.Updater(dataset, global_step, losses, exclusions)
-        learning_rate = net_updater.get_learning_rate()
-        saver = net_updater.get_variables_saver()
-        train_op = net_updater.get_train_op()
+        with tf.name_scope('updater'):
+            net_updater = gate.solver.Updater()
+            net_updater.init_layerwise_updater(dataset, global_step, losses, exclusions)
+
+            learning_rate = net_updater.get_learning_rate()
+            saver = net_updater.get_variables_saver()
+            train_op = net_updater.get_train_op()
 
         # -------------------------------------------
         # Check point
@@ -115,6 +141,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Running Info
         # -------------------------------------------
         class Running_Hook(tf.train.SessionRunHook):
+            """ Running Hook
+            """
 
             def __init__(self):
                 self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
@@ -194,54 +222,46 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
 
-        dataset = gate.dataset.factory.get_dataset(name, 'test')
-        dataset.log.test_dir = chkp_path + '/test/'
-        if not os.path.exists(dataset.log.test_dir):
-            os.mkdir(dataset.log.test_dir)
+        with tf.name_scope('dataset'):
+            dataset = gate.dataset.factory.get_dataset(name, 'test')
+            dataset.log.test_dir = chkp_path + '/test/'
+            if not os.path.exists(dataset.log.test_dir):
+                os.mkdir(dataset.log.test_dir)
 
-        gate.utils.info.print_basic_information(dataset, net_name)
-
-        images, flows, labels_orig, filenames, _ = dataset.loads()
+            gate.utils.info.print_basic_information(dataset, net_name)
+            images, flows, labels_orig, filenames, _ = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        _, end_points1 = gate.net.factory.get_network(
-            net_name, 'train', images, 1, '_pair1')
+        with tf.name_scope('net'):
+            logits, end_points1, end_points2 = get_network(
+                dataset, net_name, images, flows)
 
-        _, end_points2 = gate.net.factory.get_network(
-            net_name, 'train', flows, 1, '_pair2')
+        with tf.name_scope('loss'):
+            logits, labels, losses = get_loss(
+                logits, labels_orig, dataset.num_classes, dataset.batch_size)
+
+        with tf.name_scope('error'):
+            err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
 
         # -------------------------------------------
-        # FUSE for lightnet
+        # Start to test
         # -------------------------------------------
-        logits, labels, losses = get_loss(end_points1, end_points2, labels_orig,
-                                          dataset.num_classes, dataset.batch_size)
-
-        err_mae = tf.reduce_mean(input_tensor=tf.abs(
-            (logits - labels) * dataset.num_classes), name='err_mae')
-        err_mse = tf.reduce_mean(input_tensor=tf.square(
-            (logits - labels) * dataset.num_classes), name='err_mse')
-
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            # -------------------------------------------
             # restore from checkpoint
-            # -------------------------------------------
             snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
 
-            # -------------------------------------------
             # start queue from runner
-            # -------------------------------------------
             coord = tf.train.Coordinator()
             threads = []
-            for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(qr.create_threads(sess, coord=coord, daemon=True, start=True))
+            for queuerunner in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+                threads.extend(queuerunner.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
 
-            # -------------------------------------------
             # Initial some variables
-            # -------------------------------------------
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
             mae, rmse, loss = 0, 0, 0
 
@@ -252,17 +272,15 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
                 logits * dataset.num_classes, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
 
+            # file
             test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
-
             test_info_fp = open(test_info_path, 'wb')
             print('[TEST] Output file in %s.' % test_info_path)
 
             # progressive bar
             progress_bar = gate.utils.Progressive(min_scale=2.0)
 
-            # -------------------------------------------
             # Start to TEST
-            # -------------------------------------------
             for cur in range(num_iter):
                 if coord.should_stop():
                     break

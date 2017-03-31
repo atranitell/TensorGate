@@ -9,7 +9,7 @@ def preprocess_for_train(image, output_height, output_width, channels):
     # tf.summary.image('image_raw', tf.expand_dims(image, 0))
 
     # Transform the image to floats.
-    # image = tf.to_float(image)
+    image = tf.to_float(image)
 
     # Randomly crop a [height, width] section of the image.
     distorted_image = tf.random_crop(image, [output_height, output_width, channels])
@@ -18,7 +18,7 @@ def preprocess_for_train(image, output_height, output_width, channels):
     # tf.summary.image('image_crop', tf.expand_dims(distorted_image, 0))
 
     # Randomly flip the image horizontally.
-    # distorted_image = tf.image.random_flip_left_right(distorted_image)
+    distorted_image = tf.image.random_flip_left_right(distorted_image)
     # tf.summary.image('image_flip', tf.expand_dims(distorted_image, 0))
 
     # Because these operations are not commutative, consider randomizing

@@ -75,8 +75,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        updater = gate.solver.Updater(method='default', dataset=dataset, global_step=global_step,
-                                      losses=losses, exclusions=exclusions)
+        updater = gate.solver.Updater()
+        updater.init_default_updater(dataset, global_step, losses, exclusions)
 
         learning_rate = updater.get_learning_rate()
         saver = updater.get_variables_saver()
