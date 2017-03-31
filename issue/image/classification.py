@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/16
+""" updated: 2017/3/30
 """
 import os
 import time
@@ -12,6 +12,8 @@ import gate
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
+    """ train for classification
+    """
 
     with tf.Graph().as_default():
         # -------------------------------------------
@@ -36,13 +38,13 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
+            logits, end_points = gate.net.factory.get_network(
+                net_name, 'train', images, dataset.num_classes)
 
-        logits, end_points = gate.net.factory.get_network(
-            net_name, 'train', images, dataset.num_classes)
-
-        logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, dataset.num_classes]))
-        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels, logits=logits)
+        with tf.name_scope('loss'):
+            logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, dataset.num_classes]))
+            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                labels=labels, logits=logits)
 
         with tf.name_scope('error'):
             predictions = tf.to_int32(tf.argmax(logits, axis=1))
@@ -57,25 +59,29 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        updater = gate.solver.Updater()
-        updater.init_default_updater(dataset, global_step, losses, exclusions)
+        with tf.device(dataset.device):
+            updater = gate.solver.Updater()
+            updater.init_default_updater(dataset, global_step, losses, exclusions)
 
-        learning_rate = updater.get_learning_rate()
-        saver = updater.get_variables_saver()
-        train_op = updater.get_train_op()
+            learning_rate = updater.get_learning_rate()
+            saver = updater.get_variables_saver()
+            train_op = updater.get_train_op()
 
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        snapshot = gate.solver.Snapshot()
-        chkp_hook = snapshot.get_chkp_hook(dataset)
-        summary_hook = snapshot.get_summary_hook(dataset)
-        summary_test = snapshot.get_summary_test(dataset)
+        with tf.name_scope('checkpoint'):
+            snapshot = gate.solver.Snapshot()
+            chkp_hook = snapshot.get_chkp_hook(dataset)
+            summary_hook = snapshot.get_summary_hook(dataset)
+            summary_test = snapshot.get_summary_test(dataset)
 
         # -------------------------------------------
         # Running Info
         # -------------------------------------------
         class running_hook(tf.train.SessionRunHook):
+            """ running hook information
+            """
 
             def __init__(self):
                 self.loss, self.err, self.duration = 0, 0, 0
@@ -129,51 +135,55 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
 
 def test(name, net_name, chkp_path=None, summary_writer=None):
+    """ test for classification
+    """
 
     with tf.Graph().as_default():
         # -------------------------------------------
         # Preparing the dataset
         # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset(name, 'test')
-        dataset.log.test_dir = chkp_path + '/test/'
-        if not os.path.exists(dataset.log.test_dir):
-            os.mkdir(dataset.log.test_dir)
+        with tf.name_scope('dataset'):
+            dataset = gate.dataset.factory.get_dataset(name, 'test')
+            dataset.log.test_dir = chkp_path + '/test/'
+            if not os.path.exists(dataset.log.test_dir):
+                os.mkdir(dataset.log.test_dir)
 
-        gate.utils.info.print_basic_information(dataset, net_name)
+            gate.utils.info.print_basic_information(dataset, net_name)
 
-        images, labels_orig, filenames = dataset.loads()
+            images, labels_orig, filenames = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        logits, end_points = gate.net.factory.get_network(
-            net_name, 'test', images, dataset.num_classes)
-        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=labels_orig, logits=logits)
+        with tf.device(dataset.device):
+            logits, end_points = gate.net.factory.get_network(
+                net_name, 'test', images, dataset.num_classes)
 
-        predictions = tf.to_int32(tf.argmax(logits, axis=1))
-        err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels_orig)))
-        loss = tf.reduce_mean(losses)
+        with tf.name_scope('loss'):
+            losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                labels=labels_orig, logits=logits)
 
-        saver = tf.train.Saver()
+        with tf.name_scope('error'):
+            predictions = tf.to_int32(tf.argmax(logits, axis=1))
+            err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels_orig)))
+            loss = tf.reduce_mean(losses)
+
+        # -------------------------------------------
+        # Start to test
+        # -------------------------------------------
+        saver = tf.train.Saver(name='restore_all')
         with tf.Session() as sess:
-            # -------------------------------------------
-            # restore from checkpoint
-            # -------------------------------------------
+            # restore from snapshot
             snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
 
-            # -------------------------------------------
             # start queue from runner
-            # -------------------------------------------
             coord = tf.train.Coordinator()
             threads = []
-            for qr in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(qr.create_threads(sess, coord=coord, daemon=True, start=True))
+            for queue in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+                threads.extend(queue.create_threads(sess, coord=coord, daemon=True, start=True))
 
-            # -------------------------------------------
             # Initial some variables
-            # -------------------------------------------
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
             output_err, output_loss = 0, 0
 
@@ -182,6 +192,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             labels_str = tf.as_string(tf.reshape(labels_orig, shape=[dataset.batch_size]))
             logits_str = tf.as_string(tf.reshape(predictions, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
+
+            # file info
             test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
             print('[TEST] Output file in %s.' % test_info_path)
@@ -189,9 +201,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # progressive bar
             progress_bar = gate.utils.Progressive(min_scale=2.0)
 
-            # -------------------------------------------
             # Start to TEST
-            # -------------------------------------------
             for cur in range(num_iter):
                 if coord.should_stop():
                     break

@@ -119,11 +119,11 @@ if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument('-target', type=str, default='regression', dest='target',
                         help='regression/classification/regression_fuse')
-    PARSER.add_argument('-task', type=str, default=None, dest='task',
-                        help='train/train_continue/test/finetune/feature')
+    PARSER.add_argument('-task', type=str, default='train', dest='task',
+                        help='train/test/finetune/feature')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
-    PARSER.add_argument('-net', type=str, default=None, dest='net',
+    PARSER.add_argument('-net', type=str, default='lightnet', dest='net',
                         help='lenet/cifarnet')
     PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
                         help='avec2014/cifar10')

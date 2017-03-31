@@ -82,7 +82,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        with tf.name_scope('net'):
+        with tf.device(dataset.device):
             # get global step
             global_step = framework.create_global_step()
 
@@ -121,7 +121,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        with tf.name_scope('updater'):
+        with tf.device(dataset.device):
             net_updater = gate.solver.Updater()
             net_updater.init_layerwise_updater(dataset, global_step, losses, exclusions)
 
@@ -132,10 +132,11 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        snapshot = gate.solver.Snapshot()
-        chkp_hook = snapshot.get_chkp_hook(dataset)
-        summary_hook = snapshot.get_summary_hook(dataset)
-        summary_test = snapshot.get_summary_test(dataset)
+        with tf.name_scope('checkpoint'):
+            snapshot = gate.solver.Snapshot()
+            chkp_hook = snapshot.get_chkp_hook(dataset)
+            summary_hook = snapshot.get_summary_hook(dataset)
+            summary_test = snapshot.get_summary_test(dataset)
 
         # -------------------------------------------
         # Running Info
@@ -234,7 +235,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        with tf.name_scope('net'):
+        with tf.device(dataset.device):
             logits, end_points1, end_points2 = get_network(
                 dataset, net_name, images, flows)
 
@@ -248,7 +249,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         # Start to test
         # -------------------------------------------
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(name='restore_all')
         with tf.Session() as sess:
             # restore from checkpoint
             snapshot = gate.solver.Snapshot()

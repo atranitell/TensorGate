@@ -65,7 +65,7 @@ class Updater():
         if self.saver is not None:
             return self.saver
         utils.check.raise_none_param(self.variables_to_train)
-        return tf.train.Saver(var_list=self.variables_to_train)
+        return tf.train.Saver(var_list=self.variables_to_train, name='restore')
 
     def init_default_updater(self, dataset, global_step,
                              losses, exclusions=None):
@@ -110,7 +110,9 @@ class Updater():
         # adjust grads according to layerwise
         self.grads = []
         for grad, var in gradients:
-            if var.op.name in lr_coeff and grad is not None:
+            if grad is None:
+                continue
+            if var.op.name in lr_coeff:
                 print('[LR COEFF]', lr_coeff[var.op.name], var.op.name)
                 grad *= lr_coeff[var.op.name]
             self.grads.append((grad, var))
@@ -177,7 +179,7 @@ class Updater():
                     tf.summary.histogram(weight.op.name, weight)
 
     def _summary_lr(self, lr_summary=True):
-        tf.summary.scalar('lr', self.learning_rate)
+        tf.summary.scalar('train/lr', self.learning_rate)
 
     def print_trainable_list(self):
         print('[NET] Variables will be trained as list:')

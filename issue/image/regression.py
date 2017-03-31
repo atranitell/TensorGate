@@ -54,16 +54,18 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        # with tf.device(dataset.device):
-        global_step = framework.create_global_step()
+        with tf.device(dataset.device):
+            global_step = framework.create_global_step()
+            logits, end_points = gate.net.factory.get_network(
+                net_name, 'train', images, 1)
 
-        logits, end_points = gate.net.factory.get_network(
-            net_name, 'train', images, 1)
+        with tf.name_scope('loss'):
+            logits, labels, losses = get_loss(
+                end_points, logits, labels,
+                dataset.num_classes, dataset.batch_size)
 
-        logits, labels, losses = get_loss(end_points, logits, labels,
-                                          dataset.num_classes, dataset.batch_size)
-
-        err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
+        with tf.name_scope('error'):
+            err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
 
         with tf.name_scope('train'):
             # iter must be the first scalar
@@ -75,20 +77,22 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        updater = gate.solver.Updater()
-        updater.init_default_updater(dataset, global_step, losses, exclusions)
+        with tf.device(dataset.device):
+            updater = gate.solver.Updater()
+            updater.init_default_updater(dataset, global_step, losses, exclusions)
 
-        learning_rate = updater.get_learning_rate()
-        saver = updater.get_variables_saver()
-        train_op = updater.get_train_op()
+            learning_rate = updater.get_learning_rate()
+            restore_saver = updater.get_variables_saver()
+            train_op = updater.get_train_op()
 
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        snapshot = gate.solver.Snapshot()
-        chkp_hook = snapshot.get_chkp_hook(dataset)
-        summary_hook = snapshot.get_summary_hook(dataset)
-        summary_test = snapshot.get_summary_test(dataset)
+        with tf.name_scope('checkpoint'):
+            snapshot = gate.solver.Snapshot()
+            chkp_hook = snapshot.get_chkp_hook(dataset)
+            summary_hook = snapshot.get_summary_hook(dataset)
+            summary_test = snapshot.get_summary_test(dataset)
 
         # -------------------------------------------
         # Running Info
@@ -164,7 +168,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 save_summaries_steps=None) as mon_sess:
 
             if chkp_path is not None:
-                snapshot.restore(mon_sess, chkp_path, saver)
+                snapshot.restore(mon_sess, chkp_path, restore_saver)
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
@@ -176,46 +180,48 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         # Preparing the dataset
         # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset(name, 'test')
-        dataset.log.test_dir = chkp_path + '/test/'
-        if not os.path.exists(dataset.log.test_dir):
-            os.mkdir(dataset.log.test_dir)
+        with tf.name_scope('dataset'):
+            dataset = gate.dataset.factory.get_dataset(name, 'test')
+            dataset.log.test_dir = chkp_path + '/test/'
+            if not os.path.exists(dataset.log.test_dir):
+                os.mkdir(dataset.log.test_dir)
 
-        gate.utils.info.print_basic_information(dataset, net_name)
+            gate.utils.info.print_basic_information(dataset, net_name)
 
-        images, labels_orig, filenames = dataset.loads()
+            images, labels_orig, filenames = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        logits, end_points = gate.net.factory.get_network(
-            net_name, 'test', images, 1)
+        with tf.device(dataset.device):
+            logits, end_points = gate.net.factory.get_network(
+                net_name, 'test', images, 1)
 
-        logits, labels, losses = get_loss(end_points, logits, labels_orig,
-                                          dataset.num_classes, dataset.batch_size)
+        with tf.name_scope('loss'):
+            logits, labels, losses = get_loss(
+                end_points, logits, labels_orig,
+                dataset.num_classes, dataset.batch_size)
 
-        err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
+        with tf.name_scope('error'):
+            err_mae, err_mse = get_error(logits, labels, dataset.num_classes)
 
-        saver = tf.train.Saver()
+        # -------------------------------------------
+        # restore from checkpoint
+        # -------------------------------------------
+        saver = tf.train.Saver(name='restore_all')
         with tf.Session() as sess:
-            # -------------------------------------------
-            # restore from checkpoint
-            # -------------------------------------------
+            # load checkpoint
             snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
 
-            # -------------------------------------------
             # start queue from runner
-            # -------------------------------------------
             coord = tf.train.Coordinator()
             threads = []
             for queuerunner in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
                 threads.extend(queuerunner.create_threads(
                     sess, coord=coord, daemon=True, start=True))
 
-            # -------------------------------------------
             # Initial some variables
-            # -------------------------------------------
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
             mae, rmse, loss = 0, 0, 0
 

@@ -14,7 +14,8 @@ class Snapshot():
             self.chkp_hook = tf.train.CheckpointSaverHook(
                 checkpoint_dir=dataset.log.train_dir,
                 save_steps=dataset.log.save_model_iter,
-                saver=tf.train.Saver(var_list=tf.global_variables(), max_to_keep=10000),
+                saver=tf.train.Saver(var_list=tf.global_variables(),
+                                     max_to_keep=10000, name='save_all'),
                 checkpoint_basename=dataset.name + '.ckpt')
         return self.chkp_hook
 
