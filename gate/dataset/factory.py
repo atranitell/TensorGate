@@ -2,13 +2,13 @@
 """ updated: 2017/3/16
 """
 
-from gate.datains import dataset_cifar10
-from gate.datains import dataset_avec2014
-from gate.datains import dataset_avec2014_16f
-from gate.datains import dataset_avec2014_flow
-from gate.datains import dataset_avec2014_flow_16f
-from gate.datains import dataset_avec2014_fuse_16f
-from gate.datains import dataset_mnist
+from gate.dataset import dataset_cifar10
+from gate.dataset import dataset_avec2014
+from gate.dataset import dataset_avec2014_16f
+from gate.dataset import dataset_avec2014_flow
+from gate.dataset import dataset_avec2014_flow_16f
+from gate.dataset import dataset_avec2014_fuse_16f
+from gate.dataset import dataset_mnist
 
 dataset_map = {
     'mnist': dataset_mnist.mnist,

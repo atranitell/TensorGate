@@ -8,10 +8,7 @@ import math
 import tensorflow as tf
 from tensorflow.contrib import framework
 
-from gate import solver
-from gate import utils
-from gate import datains
-from gate import net
+import gate
 
 
 def train(data_name, net_name, chkp_path=None, exclusions=None):
@@ -21,7 +18,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Initail Data related
         # -------------------------------------------
         with tf.name_scope('dataset'):
-            dataset = datains.factory.get_dataset(data_name, 'train')
+            dataset = gate.dataset.factory.get_dataset(data_name, 'train')
 
             # reset_training_path
             if chkp_path is not None:
@@ -29,7 +26,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 dataset.log.train_dir = chkp_path
 
             # ouput information
-            utils.info.print_basic_information(dataset, net_name)
+            gate.utils.info.print_basic_information(dataset, net_name)
 
             # get data
             images, labels, _ = dataset.loads()
@@ -40,7 +37,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
 
-        logits, end_points = net.factory.get_network(
+        logits, end_points = gate.net.factory.get_network(
             net_name, 'train', images, dataset.num_classes)
 
         logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, dataset.num_classes]))
@@ -60,7 +57,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        net_updater = solver.Updater(dataset, global_step, losses, exclusions)
+        net_updater = gate.solver.Updater(dataset, global_step, losses, exclusions)
         learning_rate = net_updater.get_learning_rate()
         saver = net_updater.get_variables_saver()
         train_op = net_updater.get_train_op()
@@ -68,7 +65,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        snapshot = solver.Snapshot()
+        snapshot = gate.solver.Snapshot()
         chkp_hook = snapshot.get_chkp_hook(dataset)
         summary_hook = snapshot.get_summary_hook(dataset)
         summary_test = snapshot.get_summary_test(dataset)
@@ -135,19 +132,19 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         # Preparing the dataset
         # -------------------------------------------
-        dataset = datains.factory.get_dataset(name, 'test')
+        dataset = gate.dataset.factory.get_dataset(name, 'test')
         dataset.log.test_dir = chkp_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
-        utils.info.print_basic_information(dataset, net_name)
+        gate.utils.info.print_basic_information(dataset, net_name)
 
         images, labels_orig, filenames = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        logits, end_points = net.factory.get_network(
+        logits, end_points = gate.net.factory.get_network(
             net_name, 'test', images, dataset.num_classes)
         losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=labels_orig, logits=logits)
@@ -161,7 +158,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # restore from checkpoint
             # -------------------------------------------
-            snapshot = solver.Snapshot()
+            snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
 
             # -------------------------------------------
@@ -188,7 +185,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             print('[TEST] Output file in %s.' % test_info_path)
 
             # progressive bar
-            progress_bar = utils.Progressive(min_scale=2.0)
+            progress_bar = gate.utils.Progressive(min_scale=2.0)
 
             # -------------------------------------------
             # Start to TEST

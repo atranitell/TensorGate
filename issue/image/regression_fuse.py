@@ -9,15 +9,10 @@ import math
 
 import tensorflow as tf
 from tensorflow.contrib import framework
-
-from gate import solver
-from gate import utils
-from gate import datains
-from gate import net
-
 from tensorflow.contrib import layers
+# from tensorflow.python.client import timeline
 
-from tensorflow.python.client import timeline
+import gate
 
 
 def get_loss(end_points1, end_points2, labels, num_class, batch_size):
@@ -51,7 +46,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Initail Data related
         # -------------------------------------------
         with tf.name_scope('dataset'):
-            dataset = datains.factory.get_dataset(data_name, 'train')
+            dataset = gate.dataset.factory.get_dataset(data_name, 'train')
 
             # reset_training_path
             if chkp_path is not None:
@@ -59,7 +54,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 dataset.log.train_dir = chkp_path
 
             # ouput information
-            utils.info.print_basic_information(dataset, net_name)
+            gate.utils.info.print_basic_information(dataset, net_name)
 
             # get data
             images, flows, labels, _, _ = dataset.loads()
@@ -70,15 +65,15 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
 
-        _, end_points1 = net.factory.get_network(
+        _, end_points1 = gate.net.factory.get_network(
             net_name, 'train', images, 1, '_pair1')
 
-        _, end_points2 = net.factory.get_network(
+        _, end_points2 = gate.net.factory.get_network(
             net_name, 'train', flows, 1, '_pair2')
 
         # delete unnessary node
-        ex_logits_1 = utils.string.clip_last_sub_string(end_points1['logits'].op.name)
-        ex_logits_2 = utils.string.clip_last_sub_string(end_points2['logits'].op.name)
+        ex_logits_1 = gate.utils.string.clip_last_sub_string(end_points1['logits'].op.name)
+        ex_logits_2 = gate.utils.string.clip_last_sub_string(end_points2['logits'].op.name)
         exclusions = [ex_logits_1, ex_logits_2]
 
         # -------------------------------------------
@@ -103,7 +98,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Gradients
         # -------------------------------------------
-        net_updater = solver.Updater(dataset, global_step, losses, exclusions)
+        net_updater = gate.solver.Updater(dataset, global_step, losses, exclusions)
         learning_rate = net_updater.get_learning_rate()
         saver = net_updater.get_variables_saver()
         train_op = net_updater.get_train_op()
@@ -111,7 +106,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Check point
         # -------------------------------------------
-        snapshot = solver.Snapshot()
+        snapshot = gate.solver.Snapshot()
         chkp_hook = snapshot.get_chkp_hook(dataset)
         summary_hook = snapshot.get_summary_hook(dataset)
         summary_test = snapshot.get_summary_test(dataset)
@@ -199,22 +194,22 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
     with tf.Graph().as_default():
 
-        dataset = datains.factory.get_dataset(name, 'test')
+        dataset = gate.dataset.factory.get_dataset(name, 'test')
         dataset.log.test_dir = chkp_path + '/test/'
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
-        utils.info.print_basic_information(dataset, net_name)
+        gate.utils.info.print_basic_information(dataset, net_name)
 
         images, flows, labels_orig, filenames, _ = dataset.loads()
 
         # -------------------------------------------
         # Network
         # -------------------------------------------
-        _, end_points1 = net.factory.get_network(
+        _, end_points1 = gate.net.factory.get_network(
             net_name, 'train', images, 1, '_pair1')
 
-        _, end_points2 = net.factory.get_network(
+        _, end_points2 = gate.net.factory.get_network(
             net_name, 'train', flows, 1, '_pair2')
 
         # -------------------------------------------
@@ -233,7 +228,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # restore from checkpoint
             # -------------------------------------------
-            snapshot = solver.Snapshot()
+            snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
 
             # -------------------------------------------
@@ -263,7 +258,7 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             print('[TEST] Output file in %s.' % test_info_path)
 
             # progressive bar
-            progress_bar = utils.Progressive(min_scale=2.0)
+            progress_bar = gate.utils.Progressive(min_scale=2.0)
 
             # -------------------------------------------
             # Start to TEST
