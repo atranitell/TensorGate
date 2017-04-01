@@ -17,9 +17,16 @@ def get_accurate_from_file(path):
         elif r2:
             res = r2[0]
         else:
-            continue
+            r1 = re.findall('\\\(.*?)_Freeform_video', line)
+            r2 = re.findall('\\\(.*?)_Northwind_video', line)
+            if r1:
+                res = r1[0]
+            elif r2:
+                res = r2[0]
+            else:
+                continue
 
-        label = re.findall('.jpg (.*?) ', line)
+        label = re.findall(' (.*?) ', line)
         logit = re.findall(label[0] + ' (.*)\n', line)
 
         if res not in res_label:
@@ -45,4 +52,4 @@ def get_accurate_from_file(path):
 
     return err_mae, err_rmse
 
-# print(get_accurate_from_file('501.txt'))
+# print(get_accurate_from_file('200.txt'))

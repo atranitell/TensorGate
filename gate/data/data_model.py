@@ -35,6 +35,12 @@ def loads(method, data_path, shuffle, data_type, channels=3,
             raw_height, raw_width, output_height, output_width,
             min_queue_num, batch_size, reader_thread)
 
+    elif method == 'pair_video_from_text_succ':
+        return load_single_video_frame_succ(
+            data_path, shuffle, data_type, channels, preprocessing_method1,
+            raw_height, raw_width, output_height, output_width,
+            min_queue_num, batch_size, reader_thread)
+
     else:
         raise ValueError('Unkonwn method %s' % method)
 
@@ -64,6 +70,27 @@ def load_single_video_frame(data_path, shuffle, data_type, channels, preprocessi
     is_training = True if data_type is 'train' else False
 
     image, label, filename = data_loader.load_single_video_frame_from_text(
+        data_path, channels, is_training, shuffle=shuffle)
+
+    image = tf.reshape(image, shape=[raw_height, raw_width, channels * 3])
+
+    image = preprocessing.factory.get_preprocessing(
+        preprocessing_method, data_type, image,
+        output_height, output_width, channels=channels * 3)
+
+    return data_prefetch.generate_img_label_batch(
+        image, label, filename, shuffle,
+        batch_size, min_queue_num, reader_thread)
+
+
+def load_single_video_frame_succ(data_path, shuffle, data_type, channels, preprocessing_method,
+                                 raw_height, raw_width, output_height, output_width,
+                                 min_queue_num, batch_size, reader_thread):
+    """ load single video frame
+    """
+    is_training = True if data_type is 'train' else False
+
+    image, label, filename = data_loader.load_single_video_frame_from_text_succ(
         data_path, channels, is_training, shuffle=shuffle)
 
     image = tf.reshape(image, shape=[raw_height, raw_width, channels * 3])

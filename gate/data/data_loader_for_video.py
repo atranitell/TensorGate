@@ -48,6 +48,38 @@ def compress_multi_imgs_to_one(foldpath, channels=16, is_training=True):
     return combine
 
 
+def compress_multi_imgs_to_one_succ(foldpath, start_idx, channels=16, is_training=True):
+    """
+        channels: how many pictures will be compressed.
+    """
+    fold_path_abs = str(foldpath, encoding='utf-8')
+    img_list = [fs for fs in os.listdir(fold_path_abs) if len(fs.split('.jpg')) > 1]
+
+    # for train
+    if start_idx < 0:
+        start = random.randint(0, len(img_list) - channels)
+    # for test
+    else:
+        start = start_idx
+
+    # generate
+    img_selected_list = []
+    for idx in range(channels):
+        img_path = os.path.join(fold_path_abs, img_list[start + idx])
+        img_selected_list.append(img_path)
+    img_selected_list.sort()
+
+    # compression to (256,256,3*16)
+    combine = np.asarray(Image.open(img_selected_list[0]))
+    for idx, img in enumerate(img_selected_list):
+        if idx == 0:
+            continue
+        img_content = np.asarray(Image.open(img))
+        combine = np.dstack((combine, img_content))
+
+    return combine
+
+
 def compress_pair_multi_imgs_to_one(img_fold, flow_fold, channels=16, is_training=True):
     """
         assemble images into pair sequence data

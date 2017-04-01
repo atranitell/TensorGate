@@ -46,6 +46,25 @@ def load_single_video_frame_from_text(data_path, channels=16, is_training=True, 
     return combined_image, label, foldname
 
 
+def load_single_video_frame_from_text_succ(data_path, channels=16, is_training=True, shuffle=True):
+    """ load video sequence from a folder
+    e.g. acquire video frame successently.
+        a. |12345678901234567890|
+        b.   |3456|   |2345|
+    args:
+        channels: how much images in a folder will be compress into a image.
+    """
+    folds, starts, labels = data_entry.read_fold_from_text_list_with_label_succ(data_path)
+
+    # construct a fifo queue
+    foldname, start, label = tf.train.slice_input_producer([folds, starts, labels], shuffle=shuffle)
+
+    combined_image = tf.py_func(data_loader_for_video.compress_multi_imgs_to_one_succ,
+                                [foldname, start, channels, is_training], tf.uint8)
+
+    return combined_image, label, foldname
+
+
 def load_pair_video_frame_from_text(data_path, channels=16, is_training=True, shuffle=True):
     """ load pair video sequence from a folder
     """
