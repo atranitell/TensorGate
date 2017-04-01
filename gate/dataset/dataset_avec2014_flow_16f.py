@@ -67,9 +67,9 @@ class avec2014_flow_16f():
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 200
+        self.log.save_model_iter = 100
         # test iteration
-        self.log.test_interval = 200
+        self.log.test_interval = 100
 
         """ "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
@@ -106,7 +106,7 @@ class avec2014_flow_16f():
         self.lr = param()
         self.lr.learning_rate_decay_type = 'exponential'
         # Initial learning rate.
-        self.lr.learning_rate = 0.01
+        self.lr.learning_rate = 0.1
         # The minimal end learning rate used by a polynomial decay learning
         # rate.
         self.lr.end_learning_rate = 0.00001
@@ -115,7 +115,7 @@ class avec2014_flow_16f():
         # Learning rate decay factor
         self.lr.learning_rate_decay_factor = 0.5
         # Number of epochs after which learning rate decays.
-        self.lr.num_epochs_per_decay = 5000.0
+        self.lr.num_epochs_per_decay = 50000.0
         # Whether or not to synchronize the replicas during training.
         self.lr.sync_replicas = False
         # The Number of gradients to collect before updating params.

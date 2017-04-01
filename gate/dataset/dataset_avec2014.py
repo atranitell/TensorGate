@@ -63,9 +63,9 @@ class avec2014():
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 200
+        self.log.save_model_iter = 100
         # test iteration
-        self.log.test_interval = 200
+        self.log.test_interval = 100
 
         """ "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """
