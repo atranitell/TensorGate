@@ -72,6 +72,44 @@ def read_fold_from_text_list_with_label(filepath):
     return fold_0, labels
 
 
+def read_fold_from_text_list_with_label_succ(filepath):
+    """ Reading folds and labels from text file.
+        Attention: the function will load in fold path not images
+
+        The format like:
+            path start_point label
+            path-of-fold1 0 0
+            path-of-fold2 1 10
+    """
+    # check path
+    filesystem.raise_path_not_exists(filepath)
+
+    fold_0 = []
+    starts = []
+    labels = []
+
+    count = 0
+    with open(filepath, 'r') as fp:
+        for line in fp:
+
+            r = line.split(' ')
+            if len(r) <= 1:
+                continue
+
+            r[0] = os.path.join(os.path.dirname(filepath), r[0])
+            filesystem.raise_path_not_exists(r[0])
+
+            fold_0.append(r[0])
+            starts.append(int(r[1]))
+            labels.append(int(r[2]))
+
+            count += 1
+
+    print('[INFO] Total load %d folds.' % count)
+
+    return fold_0, starts, labels
+
+
 def read_pair_folds_from_text_list_with_label(filepath):
     """ Reading a pair of folds and labels from text file.
         The function will server for same label but has different style.
