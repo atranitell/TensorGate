@@ -17,8 +17,8 @@ def get_accurate_from_file(path):
         elif r2:
             res = r2[0]
         else:
-            r1 = re.findall('\\\(.*?)_Freeform_video', line)
-            r2 = re.findall('\\\(.*?)_Northwind_video', line)
+            r1 = re.findall('frames_flow\\\(.*?)_video', line)
+            r2 = re.findall('frames_flow\\\(.*?)_video', line)
             if r1:
                 res = r1[0]
             elif r2:
