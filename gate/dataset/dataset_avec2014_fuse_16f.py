@@ -11,8 +11,9 @@ class avec2014_fuse_16f():
     def loads(self):
         """ public interface for upper layer to call
         """
-        return data_model.load_pair_video_frame(
-            self.data_path, self.shuffle, self.data_type, self.channels,
+        return data_model.loads(
+            self.data_load_method, self.data_path, self.shuffle,
+            self.data_type, self.channels,
             self.preprocessing_method1, self.preprocessing_method2,
             self.raw_height, self.raw_width,
             self.output_height, self.output_width,
@@ -41,13 +42,13 @@ class avec2014_fuse_16f():
         else:
             raise ValueError('Unknown command %s' % self.data_type)
 
+        self.channels = 16
         self.raw_height = 256
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
         self.min_queue_num = 32
         self.data_load_method = 'pair_video_from_text'
-        self.channels = 16
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method1 = 'avec2014'

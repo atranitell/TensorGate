@@ -9,13 +9,21 @@ from gate.data import data_loader
 from gate.data import data_prefetch
 
 
-def loads(method, data_path, shuffle, data_type, channels=3,
-          preprocessing_method1=None, preprocessing_method2=None,
-          raw_height=256, raw_width=256,
-          output_height=224, output_width=224,
-          min_queue_num=128, batch_size=32, reader_thread=16):
+def loads(method, data_path, shuffle, data_type, channels,
+          preprocessing_method1, preprocessing_method2,
+          raw_height, raw_width,
+          output_height, output_width,
+          min_queue_num, batch_size, reader_thread):
     """ interface
     """
+    print('[INFO] Data will use %s loader.' % method)
+
+    if preprocessing_method1 is not None:
+        print('[INFO] Data will use %s preprocessing.' % preprocessing_method1)
+
+    if preprocessing_method2 is not None:
+        print('[INFO] Data will use %s preprocessing.' % preprocessing_method2)
+
     if method == 'single_image_from_text':
         return load_single_image(
             data_path, shuffle, data_type,
@@ -35,7 +43,7 @@ def loads(method, data_path, shuffle, data_type, channels=3,
             raw_height, raw_width, output_height, output_width,
             min_queue_num, batch_size, reader_thread)
 
-    elif method == 'pair_video_from_text_succ':
+    elif method == 'single_video_from_text_succ':
         return load_single_video_frame_succ(
             data_path, shuffle, data_type, channels, preprocessing_method1,
             raw_height, raw_width, output_height, output_width,

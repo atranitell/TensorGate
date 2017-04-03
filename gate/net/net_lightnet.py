@@ -7,7 +7,7 @@ from gate.net import net
 class lightnet(net.Net):
 
     def __init__(self):
-        self.weight_decay = 0.0001
+        self.weight_decay = 0.0005
 
     def arg_scope(self):
         with arg_scope([layers.conv2d],

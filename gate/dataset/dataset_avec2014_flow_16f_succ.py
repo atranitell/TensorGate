@@ -11,9 +11,11 @@ class avec2014_flow_16f_succ():
     def loads(self):
         """ public interface for upper layer to call
         """
-        return data_model.load_single_video_frame(
-            self.data_path, self.shuffle, self.data_type, self.channels,
-            self.preprocessing_method, self.raw_height, self.raw_width,
+        return data_model.loads(
+            self.data_load_method, self.data_path, self.shuffle,
+            self.data_type, self.channels,
+            self.preprocessing_method, None,
+            self.raw_height, self.raw_width,
             self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -40,13 +42,13 @@ class avec2014_flow_16f_succ():
         else:
             raise ValueError('Unknown command %s' % self.data_type)
 
+        self.channels = 16
         self.raw_height = 256
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 128
+        self.min_queue_num = 512
         self.data_load_method = 'single_video_from_text_succ'
-        self.channels = 16
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = 'avec2014_flow'
@@ -57,7 +59,8 @@ class avec2014_flow_16f_succ():
         self.log = param()
         # Directory where checkpoints and event logs are written to.
         if self.data_type == 'train':
-            self.log.train_dir = filesystem.create_folder_with_date('_output/' + self.name)
+            self.log.train_dir = filesystem.create_folder_with_date(
+                '_output/' + self.name)
 
         elif self.data_type == 'test':
             self.log.test_dir = None
@@ -67,9 +70,9 @@ class avec2014_flow_16f_succ():
         # The frequency with which summaries are saved, in iteration.
         self.log.save_summaries_iter = 2
         # The frequency with which the model is saved, in iteration.
-        self.log.save_model_iter = 200
+        self.log.save_model_iter = 100
         # test iteration
-        self.log.test_interval = 2000
+        self.log.test_interval = 200
 
         """ "adadelta", "adagrad", "adam", "ftrl", "momentum", "sgd", "rmsprops"
         """

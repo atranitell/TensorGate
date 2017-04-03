@@ -11,9 +11,12 @@ class cifar10():
     def loads(self):
         """ public interface for upper layer to call
         """
-        return data_model.load_single_image(
-            self.data_path, self.shuffle, self.data_type,
-            self.preprocessing_method, self.output_height, self.output_width,
+        return data_model.loads(
+            self.data_load_method, self.data_path, self.shuffle,
+            self.data_type, self.channels,
+            self.preprocessing_method, None,
+            self.raw_height, self.raw_width,
+            self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
     def __init__(self, data_type, name):
@@ -39,6 +42,9 @@ class cifar10():
         else:
             raise ValueError('Unknown command %s' % self.data_type)
 
+        self.channels = 3
+        self.raw_height = 32
+        self.raw_width = 32
         self.output_height = 28
         self.output_width = 28
         self.min_queue_num = 1024
