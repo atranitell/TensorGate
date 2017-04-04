@@ -16,6 +16,7 @@ from gate.net import net_lightnet_bn
 from gate.net import net_lightnet_wd
 from gate.net import net_lightnet_slim
 from gate.net import net_lightnet_fast
+from gate.net import net_lightnet_dropout
 
 networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
@@ -37,7 +38,8 @@ networks_map = {
     'lightnet_bn': net_lightnet_bn.lightnet_bn(),
     'lightnet_wd': net_lightnet_wd.lightnet_wd(),
     'lightnet_slim': net_lightnet_slim.lightnet_slim(),
-    'lightnet_fast': net_lightnet_fast.lightnet_fast()
+    'lightnet_fast': net_lightnet_fast.lightnet_fast(),
+    'lightnet_dropout': net_lightnet_dropout.lightnet_dropout()
 }
 
 
