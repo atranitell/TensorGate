@@ -3,7 +3,7 @@
 """
 
 import sys
-# import time
+from gate.utils import show
 
 
 class Progressive():

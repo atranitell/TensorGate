@@ -113,7 +113,7 @@ class Updater():
             if grad is None:
                 continue
             if var.op.name in lr_coeff:
-                print('[LR COEFF]', lr_coeff[var.op.name], var.op.name)
+                utils.show.INFO(lr_coeff[var.op.name] + ' ' + var.op.name)
                 grad *= lr_coeff[var.op.name]
             self.grads.append((grad, var))
         # start to train
@@ -182,11 +182,11 @@ class Updater():
         tf.summary.scalar('train/lr', self.learning_rate)
 
     def print_trainable_list(self):
-        print('[NET] Variables will be trained as list:')
+        utils.show.NET('Variables will be trained as list:')
         for weight in self.variables_to_train:
-            print('[NET] ', weight)
+            utils.show.NET(str(weight))
 
     def print_grads_list(self):
-        print('[GRAD] Gradients will be trained as list:')
+        utils.show.NET('Gradients will be trained as list:')
         for grad, var in self.grads:
-            print('[GRAD] ', grad)
+            utils.show.NET(str(grad))

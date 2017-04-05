@@ -27,9 +27,6 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
 
-            # ouput information
-            gate.utils.info.print_basic_information(dataset, net_name)
-
             # get data
             images, labels, _ = dataset.loads()
 
@@ -148,8 +145,6 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             if not os.path.exists(dataset.log.test_dir):
                 os.mkdir(dataset.log.test_dir)
 
-            gate.utils.info.print_basic_information(dataset, net_name)
-
             images, labels_orig, filenames = dataset.loads()
 
         # -------------------------------------------
@@ -228,11 +223,12 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
             print('[TEST] Loss:%.4f, acc:%.4f' % (output_loss, output_err))
 
-            summary = tf.Summary()
-            summary.value.add(tag='test/iter', simple_value=int(global_step))
-            summary.value.add(tag='test/acc', simple_value=output_err)
-            summary.value.add(tag='test/loss', simple_value=output_loss)
-            summary_writer.add_summary(summary, global_step)
+            if summary_writer is not None:
+                summary = tf.Summary()
+                summary.value.add(tag='test/iter', simple_value=int(global_step))
+                summary.value.add(tag='test/acc', simple_value=output_err)
+                summary.value.add(tag='test/loss', simple_value=output_loss)
+                summary_writer.add_summary(summary, global_step)
 
             # -------------------------------------------
             # terminate all threads

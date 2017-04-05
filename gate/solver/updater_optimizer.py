@@ -3,6 +3,7 @@
 """
 
 import tensorflow as tf
+from gate.utils import show
 
 
 def configure(dataset, learning_rate):
@@ -17,13 +18,13 @@ def configure(dataset, learning_rate):
     Raises:
       ValueError: if dataset.opt.optimizer is not recognized.
     """
-    print('[TRAIN] Routine will use %s optimizer.' % dataset.opt.optimizer)
+    show.TRAIN('Routine will use %s optimizer.' % dataset.opt.optimizer)
 
     if dataset.opt.optimizer == 'adadelta':
         optimizer = tf.train.AdadeltaOptimizer(
             learning_rate,
             rho=dataset.opt.adadelta_rho,
-            epsilon=dataset.opt.opt_epsilon)
+            epsilon=dataset.opt.adadelta_epsilon)
 
     elif dataset.opt.optimizer == 'adagrad':
         optimizer = tf.train.AdagradOptimizer(
@@ -35,7 +36,7 @@ def configure(dataset, learning_rate):
             learning_rate,
             beta1=dataset.opt.adam_beta1,
             beta2=dataset.opt.adam_beta2,
-            epsilon=dataset.opt.opt_epsilon)
+            epsilon=dataset.opt.adam_epsilon)
 
     elif dataset.opt.optimizer == 'ftrl':
         optimizer = tf.train.FtrlOptimizer(
@@ -56,7 +57,7 @@ def configure(dataset, learning_rate):
             learning_rate,
             decay=dataset.opt.rmsprop_decay,
             momentum=dataset.opt.rmsprop_momentum,
-            epsilon=dataset.opt.opt_epsilon)
+            epsilon=dataset.opt.rmsprop_epsilon)
 
     elif dataset.opt.optimizer == 'sgd':
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)

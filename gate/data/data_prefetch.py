@@ -5,11 +5,10 @@
 import tensorflow as tf
 
 
-def generate_img_label_batch(image, label, filename, shuffle,
-                             batch_size, min_queue_num, reader_thread):
+def generate_batch(image, label, filename, shuffle,
+                   batch_size, min_queue_num, reader_thread):
     """ for single image and label
     """
-
     if shuffle:
         images, labels, filenames = tf.train.shuffle_batch(
             tensors=[image, label, filename],
@@ -27,8 +26,8 @@ def generate_img_label_batch(image, label, filename, shuffle,
     return images, tf.reshape(labels, [batch_size]), filenames
 
 
-def generate_pair_imgs_labels_batch(img1, img2, label, filename1, filename2, shuffle,
-                                    batch_size, min_queue_num, reader_thread):
+def generate_pair_batch(img1, img2, label, filename1, filename2, shuffle,
+                        batch_size, min_queue_num, reader_thread):
     """ for pair images and same label
     """
     if shuffle:

@@ -1,151 +1,58 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/28
+""" updated: 2017/04/05
 """
 
 import os
 from gate.utils import filesystem
+from gate.utils import show
 
 
-def read_image_from_text_list_with_label(filepath):
-    """ Reading images and labels from text file.
+def parse_from_text(text_path, dtype_list, path_list):
+    """ dtype_list is a tuple, which represent a list of data type.
+        e.g. the file format like:
+            a/1.jpg 3 2.5
+            a/2.jpg 4 3.4
+        dtype_list: (str, int, float)
+        path_list: (true, false, false)
 
-        The format like:
-            path-to-fold/img0 0
-            path-to-fold/img1 10
-            ...
+    Return:
+        according to the dtype_list, return a tuple
+        each item in tuple is a list.
     """
     # check path
-    filesystem.raise_path_not_exists(filepath)
+    filesystem.raise_path_not_exists(text_path)
+    dtype_size = len(dtype_list)
+    assert dtype_size == len(path_list)
 
-    imgs = []
-    labels = []
+    # show
+    show.SYS('Parse items from text file %s' % text_path)
+    show.SYS('Items data type: ' + show.type_list_to_str(dtype_list))
+
+    # construct the value to return and store
+    res = []
+    for _ in range(dtype_size):
+        res.append([])
+
+    # start to parse
     count = 0
-
-    with open(filepath, 'r') as fp:
+    with open(text_path, 'r') as fp:
         for line in fp:
-            subpath, label = line[:-1].split(' ')
-            # some image path could not find
-            actual_path = os.path.join(os.path.dirname(filepath), subpath)
-            if not os.path.isfile(actual_path):
-                continue
-            imgs.append(actual_path)
-            labels.append(int(label))
-            count += 1
-
-    print('[INFO] Total load %d files.' % count)
-
-    return imgs, labels, count
-
-
-def read_fold_from_text_list_with_label(filepath):
-    """ Reading folds and labels from text file.
-        Attention: the function will load in fold path not images
-
-        The format like:
-            path-of-fold1 0
-            path-of-fold2 10
-    """
-    # check path
-    filesystem.raise_path_not_exists(filepath)
-
-    fold_0 = []
-    labels = []
-
-    count = 0
-    with open(filepath, 'r') as fp:
-        for line in fp:
-
-            r = line.split(' ')
-            if len(r) <= 1:
+            # check content number
+            r = line[:-1].split(' ')
+            if len(r) != dtype_size:
                 continue
 
-            r[0] = os.path.join(os.path.dirname(filepath), r[0])
-            filesystem.raise_path_not_exists(r[0])
+            # check path
+            # transfer type
+            for idx, dtype in enumerate(dtype_list):
+                val = dtype(r[idx])
+                if path_list[idx]:
+                    val = os.path.join(os.path.dirname(text_path), val)
+                    filesystem.raise_path_not_exists(val)
+                res[idx].append(val)
 
-            fold_0.append(r[0])
-            labels.append(int(r[1]))
-
+            # count
             count += 1
 
-    print('[INFO] Total load %d folds.' % count)
-
-    return fold_0, labels
-
-
-def read_fold_from_text_list_with_label_succ(filepath):
-    """ Reading folds and labels from text file.
-        Attention: the function will load in fold path not images
-
-        The format like:
-            path start_point label
-            path-of-fold1 0 0
-            path-of-fold2 1 10
-    """
-    # check path
-    filesystem.raise_path_not_exists(filepath)
-
-    fold_0 = []
-    starts = []
-    labels = []
-
-    count = 0
-    with open(filepath, 'r') as fp:
-        for line in fp:
-
-            r = line.split(' ')
-            if len(r) <= 1:
-                continue
-
-            r[0] = os.path.join(os.path.dirname(filepath), r[0])
-            filesystem.raise_path_not_exists(r[0])
-
-            fold_0.append(r[0])
-            starts.append(int(r[1]))
-            labels.append(int(r[2]))
-
-            count += 1
-
-    print('[INFO] Total load %d folds.' % count)
-
-    return fold_0, starts, labels
-
-
-def read_pair_folds_from_text_list_with_label(filepath):
-    """ Reading a pair of folds and labels from text file.
-        The function will server for same label but has different style.
-        Attention: the function will load in fold path not images
-
-        The format like:
-            path-of-fold1-1 path-of-fold1-2 0
-            path-of-fold2-1 path-of-fold2-2 10
-    """
-    # check path
-    filesystem.raise_path_not_exists(filepath)
-
-    fold_0 = []
-    fold_1 = []
-    labels = []
-
-    count = 0
-    with open(filepath, 'r') as fp:
-        for line in fp:
-
-            r = line.split(' ')
-            if len(r) <= 1:
-                continue
-
-            r[0] = os.path.join(os.path.dirname(filepath), r[0])
-            r[1] = os.path.join(os.path.dirname(filepath), r[1])
-
-            filesystem.raise_path_not_exists(r[0])
-            filesystem.raise_path_not_exists(r[1])
-
-            fold_0.append(r[0])
-            fold_1.append(r[1])
-            labels.append(int(r[2]))
-
-            count += 1
-
-    print('[INFO] Total load %d pair folds.' % count)
-
-    return fold_0, fold_1, labels
+    show.INFO('Total loading in %d files.' % count)
+    return res

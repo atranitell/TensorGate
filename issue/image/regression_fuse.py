@@ -73,9 +73,6 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
 
-            # ouput information
-            gate.utils.info.print_basic_information(dataset, net_name)
-
             # get data
             images, flows, labels, _, _ = dataset.loads()
 
@@ -229,7 +226,6 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             if not os.path.exists(dataset.log.test_dir):
                 os.mkdir(dataset.log.test_dir)
 
-            gate.utils.info.print_basic_information(dataset, net_name)
             images, flows, labels_orig, filenames, _ = dataset.loads()
 
         # -------------------------------------------
@@ -312,12 +308,13 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # Summary
             # -------------------------------------------
-            summary = tf.Summary()
-            summary.value.add(tag='test/iter', simple_value=int(global_step))
-            summary.value.add(tag='test/mae', simple_value=mae)
-            summary.value.add(tag='test/rmse', simple_value=rmse)
-            summary.value.add(tag='test/loss', simple_value=loss)
-            summary_writer.add_summary(summary, global_step)
+            if summary_writer is not None:
+                summary = tf.Summary()
+                summary.value.add(tag='test/iter', simple_value=int(global_step))
+                summary.value.add(tag='test/mae', simple_value=mae)
+                summary.value.add(tag='test/rmse', simple_value=rmse)
+                summary.value.add(tag='test/loss', simple_value=loss)
+                summary_writer.add_summary(summary, global_step)
 
             # -------------------------------------------
             # terminate all threads

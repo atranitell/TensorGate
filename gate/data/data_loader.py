@@ -1,81 +1,62 @@
 # -*- coding: utf-8 -*-
 """ updated: 2017/3/28
+    a data loader factory, to avoid much more library for dataset
 """
-
-import tensorflow as tf
-from gate.data import data_entry
+from gate.data import data_loader_for_image
 from gate.data import data_loader_for_video
 
 
-def load_single_jpg_from_text(data_path, shuffle=True):
-    """ decode jpg images from jpg-file-path
-    """
-    image_list, label_list, _ = data_entry.read_image_from_text_list_with_label(data_path)
-
-    # construct a fifo queue
-    # images = tf.convert_to_tensor(image_list, dtype=tf.string)
-    # labels = tf.convert_to_tensor(label_list, dtype=tf.int32)
-    imgpath, label = tf.train.slice_input_producer([image_list, label_list], shuffle=shuffle)
-
-    # preprocessing
-    image_raw = tf.read_file(imgpath)
-    image_jpeg = tf.image.decode_jpeg(image_raw, channels=3)
-
-    # image, label, filename
-    return image_jpeg, label, imgpath
+def load_image_from_text(
+        data_path, data_type, shuffle,
+        preprocessing_method, output_height, output_width,
+        batch_size, min_queue_num, reader_thread):
+    return data_loader_for_image.load_image_from_text(
+        data_path, data_type, shuffle,
+        preprocessing_method, output_height, output_width,
+        batch_size, min_queue_num, reader_thread)
 
 
-def load_single_video_frame_from_text(data_path, channels=16, is_training=True, shuffle=True):
-    """ load video sequence from a folder
-    e.g.
-        a. |12345|12345|12345|12345|12345|12345|...
-        b. | 2   |1    |   4 |  3  |1    |  3  |...
-        c. 214313 = 6*3channels = 18 channels
-
-    args:
-        channels: how much images in a folder will be compress into a image.
-    """
-    folds, labels = data_entry.read_fold_from_text_list_with_label(data_path)
-
-    # construct a fifo queue
-    foldname, label = tf.train.slice_input_producer([folds, labels], shuffle=shuffle)
-
-    combined_image = tf.py_func(data_loader_for_video.compress_multi_imgs_to_one,
-                                [foldname, channels, is_training], tf.uint8)
-
-    return combined_image, label, foldname
+def load_image_from_memory(
+        data_path, shuffle, data_type, channels,
+        preprocessing_method, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_image.load_image_from_memory(
+        data_path, shuffle, data_type, channels,
+        preprocessing_method, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
 
 
-def load_single_video_frame_from_text_succ(data_path, channels=16, is_training=True, shuffle=True):
-    """ load video sequence from a folder
-    e.g. acquire video frame successently.
-        a. |12345678901234567890|
-        b.   |3456|   |2345|
-    args:
-        channels: how much images in a folder will be compress into a image.
-    """
-    folds, starts, labels = data_entry.read_fold_from_text_list_with_label_succ(data_path)
-
-    # construct a fifo queue
-    foldname, start, label = tf.train.slice_input_producer([folds, starts, labels], shuffle=shuffle)
-
-    combined_image = tf.py_func(data_loader_for_video.compress_multi_imgs_to_one_succ,
-                                [foldname, start, channels, is_training], tf.uint8)
-
-    return combined_image, label, foldname
+def load_block_random_video_from_text(
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_video.load_block_random_video_from_text(
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
 
 
-def load_pair_video_frame_from_text(data_path, channels=16, is_training=True, shuffle=True):
-    """ load pair video sequence from a folder
-    """
-    fold_1, fold_2, labels = data_entry.read_pair_folds_from_text_list_with_label(data_path)
+def load_block_continuous_video_from_text(
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_video.load_block_continuous_video_from_text(
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
 
-    # construct a fifo queue
-    fold_1_path, fold_2_path, label = tf.train.slice_input_producer(
-        [fold_1, fold_2, labels], shuffle=shuffle)
 
-    img1, img2 = tf.py_func(data_loader_for_video.compress_pair_multi_imgs_to_one,
-                            [fold_1_path, fold_2_path, channels, is_training],
-                            [tf.uint8, tf.uint8])
-
-    return img1, img2, label, fold_1_path, fold_2_path
+def load_pair_block_random_video_from_text(
+        data_path, shuffle, data_type, frames, channels,
+        preprocessing_method1, preprocessing_method2,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_video.load_pair_block_random_video_from_text(
+        data_path, shuffle, data_type, frames, channels,
+        preprocessing_method1, preprocessing_method2,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
