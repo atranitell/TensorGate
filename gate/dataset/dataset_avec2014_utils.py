@@ -1,30 +1,46 @@
+
 import re
+import math
 import numpy as np
 
 
-def get_accurate_from_file(path):
+def get_seq_list(path):
+    """ For video input
+        class1 3 2.53
+        class2 4 4.67
+        ...
+    Return:
+        {'class1':[label, logit], ...}
+    """
+    result = {}
+    res_fp = open(path, 'r')
+    for line in res_fp:
+        r1 = re.findall('\\\(.*)_video', line)
+        r2 = re.findall('\\\(.*)_video', line)
 
+        res = r1[0] if r1[0] else r2[0]
+
+        label = re.findall(' (.*?) ', line)
+        logit = re.findall(label[0] + ' (.*)\n', line)
+
+        label = float(label[0])
+        logit = float(logit[0])
+
+        result[res] = [label, logit]
+    return result
+
+
+def get_succ_list(path):
+    """ For succ video sequence
+    """
+    res_fp = open(path, 'r')
     res_label = {}
     res_logit = {}
-    res_fp = open(path, 'r')
-
     for line in res_fp:
-        r1 = re.findall('/(.*?)_Freeform_video', line)
-        r2 = re.findall('/(.*?)_Northwind_video', line)
+        r1 = re.findall('frames_flow\\\(.*)_video', line)
+        r2 = re.findall('frames_flow\\\(.*)_video', line)
 
-        if r1:
-            res = r1[0]
-        elif r2:
-            res = r2[0]
-        else:
-            r1 = re.findall('frames_flow\\\(.*?)_video', line)
-            r2 = re.findall('frames_flow\\\(.*?)_video', line)
-            if r1:
-                res = r1[0]
-            elif r2:
-                res = r2[0]
-            else:
-                continue
+        res = r1[0] if r1[0] else r2[0]
 
         label = re.findall(' (.*?) ', line)
         logit = re.findall(label[0] + ' (.*)\n', line)
@@ -34,22 +50,94 @@ def get_accurate_from_file(path):
         else:
             res_label[res].append(float(label[0]))
 
+        logit_f = float(logit[0])
+
         if res not in res_logit:
-            res_logit[res] = [float(logit[0])]
+            res_logit[res] = [logit_f]
         else:
-            res_logit[res].append(float(logit[0]))
+            res_logit[res].append(logit_f)
 
-    mae = []
-    rmse = []
+    # acquire mean
+    result = {}
     for idx in res_label:
-        a = np.mean(np.array(res_label[idx]))
-        b = np.mean(np.array(res_logit[idx]))
-        mae.append(np.abs(a - b))
-        rmse.append(np.square(a - b))
+        label = np.mean(np.array(res_label[idx]))
+        logit = np.mean(np.array(res_logit[idx]))
+        result[idx] = [label, logit]
 
-    err_mae = np.mean(mae)
-    err_rmse = np.sqrt(np.mean(rmse))
+    return result
 
-    return err_mae, err_rmse
 
-# print(get_accurate_from_file('200.txt'))
+def get_img_list(path):
+    """ For image input
+        class1 2 3.56
+        class1 2 4.32
+        class1 2 1.23
+        ...
+        class2 3 2.11
+        ...
+    Return:
+        Note: the logit will be mean of the value,
+          because the label is same value in same class
+        {'class1':[label, logit], ...}
+    """
+    res_fp = open(path, 'r')
+    res_label = {}
+    res_logit = {}
+    for line in res_fp:
+        r1 = re.findall('frames/(.*?)_video', line)
+        r2 = re.findall('frames/(.*?)_video', line)
+
+        res = r1[0] if r1[0] else r2[0]
+
+        label = re.findall(' (.*?) ', line)
+        logit = re.findall(label[0] + ' (.*)\n', line)
+
+        if res not in res_label:
+            res_label[res] = [float(label[0])]
+        else:
+            res_label[res].append(float(label[0]))
+
+        logit_f = float(logit[0])
+
+        if res not in res_logit:
+            res_logit[res] = [logit_f]
+        else:
+            res_logit[res].append(logit_f)
+    # acquire mean
+    result = {}
+    for idx in res_label:
+        label = np.mean(np.array(res_label[idx]))
+        logit = np.mean(np.array(res_logit[idx]))
+        result[idx] = [label, logit]
+    return result
+
+
+def get_mae_rmse(res):
+    """
+    Input: a get_img_list/get_seq_list dict
+        {'class1':[label value], ...}
+    """
+    mae = 0.0
+    rmse = 0.0
+    for idx in res:
+        mae += abs(res[idx][0] - res[idx][1])
+        rmse += math.pow(res[idx][0] - res[idx][1], 2)
+    mae = mae / len(res)
+    rmse = math.sqrt(rmse / len(res))
+    return mae, rmse, len(res)
+
+
+def get_accurate_from_file(path, data_type):
+
+    if data_type == 'seq':
+        res = get_mae_rmse(get_seq_list(path))
+    elif data_type == 'img':
+        res = get_mae_rmse(get_img_list(path))
+    elif data_type == 'succ':
+        res = get_mae_rmse(get_succ_list(path))
+
+    mae, rmse, _ = res
+
+    return mae, rmse
+
+# print(get_accurate_from_file('gate/dataset/23401.txt', 'succ'))

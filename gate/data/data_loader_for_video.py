@@ -13,7 +13,6 @@ from PIL import Image
 from gate import preprocessing
 from gate.data import data_entry
 from gate.data import data_prefetch
-from gate.utils import filesystem
 
 
 def combine_images_block_random(foldpath, frames, is_training):
@@ -167,7 +166,7 @@ def load_block_continuous_video_from_text(
         batch_size, min_queue_num, reader_thread)
 
 
-def combine_pair_images_block_random(img_fold, flow_fold, frames=16, is_training=True):
+def combine_pair_images_block_succ(img_fold, flow_fold, frames, start_idx):
     """
         assemble images into pair sequence data
     """
@@ -177,28 +176,17 @@ def combine_pair_images_block_random(img_fold, flow_fold, frames=16, is_training
     img_list = [fs for fs in os.listdir(img_fold_path_abs) if len(fs.split('.jpg')) > 1]
     flow_list = [fs for fs in os.listdir(flow_fold_path_abs) if len(fs.split('.jpg')) > 1]
 
-    # pay attention, please keep the image and flow images
-    #   is same number(frame id) in same people in a folder
-    invl = math.floor(len(img_list) / float(frames))
-    start = 0
-    indice = []
-
-    # for trainset, random to choose None
-    # for testset, choose fixed point
-    for _ in range(frames):
-        end = start + invl
-        if is_training:
-            indice.append(random.randint(start, end - 1))
-        else:
-            indice.append(start)
-        start = end
+    if start_idx < 0:
+        start = random.randint(0, len(img_list) - frames)
+    else:
+        start = start_idx
 
     # acquire actual image path according to indice
     img_selected_list = []
     flow_selected_list = []
     for idx in range(frames):
-        img_path = os.path.join(img_fold_path_abs, img_list[indice[idx]])
-        flow_path = os.path.join(flow_fold_path_abs, flow_list[indice[idx]])
+        img_path = os.path.join(img_fold_path_abs, img_list[start + idx])
+        flow_path = os.path.join(flow_fold_path_abs, flow_list[start + idx])
 
         img_selected_list.append(img_path)
         flow_selected_list.append(flow_path)
@@ -220,7 +208,7 @@ def combine_pair_images_block_random(img_fold, flow_fold, frames=16, is_training
     return combine_img, combine_flow
 
 
-def load_pair_block_random_video_from_text(
+def load_pair_block_succ_video_from_text(
         data_path, shuffle, data_type, frames, channels,
         preprocessing_method1, preprocessing_method2,
         raw_height, raw_width, output_height, output_width,
@@ -235,20 +223,19 @@ def load_pair_block_random_video_from_text(
         path-of-fold2-1 path-of-fold2-2 10
     """
 
-    is_training = True if data_type is 'train' else False
-
-    res = data_entry.parse_from_text(data_path, (str, str, int), (True, True, False))
-    fold_1, fold_2, labels = res[0], res[1], res[2]
+    res = data_entry.parse_from_text(data_path, (str, str, int, int), (True, True, False, False))
+    fold_1, fold_2, idxs, labels = res[0], res[1], res[2], res[3]
 
     fold_1 = tf.convert_to_tensor(fold_1, dtype=tf.string)
     fold_2 = tf.convert_to_tensor(fold_2, dtype=tf.string)
+    idxs = tf.convert_to_tensor(idxs, dtype=tf.int32)
     labels = tf.convert_to_tensor(labels, dtype=tf.int32)
 
-    fold_1_path, fold_2_path, label = tf.train.slice_input_producer(
-        [fold_1, fold_2, labels], shuffle=shuffle)
+    fold_1_path, fold_2_path, idx, label = tf.train.slice_input_producer(
+        [fold_1, fold_2, idxs, labels], shuffle=shuffle)
 
-    img1, img2 = tf.py_func(combine_pair_images_block_random,
-                            [fold_1_path, fold_2_path, frames, is_training],
+    img1, img2 = tf.py_func(combine_pair_images_block_succ,
+                            [fold_1_path, fold_2_path, frames, idx],
                             [tf.uint8, tf.uint8])
 
     img1 = tf.reshape(img1, shape=[raw_height, raw_width, channels * frames])

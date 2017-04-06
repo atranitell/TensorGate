@@ -51,6 +51,7 @@ class avec2014_flow(database.Database):
         self._print()
 
     def _test(self):
+        self.test_file_kind = 'img'
         self.batch_size = 32
         self.total_num = 17727
         self.name = self.name + '_test'
@@ -61,7 +62,7 @@ class avec2014_flow(database.Database):
     def _train(self):
         # basic param
         self.batch_size = 32
-        self.total_num = 15660
+        self.total_num = 29067
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True

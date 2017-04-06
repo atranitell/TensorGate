@@ -272,9 +272,9 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # Especially for avec2014
             # -------------------------------------------
-            if name == 'avec2014' or name == 'avec2014_flow' or name == 'avec2014_flow_16f_succ':
+            if dataset.test_file_kind is not None:
                 mae, rmse = gate.dataset.dataset_avec2014_utils.get_accurate_from_file(
-                    test_info_path)
+                    test_info_path, dataset.test_file_kind)
                 gate.utils.show.TEST('Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' %
                                      (loss, mae, rmse))
 

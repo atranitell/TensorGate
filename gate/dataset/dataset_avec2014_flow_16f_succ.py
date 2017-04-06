@@ -52,8 +52,9 @@ class avec2014_flow_16f_succ(database.Database):
         self._print()
 
     def _test(self):
+        self.test_file_kind = 'succ'
         self.batch_size = 1
-        self.total_num = 100
+        self.total_num = 16127
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False

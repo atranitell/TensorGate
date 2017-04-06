@@ -52,6 +52,7 @@ class avec2014_flow_16f(database.Database):
         self._print()
 
     def _test(self):
+        self.test_file_kind = 'seq'
         self.batch_size = 1
         self.total_num = 100
         self.name = self.name + '_test'

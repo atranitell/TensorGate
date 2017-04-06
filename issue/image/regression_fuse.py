@@ -305,6 +305,12 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
                   (int(global_step), dataset.total_num, num_iter))
             print('[TEST] Loss:%.4f, mae:%.4f, rmse:%.4f' % (loss, mae, rmse))
 
+            if dataset.test_file_kind is not None:
+                mae, rmse = gate.dataset.dataset_avec2014_utils.get_accurate_from_file(
+                    test_info_path, dataset.test_file_kind)
+                gate.utils.show.TEST('Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' %
+                                     (loss, mae, rmse))
+
             # -------------------------------------------
             # Summary
             # -------------------------------------------

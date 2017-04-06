@@ -9,13 +9,12 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class avec2014_fuse_16f(database.Database):
+class avec2014_16f_succ(database.Database):
 
     def loads(self):
-        return data_loader.load_pair_block_random_video_from_text(
+        return data_loader.load_block_continuous_video_from_text(
             self.data_path, self.shuffle, self.data_type, self.frames, self.channels,
-            self.preprocessing_method1, self.preprocessing_method2,
-            self.raw_height, self.raw_width,
+            self.preprocessing_method, self.raw_height, self.raw_width,
             self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -28,11 +27,10 @@ class avec2014_fuse_16f(database.Database):
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 32
+        self.min_queue_num = 16
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method1 = 'avec2014'
-        self.preprocessing_method2 = 'avec2014_flow'
+        self.preprocessing_method = 'avec2014'
 
         if data_type == 'train':
             self._train()
@@ -54,12 +52,13 @@ class avec2014_fuse_16f(database.Database):
         self._print()
 
     def _test(self):
-        self.batch_size = 1
-        self.total_num = 100
+        self.test_file_kind = 'succ'
+        self.batch_size = 32
+        self.total_num = 16127
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_fuse_tst.txt'
+        self.data_path = '_datasets/AVEC2014/pp_tst_succ.txt'
 
     def _train(self):
         # basic param
@@ -68,7 +67,7 @@ class avec2014_fuse_16f(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/AVEC2014/pp_fuse_trn.txt'
+        self.data_path = '_datasets/AVEC2014/pp_trn_succ.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -79,4 +78,4 @@ class avec2014_fuse_16f(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_fixed(learning_rate=0.1)

@@ -51,6 +51,7 @@ class avec2014(database.Database):
         self._print()
 
     def _test(self):
+        self.test_file_kind = 'img'
         self.batch_size = 32
         self.total_num = 17727
         self.name = self.name + '_test'
