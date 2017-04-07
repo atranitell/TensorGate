@@ -40,12 +40,11 @@ class avec2014_16f_succ(database.Database):
             raise ValueError('Unknown command %s' % self.data_type)
 
         # log
-        dirname = filesystem.create_folder_with_date('_output/' + self.name)
-        self.log = data_param.log(self.data_type, dirname)
+        self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=100,
+            save_model_iter=200,
             test_interval=200)
 
         # show
@@ -74,7 +73,7 @@ class avec2014_16f_succ(database.Database):
         self.opt.set_adam(
             adam_beta1=0.9,
             adam_beta2=0.999,
-            adam_epsilon=1e-8)
+            adam_epsilon=1.0)
 
         # lr
         self.lr = data_param.learning_rate()

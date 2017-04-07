@@ -155,11 +155,11 @@ def load_block_continuous_video_from_text(
     # combine
     image = tf.py_func(combine_images_block_continuous,
                        [foldname, start, frames], tf.uint8)
-    image = tf.reshape(image, shape=[raw_height, raw_width, channels * 3])
+    image = tf.reshape(image, shape=[raw_height, raw_width, channels * frames])
 
     image = preprocessing.factory.get_preprocessing(
         preprocessing_method, data_type, image,
-        output_height, output_width, channels=channels * 3)
+        output_height, output_width, channels=channels * frames)
 
     return data_prefetch.generate_batch(
         image, label, foldname, shuffle,

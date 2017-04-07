@@ -39,8 +39,7 @@ class avec2014_flow(database.Database):
             raise ValueError('Unknown command %s' % self.data_type)
 
         # log
-        dirname = filesystem.create_folder_with_date('_output/' + self.name)
-        self.log = data_param.log(self.data_type, dirname)
+        self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,

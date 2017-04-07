@@ -52,9 +52,6 @@ def classification_for_image(config):
 def regression_fuse_for_image(config):
     """ Regression for image
     """
-    config.dataset = 'avec2014_fuse_16f'
-    config.net = 'lightnet'
-
     # train from start
     if config.task == 'train' and config.model is None:
         raise_invalid_input(config.dataset, config.net)

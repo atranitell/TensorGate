@@ -12,10 +12,10 @@ from gate.data import data_loader
 class avec2014(database.Database):
 
     def loads(self):
-        return data_loader.load_image_from_memory(
-            self.data_path, self.shuffle, self.data_type, self.channels,
+        return data_loader.load_image_from_text(
+            self.data_path, self.data_type, self.shuffle,
             self.preprocessing_method, self.output_height, self.output_width,
-            self.min_queue_num, self.batch_size, self.reader_thread)
+            self.batch_size, self.min_queue_num, self.reader_thread)
 
     def __init__(self, data_type, name):
         self.data_type = data_type
@@ -26,7 +26,7 @@ class avec2014(database.Database):
         self.raw_width = 256
         self.output_height = 224
         self.output_width = 224
-        self.min_queue_num = 1024
+        self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = 'avec2014'
@@ -39,12 +39,11 @@ class avec2014(database.Database):
             raise ValueError('Unknown command %s' % self.data_type)
 
         # log
-        dirname = filesystem.create_folder_with_date('_output/' + self.name)
-        self.log = data_param.log(self.data_type, dirname)
+        self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=100,
+            save_model_iter=200,
             test_interval=200)
 
         # show
@@ -57,7 +56,7 @@ class avec2014(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/tst_list.txt'
+        self.data_path = '_datasets/AVEC2014/tst_list_new.txt'
 
     def _train(self):
         # basic param
@@ -66,7 +65,7 @@ class avec2014(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/AVEC2014/trn_list.txt'
+        self.data_path = '_datasets/AVEC2014/trn_list_new.txt'
 
         # optimizer
         self.opt = data_param.optimizer()

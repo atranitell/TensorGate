@@ -70,10 +70,11 @@ class lightnet_dropout(net.Net):
 
             block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
-            end_points['end_avg_pool'] = block_in
 
             block_in = layers.dropout(
                 block_in, keep_prob=0.5, is_training=is_training)
+                
+            end_points['end_avg_pool'] = block_in
 
             logits = layers.fully_connected(
                 block_in, num_classes,

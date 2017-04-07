@@ -23,7 +23,7 @@ def load_image_from_text(
         path-to-fold/img0 0
         path-to-fold/img1 10
     """
-    res = data_entry.parse_from_text(data_path, (str, float), (True, False))
+    res = data_entry.parse_from_text(data_path, (str, int), (True, False))
     image_list = res[0]
     label_list = res[1]
 

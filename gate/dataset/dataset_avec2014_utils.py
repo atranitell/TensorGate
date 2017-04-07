@@ -15,10 +15,10 @@ def get_seq_list(path):
     result = {}
     res_fp = open(path, 'r')
     for line in res_fp:
-        r1 = re.findall('\\\(.*)_video', line)
-        r2 = re.findall('\\\(.*)_video', line)
+        r1 = re.findall('frames\\\(.*)_video', line)
+        r2 = re.findall('frames_flow\\\(.*)_video', line)
 
-        res = r1[0] if r1[0] else r2[0]
+        res = r1[0] if len(r1) else r2[0]
 
         label = re.findall(' (.*?) ', line)
         logit = re.findall(label[0] + ' (.*)\n', line)
@@ -37,10 +37,10 @@ def get_succ_list(path):
     res_label = {}
     res_logit = {}
     for line in res_fp:
-        r1 = re.findall('frames_flow\\\(.*)_video', line)
+        r1 = re.findall('frames\\\(.*)_video', line)
         r2 = re.findall('frames_flow\\\(.*)_video', line)
 
-        res = r1[0] if r1[0] else r2[0]
+        res = r1[0] if len(r1) else r2[0]
 
         label = re.findall(' (.*?) ', line)
         logit = re.findall(label[0] + ' (.*)\n', line)
@@ -85,9 +85,9 @@ def get_img_list(path):
     res_logit = {}
     for line in res_fp:
         r1 = re.findall('frames/(.*?)_video', line)
-        r2 = re.findall('frames/(.*?)_video', line)
+        r2 = re.findall('frames_flow/(.*?)_video', line)
 
-        res = r1[0] if r1[0] else r2[0]
+        res = r1[0] if len(r1) else r2[0]
 
         label = re.findall(' (.*?) ', line)
         logit = re.findall(label[0] + ' (.*)\n', line)

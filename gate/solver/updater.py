@@ -101,7 +101,7 @@ class Updater():
         lr_coeff = {}
         for weight in self.variables_to_train:
             if weight.op.name.find('flow') > 0:
-                lr_coeff[weight.op.name] = 0.1
+                lr_coeff[weight.op.name] = 1.0
 
         self.learning_rate = self.get_learning_rate(dataset, global_step)
         self.optimizer = self.get_optimizer(dataset)
@@ -113,7 +113,7 @@ class Updater():
             if grad is None:
                 continue
             if var.op.name in lr_coeff:
-                utils.show.INFO(lr_coeff[var.op.name] + ' ' + var.op.name)
+                utils.show.INFO(str(lr_coeff[var.op.name]) + ' ' + var.op.name)
                 grad *= lr_coeff[var.op.name]
             self.grads.append((grad, var))
         # start to train

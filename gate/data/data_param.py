@@ -3,6 +3,8 @@
     more clearly to setting param
 """
 
+from gate.utils import filesystem
+
 
 def check_init(_func):
     """ in order to init twice,
@@ -113,9 +115,9 @@ class learning_rate():
 class log():
 
     def __init__(self, data_type, dirname):
-
         if data_type == 'train':
-            self.train_dir = dirname
+            self.train_dir = filesystem.create_folder_with_date(
+                '_output/' + dirname)
         # it will be determined by command inputs.
         elif data_type == 'test':
             self.test_dir = None
