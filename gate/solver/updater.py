@@ -116,8 +116,11 @@ class Updater():
                 utils.show.INFO(str(lr_coeff[var.op.name]) + ' ' + var.op.name)
                 grad *= lr_coeff[var.op.name]
             self.grads.append((grad, var))
+        
         # start to train
-        self.train_op = self.get_train_op(global_step)
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            self.train_op = self.get_train_op(global_step)
 
         # print info
         self.print_trainable_list()

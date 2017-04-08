@@ -25,8 +25,8 @@ class avec2014_flow_16f(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 224
-        self.output_width = 224
+        self.output_height = 112
+        self.output_width = 112
         self.min_queue_num = 16
         self.device = '/gpu:0'
         self.num_classes = 63
@@ -44,7 +44,7 @@ class avec2014_flow_16f(database.Database):
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=100,
+            save_model_iter=200,
             test_interval=200)
 
         # show
@@ -55,7 +55,7 @@ class avec2014_flow_16f(database.Database):
         self.batch_size = 1
         self.total_num = 100
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = False
         self.data_path = '_datasets/AVEC2014/pp_tst_flow.txt'
 

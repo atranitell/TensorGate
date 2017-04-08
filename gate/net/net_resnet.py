@@ -246,7 +246,7 @@ class resent(net.Net):
             'decay': batch_norm_decay,
             'epsilon': batch_norm_epsilon,
             'scale': batch_norm_scale,
-            'updates_collections': tf.GraphKeys.UPDATE_OPS,
+            'updates_collections': None #tf.GraphKeys.UPDATE_OPS,
         }
 
         with arg_scope([layers.conv2d],

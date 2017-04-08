@@ -24,8 +24,8 @@ class avec2014(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 224
-        self.output_width = 224
+        self.output_height = 112
+        self.output_width = 112
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
@@ -54,7 +54,7 @@ class avec2014(database.Database):
         self.batch_size = 32
         self.total_num = 17727
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = False
         self.data_path = '_datasets/AVEC2014/tst_list_new.txt'
 
@@ -76,4 +76,4 @@ class avec2014(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_fixed(learning_rate=0.001)

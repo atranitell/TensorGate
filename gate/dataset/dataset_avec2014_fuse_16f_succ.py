@@ -26,8 +26,8 @@ class avec2014_fuse_16f_succ(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 224
-        self.output_width = 224
+        self.output_height = 112
+        self.output_width = 112
         self.min_queue_num = 32
         self.device = '/gpu:0'
         self.num_classes = 63
@@ -76,8 +76,8 @@ class avec2014_fuse_16f_succ(database.Database):
         self.opt.set_adam(
             adam_beta1=0.9,
             adam_beta2=0.999,
-            adam_epsilon=1.0)
+            adam_epsilon=1e-8)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.01)
