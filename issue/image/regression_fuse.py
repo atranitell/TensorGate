@@ -73,6 +73,10 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
 
+            # copy all fold
+            gate.utils.filesystem.copy_folder(
+                'gate', os.path.join(dataset.log.train_dir, 'gate'))
+
             # get data
             images, flows, labels, _, _ = dataset.loads()
 
@@ -172,9 +176,9 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, '
-                    format_str += 'lr:%s, time:%.2fms.'
-                    print(format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
+                    format_str = 'Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, lr:%s, time:%.2fms.'
+                    gate.utils.show.TRAIN(
+                        format_str % (cur_iter, _loss, _mae, _rmse, _lr, _duration))
                     # set zero
                     self.mean_loss, self.mean_mae, self.mean_mse, self.duration = 0, 0, 0, 0
 
@@ -191,10 +195,11 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     if test_rmse < self.best_rmse:
                         self.best_rmse = test_rmse
                         self.best_iter_rmse = cur_iter
-
-                    print('[TEST] Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
-                          (test_duration, self.best_mae, self.best_iter_mae,
-                           self.best_rmse, self.best_iter_rmse))
+                    
+                    gate.utils.show.TEST(
+                        'Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
+                        (test_duration, self.best_mae, self.best_iter_mae,
+                         self.best_rmse, self.best_iter_rmse))
 
         # record running information
         running_hook = Running_Hook()
@@ -301,9 +306,10 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # output
             # -------------------------------------------
-            print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
-                  (int(global_step), dataset.total_num, num_iter))
-            print('[TEST] Loss:%.4f, mae:%.4f, rmse:%.4f' % (loss, mae, rmse))
+            print()
+            gate.utils.show.TEST('Iter:%d, total test sample:%d, num_batch:%d' %
+                                 (int(global_step), dataset.total_num, num_iter))
+            gate.utils.show.TEST('Loss:%.4f, mae:%.4f, rmse:%.4f' % (loss, mae, rmse))
 
             if dataset.test_file_kind is not None:
                 mae, rmse = gate.dataset.dataset_avec2014_utils.get_accurate_from_file(

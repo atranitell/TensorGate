@@ -27,6 +27,10 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
 
+            # copy all fold
+            gate.utils.filesystem.copy_folder(
+                'gate', os.path.join(dataset.log.train_dir, 'gate'))
+
             # get data
             images, labels, _ = dataset.loads()
 
@@ -39,7 +43,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 net_name, 'train', images, dataset.num_classes)
 
         with tf.name_scope('loss'):
-            logits = tf.to_float(tf.reshape(logits, [dataset.batch_size, dataset.num_classes]))
+            logits = tf.to_float(tf.reshape(
+                logits, [dataset.batch_size, dataset.num_classes]))
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels, logits=logits)
 
@@ -58,7 +63,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         with tf.device(dataset.device):
             updater = gate.solver.Updater()
-            updater.init_default_updater(dataset, global_step, losses, exclusions)
+            updater.init_default_updater(
+                dataset, global_step, losses, exclusions)
 
             learning_rate = updater.get_learning_rate()
             saver = updater.get_variables_saver()
@@ -105,8 +111,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    format_str = '[TRAIN] Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms'
-                    print(format_str % (cur_iter, _loss, _err, _lr, _duration))
+                    gate.utils.show.TRAIN('Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms' %
+                                          (cur_iter, _loss, _err, _lr, _duration))
                     # set zero
                     self.loss, self.err, self.duration = 0, 0, 0
 
@@ -160,7 +166,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
         with tf.name_scope('error'):
             predictions = tf.to_int32(tf.argmax(logits, axis=1))
-            err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels_orig)))
+            err = tf.reduce_mean(tf.to_float(
+                tf.equal(predictions, labels_orig)))
             loss = tf.reduce_mean(losses)
 
         # -------------------------------------------
@@ -176,7 +183,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             coord = tf.train.Coordinator()
             threads = []
             for queue in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
-                threads.extend(queue.create_threads(sess, coord=coord, daemon=True, start=True))
+                threads.extend(queue.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
 
             # Initial some variables
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
@@ -184,14 +192,17 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
 
             # output test information
             tab = tf.constant(' ', shape=[dataset.batch_size])
-            labels_str = tf.as_string(tf.reshape(labels_orig, shape=[dataset.batch_size]))
-            logits_str = tf.as_string(tf.reshape(predictions, shape=[dataset.batch_size]))
+            labels_str = tf.as_string(tf.reshape(
+                labels_orig, shape=[dataset.batch_size]))
+            logits_str = tf.as_string(tf.reshape(
+                predictions, shape=[dataset.batch_size]))
             test_batch_info = filenames + tab + labels_str + tab + logits_str
 
             # file info
-            test_info_path = os.path.join(dataset.log.test_dir, '%s.txt' % global_step)
+            test_info_path = os.path.join(
+                dataset.log.test_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
-            print('[TEST] Output file in %s.' % test_info_path)
+            gate.utils.show.TEST('Output file in %s.' % test_info_path)
 
             # progressive bar
             progress_bar = gate.utils.Progressive(min_scale=2.0)
@@ -218,14 +229,16 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # -------------------------------------------
             # output
             # -------------------------------------------
-            print('\n[TEST] Iter:%d, total test sample:%d, num_batch:%d' %
-                  (int(global_step), dataset.total_num, num_iter))
-
-            print('[TEST] Loss:%.4f, acc:%.4f' % (output_loss, output_err))
+            print()
+            gate.utils.show.TEST('Iter:%d, total test sample:%d, num_batch:%d' %
+                                 (int(global_step), dataset.total_num, num_iter))
+            gate.utils.show.TEST('Loss:%.4f, acc:%.4f' %
+                                 (output_loss, output_err))
 
             if summary_writer is not None:
                 summary = tf.Summary()
-                summary.value.add(tag='test/iter', simple_value=int(global_step))
+                summary.value.add(
+                    tag='test/iter', simple_value=int(global_step))
                 summary.value.add(tag='test/acc', simple_value=output_err)
                 summary.value.add(tag='test/loss', simple_value=output_loss)
                 summary_writer.add_summary(summary, global_step)

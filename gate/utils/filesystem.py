@@ -3,7 +3,16 @@
 """
 
 import os
+import shutil
 from datetime import datetime
+
+
+def copy_folder(src_path, dst_path):
+    """ copy a folder, including all files and sub-folder to dst
+        if dst_path does not exist, it will create a folder
+    """
+    raise_path_not_exists(src_path)
+    shutil.copytree(src_path, dst_path)
 
 
 def create_folder_with_date(folder_path):
