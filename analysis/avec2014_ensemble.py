@@ -88,12 +88,12 @@ def get_best_ensemble_value2(json_file_path):
                 if min_mae > ensemble['avg_res'][0]:
                     min_mae = ensemble['avg_res'][0]
                     min_mae_rmse = ensemble['avg_res'][1]
-                    min_mae_name = name
+                    min_mae_name = name.copy()
 
                 if min_rmse > ensemble['avg_res'][1]:
                     min_rmse = ensemble['avg_res'][1]
                     min_rmse_mae = ensemble['avg_res'][0]
-                    min_rmse_name = name
+                    min_rmse_name = name.copy()
 
     print_name_mae_rmse(min_mae_name, [min_mae], [min_mae_rmse])
     print_name_mae_rmse(min_rmse_name, [min_rmse_mae], [min_rmse])
@@ -147,17 +147,17 @@ def get_best_ensemble_value(json_file_path):
                     ensemble = {}
                     # print(ensemble_list)
                     get_ensemble_avg(ensemble, ensemble_list)
-                    print('%s  %-.3f  %-.3f' %
-                          ('ensemble_avg', ensemble['avg_res'][0],  ensemble['avg_res'][1]))
+                    # print('%s  %-.3f  %-.3f' %
+                    #       ('ensemble_avg', ensemble['avg_res'][0],  ensemble['avg_res'][1]))
                     if min_mae > ensemble['avg_res'][0]:
                         min_mae = ensemble['avg_res'][0]
                         min_mae_rmse = ensemble['avg_res'][1]
-                        min_mae_name = name
+                        min_mae_name = name.copy()
 
                     if min_rmse > ensemble['avg_res'][1]:
                         min_rmse = ensemble['avg_res'][1]
                         min_rmse_mae = ensemble['avg_res'][0]
-                        min_rmse_name = name
+                        min_rmse_name = name.copy()
 
     print_name_mae_rmse(min_mae_name, [min_mae], [min_mae_rmse])
     print_name_mae_rmse(min_rmse_name, [min_rmse_mae], [min_rmse])
@@ -209,43 +209,8 @@ def get_ensemble_value(json_file_path):
     print('\n%-30s  %-.3f     %-.3f' %
           ('ensemble_avg', ensemble['avg_res'][0],  ensemble['avg_res'][1]))
 
-
-def get_all_res_in_fold(path, data_type):
-    print(path)
-
-    min_mae = 10000
-    min_mae_iter = ''
-    min_rmse = 10000
-    min_rmse_iter = ''
-    for filename in sorted(os.listdir(path)):
-        filepath = os.path.join(path, filename)
-
-        if data_type == 'seq':
-            res = avec2014_error.get_mae_rmse(
-                avec2014_textfile.get_seq_list(filepath))
-        elif data_type == 'img':
-            res = avec2014_error.get_mae_rmse(
-                avec2014_textfile.get_img_list(filepath))
-        elif data_type == 'succ':
-            res = avec2014_error.get_mae_rmse(
-                avec2014_textfile.get_succ_list(filepath))
-
-        if res[0] < min_mae:
-            min_mae = res[0]
-            min_mae_iter = filename
-
-        if res[1] < min_rmse:
-            min_rmse = res[1]
-            min_rmse_iter = filename
-
-        print('(%s, %.4f, %.4f, %d)' % (filename, res[0], res[1], res[2]))
-
-    print('min_mae: %.4f in %s' % (min_mae, min_mae_iter))
-    print('min_rmse: %.4f in %s' % (min_rmse, min_rmse_iter))
-
-
 # get_ensemble_value('list_old.json')
 
-# get_best_ensemble_value2('analysis/avec2014/list.json')
+get_best_ensemble_value('analysis/avec2014/list.json')
 
 # get_all_res_in_fold('test/avec2014_16f_train_201703220924', 'seq')
