@@ -25,8 +25,8 @@ class avec2014_flow_16f_succ(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 112
-        self.output_width = 112
+        self.output_height = 224
+        self.output_width = 224
         self.min_queue_num = 16
         self.device = '/gpu:0'
         self.num_classes = 63

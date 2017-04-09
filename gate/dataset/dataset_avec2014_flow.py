@@ -77,5 +77,5 @@ class avec2014_flow(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.0001)
+        self.lr.set_fixed(learning_rate=0.01)
         
