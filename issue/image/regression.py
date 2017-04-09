@@ -45,6 +45,10 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 os.rmdir(dataset.log.train_dir)
                 dataset.log.train_dir = chkp_path
 
+            # copy all fold
+            gate.utils.filesystem.copy_folder(
+                'gate', os.path.join(dataset.log.train_dir, 'gate'))
+
             # get data
             images, labels, _ = dataset.loads()
 
