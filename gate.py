@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
 # automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 print('SYSTEM WILL RUN ON GPU ', os.environ["CUDA_VISIBLE_DEVICES"])
 
 # fro debug
@@ -96,6 +96,10 @@ def regression_for_image(config):
     elif config.task == 'test':
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression.test(config.dataset, config.net, config.model)
+
+    elif config.task == 'test_heatmap':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.test_heatmap(config.dataset, config.net, config.model)
 
     # train from saved model and fixed some layers
     elif config.task == 'finetune':

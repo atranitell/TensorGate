@@ -40,6 +40,7 @@ def preprocess_for_eval(image, output_height, output_width):
     image = tf.to_float(image)
 
     # Resize and crop if needed.
+    # resized_image = tf.image.resize_images(image, (output_width, output_height))
     resized_image = tf.image.resize_image_with_crop_or_pad(image, output_width, output_height)
     # tf.summary.image('image_resize', tf.expand_dims(resized_image, 0))
 

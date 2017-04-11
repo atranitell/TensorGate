@@ -30,4 +30,4 @@ def dist_data():
     plt.grid()
     plt.show()
 
-# dist_data()
+dist_data()

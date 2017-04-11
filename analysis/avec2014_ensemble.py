@@ -187,21 +187,21 @@ def get_ensemble_value(json_file_path):
         elif val['type'] == 'succ':
             res_dict = avec2014_textfile.get_succ_list(val['path'])
 
-        mae, rmse, _ = avec2014_error.get_mae_rmse(res_dict)
-        res[val['model']] = [val['ensemble'], mae, rmse, val['desc']]
+        mae, rmse, count = avec2014_error.get_mae_rmse(res_dict)
+        res[val['model']] = [val['ensemble'], mae, rmse, str(count)]
 
         if val['ensemble'] is True:
             res_list.append((res_dict))
 
-    print('%-60s %5s     %5s    %7s    %7s' %
-          ('model name:', 'mae', 'rmse', 'ensemble', 'desc'))
+    print('%-20s %5s     %5s    %7s   %5s' %
+          ('model name:', 'mae', 'rmse', 'ensemble', 'PP'))
 
     for line in sorted(res):
         if res[line][2] >= 10:
-            print('%-60s  %-.3f     %-.3f    %-7s    %-7s' %
+            print('%-20s  %-.3f     %-.3f    %-7s    %-7s' %
                   (line, res[line][1], res[line][2], str(res[line][0]), res[line][3]))
         else:
-            print('%-60s  %-.3f     %-.3f     %-7s    %-7s' %
+            print('%-20s  %-.3f     %-.3f     %-7s    %-7s' %
                   (line, res[line][1], res[line][2], str(res[line][0]), res[line][3]))
     # ensemble
     ensemble = {}
@@ -209,8 +209,8 @@ def get_ensemble_value(json_file_path):
     print('\n%-30s  %-.3f     %-.3f' %
           ('ensemble_avg', ensemble['avg_res'][0],  ensemble['avg_res'][1]))
 
-# get_ensemble_value('list_old.json')
+get_ensemble_value('analysis/avec2014/list_old.json')
 
-get_best_ensemble_value('analysis/avec2014/list.json')
+# get_best_ensemble_value('analysis/avec2014/list_old.json')
 
 # get_all_res_in_fold('test/avec2014_16f_train_201703220924', 'seq')

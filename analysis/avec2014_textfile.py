@@ -90,8 +90,8 @@ def get_img_list(path):
     res_label = {}
     res_logit = {}
     for line in res_fp:
-        r1 = re.findall('frames_flow/(.*?)_video', line)
-        r2 = re.findall('frames/(.*?)_video', line)
+        r1 = re.findall('frames_flow\\\(.*?)_video', line)
+        r2 = re.findall('frames\\\(.*?)_video', line)
 
         res = r1[0] if len(r1) else r2[0]
 

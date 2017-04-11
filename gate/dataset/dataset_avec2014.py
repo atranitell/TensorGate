@@ -24,8 +24,8 @@ class avec2014(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 112
-        self.output_width = 112
+        self.output_height = 224
+        self.output_width = 224
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
@@ -51,19 +51,20 @@ class avec2014(database.Database):
 
     def _test(self):
         self.test_file_kind = 'img'
-        self.batch_size = 32
+        self.batch_size = 1
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
-        self.total_num = 6195
+        # 17727
+        self.total_num = 100
         self.name = self.name + '_test'
-        self.reader_thread = 32
-        self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_val_1_img.txt'
+        self.reader_thread = 1
+        self.shuffle = True
+        self.data_path = '_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 32
         # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 22872
+        self.total_num = 23564
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True

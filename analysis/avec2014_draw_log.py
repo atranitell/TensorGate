@@ -32,10 +32,10 @@ def parse_log_test(path):
     tst_info['mae'] = _mae
     tst_info['rmse'] = _rmse
 
-    with open('new_test.txt', 'w') as fw:
-        for i, v in enumerate(tst_info['iter']):
-            fw.write(str(tst_info['iter'][i]) + ' ' + str(tst_info['loss'][i]) + ' ' +
-                     str(tst_info['mae'][i]) + ' ' + str(tst_info['rmse'][i]) + '\n')
+    # with open('new_test.txt', 'w') as fw:
+    #     for i, v in enumerate(tst_info['iter']):
+    #         fw.write(str(tst_info['iter'][i]) + ' ' + str(tst_info['loss'][i]) + ' ' +
+    #                  str(tst_info['mae'][i]) + ' ' + str(tst_info['rmse'][i]) + '\n')
 
     return tst_info
 
@@ -66,10 +66,10 @@ def parse_log_train(path):
     trn_info['mae'] = _mae
     trn_info['rmse'] = _rmse
 
-    with open('new.txt', 'w') as fw:
-        for i, v in enumerate(trn_info['iter']):
-            fw.write(str(trn_info['iter'][i]) + ' ' + str(trn_info['loss'][i]) + ' ' +
-                     str(trn_info['mae'][i]) + ' ' + str(trn_info['rmse'][i]) + '\n')
+    # with open('new.txt', 'w') as fw:
+    #     for i, v in enumerate(trn_info['iter']):
+    #         fw.write(str(trn_info['iter'][i]) + ' ' + str(trn_info['loss'][i]) + ' ' +
+    #                  str(trn_info['mae'][i]) + ' ' + str(trn_info['rmse'][i]) + '\n')
 
     return trn_info
 
@@ -94,8 +94,8 @@ def draw(info):
     plt.grid()
     plt.xlim((0, info['iter'][-1]))
     plt.xlabel('iter')
-    plt.ylabel('loss')
-    plt.title('cifarnet-avec2014-image')
+    plt.ylabel('mae/rmse')
+    plt.title('image')
     plt.show()
 
 
@@ -106,7 +106,7 @@ def draw_mae(info):
     plt.xlim((0, info['iter'][-1]))
     plt.xlabel('iter')
     plt.ylabel('mae')
-    plt.title('flow')
+    plt.title('image')
     plt.show()
 
 # r = parse_log_test('analysis/avec2014/flow.log')
