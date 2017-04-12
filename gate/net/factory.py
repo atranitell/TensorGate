@@ -13,11 +13,6 @@ from gate.net import net_vgg
 from gate.net import net_inception_resnet_v2
 from gate.net import net_lightnet
 from gate.net import net_lightnet_bn
-from gate.net import net_lightnet_bn_224
-from gate.net import net_lightnet_wd
-from gate.net import net_lightnet_slim
-from gate.net import net_lightnet_fast
-from gate.net import net_lightnet_dropout
 
 networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
@@ -36,12 +31,7 @@ networks_map = {
     'vgg_19': net_vgg.vgg_19(),
     'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2(),
     'lightnet': net_lightnet.lightnet(),
-    'lightnet_bn': net_lightnet_bn.lightnet_bn(),
-    'lightnet_bn_224': net_lightnet_bn_224.lightnet_bn_224(),
-    'lightnet_wd': net_lightnet_wd.lightnet_wd(),
-    'lightnet_slim': net_lightnet_slim.lightnet_slim(),
-    'lightnet_fast': net_lightnet_fast.lightnet_fast(),
-    'lightnet_dropout': net_lightnet_dropout.lightnet_dropout()
+    'lightnet_bn': net_lightnet_bn.lightnet_bn()
 }
 
 

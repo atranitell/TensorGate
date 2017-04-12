@@ -43,8 +43,8 @@ class avec2014(database.Database):
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=1000,
+            test_interval=1000)
 
         # show
         self._print()
@@ -54,11 +54,11 @@ class avec2014(database.Database):
         self.batch_size = 1
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
         # 17727
-        self.total_num = 100
+        self.total_num = 17727
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_tst_img_heatmap.txt'
+        self.data_path = '_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
         # basic param

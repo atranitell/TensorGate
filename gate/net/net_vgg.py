@@ -23,9 +23,9 @@ from gate.net import net
 class vgg(net.Net):
 
     def __init__(self):
-        self.dropout_keep_prob = 1.0
+        self.dropout_keep_prob = 0.5
         self.spatial_squeeze = True
-        self.weight_decay = 0.00001
+        self.weight_decay = 0.0005
 
     def arg_scope(self):
         """ weight_decay: The l2 regularization coefficient. """

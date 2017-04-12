@@ -45,7 +45,7 @@ class lightnet_bn(net.Net):
 
         with arg_scope([layers.batch_norm], is_training=is_training):
 
-            block_in = layers.conv2d(images, 64, [7, 7], 1)
+            block_in = layers.conv2d(images, 64, [7, 7], 2)
             block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
             with tf.variable_scope('block1'):
@@ -76,23 +76,24 @@ class lightnet_bn(net.Net):
                 net = tf.concat(axis=3, values=[branch_3_0, block_in])
                 block_in = layers.conv2d(net, 512, [1, 1], 1)
 
-            block_in = layers.max_pool2d(block_in, [3, 3], 2)
+            # block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
-            with tf.variable_scope('block4'):
-                with tf.variable_scope('branch_4_0'):
-                    net = layers.conv2d(block_in, 64, [1, 1], 1)
-                    net = layers.conv2d(net, 64, [3, 3], 1)
-                    branch_4_0 = layers.conv2d(net, 256, [1, 1], 1)
-                net = tf.concat(axis=3, values=[branch_4_0, block_in])
+            # with tf.variable_scope('block4'):
+            #     with tf.variable_scope('branch_4_0'):
+            #         net = layers.conv2d(block_in, 64, [1, 1], 1)
+            #         net = layers.conv2d(net, 64, [3, 3], 1)
+            #         branch_4_0 = layers.conv2d(net, 256, [1, 1], 1)
+            #     net = tf.concat(axis=3, values=[branch_4_0, block_in])
+
 
         block_in = layers.conv2d(net, 1024, [1, 1], 1, normalizer_fn=None)
 
         end_points['end_conv'] = block_in
-
+        
         block_in = layers.dropout(
             block_in, keep_prob=0.5, is_training=is_training)
 
-        block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
+        block_in = layers.avg_pool2d(block_in, [14, 14], 1, padding='VALID')
 
         end_points['end_avg_pool'] = block_in
 

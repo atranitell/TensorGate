@@ -119,6 +119,7 @@ class resent(net.Net):
         output_stride = self.output_stride
         reuse = self.resue
         include_root_block = self.include_root_block
+        end_points = {}
 
         with tf.variable_scope(scope, 'resnet_v2', [inputs], reuse=reuse) as sc:
             end_points_collection = sc.name + '_end_points'
@@ -151,18 +152,21 @@ class resent(net.Net):
                         net, activation_fn=tf.nn.relu, scope='postnorm')
                     if global_pool:
                         # Global average pooling.
+                        end_points['end_conv'] = net
                         net = tf.reduce_mean(
                             net, [1, 2], name='pool5', keep_dims=True)
+                        end_points['end_avg_pool'] = net
                     if num_classes is not None:
                         net = layers.conv2d(net, num_classes, [1, 1], activation_fn=None,
                                             normalizer_fn=None, scope='logits')
                     # Convert end_points_collection into a dictionary of
                     # end_points.
-                    end_points = utils.convert_collection_to_dict(
-                        end_points_collection)
+                    # end_points = utils.convert_collection_to_dict(
+                    #     end_points_collection)
                     if num_classes is not None:
                         end_points['predictions'] = layers.softmax(
                             net, scope='predictions')
+                    # print(end_points)
                     return net, end_points
 
     @add_arg_scope

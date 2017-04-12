@@ -35,8 +35,8 @@ from gate.net import net
 class alexnet(net.Net):
 
     def __init__(self):
-        self.weight_decay = 0.0001
-        self.dropout_keep_prob = 1.0
+        self.weight_decay = 0.0005
+        self.dropout_keep_prob = 0.5
         self.spatial_squeeze = True
 
     def arg_scope(self):
