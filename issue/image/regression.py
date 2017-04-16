@@ -6,6 +6,7 @@
 import os
 import time
 import math
+import re
 
 import tensorflow as tf
 from tensorflow.contrib import framework
@@ -13,8 +14,8 @@ from tensorflow.contrib import framework
 import gate
 
 import cv2
-import numpy as np
-from PIL import Image
+# import numpy as np
+# from PIL import Image
 from matplotlib import pyplot as plt
 
 
@@ -178,6 +179,31 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
+
+
+def test_all(name, net_name, chkp_path, gen_heatmap=False):
+    """ test all model in checkpoint file
+    """
+    chkp_file_path = os.path.join(chkp_path, 'checkpoint')
+    # make a backup
+    gate.utils.filesystem.copy_file(chkp_file_path, chkp_file_path+'.bk')
+    # acquire model list
+    chkp_model_list = gate.utils.checkpoint.get_checkpoint_model_items(chkp_file_path)
+    # loop over the model list
+    for idx in range(1, len(chkp_model_list)):
+        # remove original file
+        gate.utils.filesystem.del_file(chkp_file_path)
+        # write list to new checkpoint file
+        new_model_list = chkp_model_list.copy()
+        new_model_list[0] = new_model_list[idx]
+        gate.utils.checkpoint.write_checkpoint_model_items(chkp_file_path, new_model_list)
+        print('\n')
+        gate.utils.show.INFO('Process model %s' % new_model_list[0])
+        # run test_all
+        if gen_heatmap:
+            test_heatmap(name, net_name, chkp_path)
+        else:
+            test(name, net_name, chkp_path)
 
 
 def test(name, net_name, chkp_path=None, summary_writer=None):
@@ -371,8 +397,13 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
             gate.utils.show.TEST('Output file in %s.' % test_info_path)
 
             # progressive bar
-            # progress_bar = gate.utils.Progressive(min_scale=2.0)
+            progress_bar = gate.utils.Progressive(min_scale=2.0)
 
+            # heatmap
+            heatmap_path = chkp_path + '/heatmap/'
+            if not os.path.exists(heatmap_path):
+                os.mkdir(heatmap_path)
+                
             # -------------------------------------------
             # Start to TEST
             # -------------------------------------------
@@ -384,16 +415,23 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
                     [losses, err_mae, err_mse, test_batch_info,
                      end_points['end_conv'], end_points['end_avg_pool']])
                 
+                # heatmap
                 _conv_shape = _end_conv.shape
                 _fc_shape = _end_pool.shape
-
                 conv_img = _end_conv[0, 0:_conv_shape[1], 0:_conv_shape[2], 0] * _end_pool[0, 0, 0, 0]
                 for i in range(1, _fc_shape[3]):
                     conv_img += _end_conv[0, 0:_conv_shape[1], 0:_conv_shape[2], i] * _end_pool[0, 0, 0, i]
 
                 new_img = cv2.resize(conv_img, (dataset.output_height, dataset.output_width))
 
+                # path
                 img_path = str(_info[0], encoding='utf-8').split(' ')[0]
+                img_base_name = os.path.basename(img_path).split('.')[0]
+                pp_name = re.findall('frames\\\(.*)\\\\', img_path)[0]
+                pp_fold_path = os.path.join(heatmap_path, pp_name)
+                if not os.path.exists(pp_fold_path):
+                    os.mkdir(pp_fold_path)
+
                 label = str(_info[0], encoding='utf-8').split(' ')[1]
                 predict = str(float(str(_info[0], encoding='utf-8').split(' ')[2]))
 
@@ -405,28 +443,35 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
                 src = src[margin_h:margin_h+dataset.output_height,
                           margin_w:margin_w+dataset.output_width,
                           0:dataset.channels]
+                
+                # show text
+                str_label = 'label:%d' % int(label)
+                str_predict = 'predict:%.2f' % float(predict)
+                plt.title(str_label+'    '+str_predict)
+                plt.xlabel(pp_name+' '+img_base_name+'.jpg')
+                # plt.axis('off')
+                plt.xticks([], [])
+                plt.yticks([], [])
 
-                plt.title(img_path+'\n predict:'+str(predict) + ' label:'+ label)
+                # show figure
                 plt.imshow(src)
                 plt.imshow(new_img, cmap='jet', alpha=0.5, interpolation='nearest')
 
-                if not os.path.exists('_output/0'):
-                    os.mkdir('_output/0')
+                img_name = img_base_name + '-' + net_name + '-' + global_step + '.jpg'
+                plt.savefig(os.path.join(pp_fold_path, img_name), bbox_inches='tight')
 
-                plt.savefig(os.path.join('_output/0', str(cur)+'.jpg'))
+                # print(img_path)
 
-                print(img_path)
-
-                # for i in range(7):
-                #     print(_net[0][i][0:7][1])
                 loss += _loss
                 mae += _mae
                 rmse += _rmse
+                
                 # save tensor info to text file
                 for _line in _info:
                     test_info_fp.write(_line + b'\r\n')
+                
                 # show the progressive bar, in percentage
-                # progress_bar.add_float(cur, num_iter)
+                progress_bar.add_float(cur, num_iter)
 
             test_info_fp.close()
 

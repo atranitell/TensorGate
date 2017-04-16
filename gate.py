@@ -8,8 +8,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
 # automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '3'
-print('SYSTEM WILL RUN ON GPU ', os.environ["CUDA_VISIBLE_DEVICES"])
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+from gate.utils import show
+show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
 
 # fro debug
 from tensorflow.python.client import device_lib
@@ -97,9 +99,17 @@ def regression_for_image(config):
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression.test(config.dataset, config.net, config.model)
 
+    elif config.task == 'test_all':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.test_all(config.dataset, config.net, config.model)
+
     elif config.task == 'test_heatmap':
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression.test_heatmap(config.dataset, config.net, config.model)
+
+    elif config.task == 'test_all_heatmap':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression.test_all(config.dataset, config.net, config.model, True)
 
     # train from saved model and fixed some layers
     elif config.task == 'finetune':
@@ -113,7 +123,7 @@ def regression_for_image(config):
 def interface(config):
     """ interface related to command
     """
-    print('[INFO] ', config)
+    show.SYS(str(config))
 
     if config.target == 'regression':
         regression_for_image(config)
