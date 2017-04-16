@@ -54,21 +54,21 @@ class avec2014(database.Database):
         self.batch_size = 1
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
         # 17727
-        self.total_num = 20
+        self.total_num = 17727
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_val_3_img.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 32
         # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 23673
+        self.total_num = 23564
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_3_img.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
 
         # optimizer
         self.opt = data_param.optimizer()

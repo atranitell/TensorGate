@@ -54,6 +54,8 @@ class alexnet(net.Net):
         spatial_squeeze = self.spatial_squeeze
         dropout_keep_prob = self.dropout_keep_prob
 
+        end_points = {}
+
         with tf.variable_scope('alexnet', 'alexnet_v2', [images]) as sc:
             end_points_collection = sc.name + '_end_points'
             # Collect outputs for conv2d, fully_connected and max_pool2d.
@@ -66,8 +68,9 @@ class alexnet(net.Net):
                 net = layers.conv2d(net, 384, [3, 3], scope='conv3')
                 net = layers.conv2d(net, 384, [3, 3], scope='conv4')
                 net = layers.conv2d(net, 256, [3, 3], scope='conv5')
+                end_points['end_conv'] = net
                 net = layers.max_pool2d(net, [3, 3], 2, scope='pool5')
-
+                end_points['end_avg_pool'] = net
                 # Use conv2d instead of fully_connected layers.
                 with arg_scope([layers.conv2d],
                                weights_initializer=tf.truncated_normal_initializer(stddev=0.005),
@@ -85,8 +88,8 @@ class alexnet(net.Net):
                                         scope='fc8')
 
                 # Convert end_points_collection into a end_point dict.
-                end_points = utils.convert_collection_to_dict(
-                    end_points_collection)
+                # end_points = utils.convert_collection_to_dict(
+                #     end_points_collection)
 
                 if spatial_squeeze:
                     net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
