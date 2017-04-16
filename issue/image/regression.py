@@ -448,8 +448,7 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
                 str_label = 'label:%d' % int(label)
                 str_predict = 'predict:%.2f' % float(predict)
                 plt.title(str_label+'    '+str_predict)
-                plt.xlabel(pp_name+' '+img_base_name+'.jpg')
-                # plt.axis('off')
+                # plt.xlabel(pp_name+' '+img_base_name+'.jpg')
                 plt.xticks([], [])
                 plt.yticks([], [])
 
