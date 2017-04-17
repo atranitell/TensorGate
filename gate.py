@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
 # automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 from gate.utils import show
 show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
