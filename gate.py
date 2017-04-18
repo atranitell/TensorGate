@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
 # automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
 from gate.utils import show
 show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
@@ -143,9 +143,9 @@ if __name__ == '__main__':
                         help='train/test/finetune/feature')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
-    PARSER.add_argument('-net', type=str, default='lightnet', dest='net',
+    PARSER.add_argument('-net', type=str, default=None, dest='net',
                         help='lenet/cifarnet')
-    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
+    PARSER.add_argument('-dataset', type=str, default='avec2014', dest='dataset',
                         help='avec2014/cifar10')
     ARGS, _ = PARSER.parse_known_args()
     interface(ARGS)
