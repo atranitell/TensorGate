@@ -8,7 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
 # automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 from gate.utils import show
 show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
@@ -22,6 +22,7 @@ import tensorflow as tf
 import issue.image.regression as img_regression
 import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
+import issue.image.dcgan as img_dcgan
 
 
 def raise_invalid_input(*config):
@@ -120,6 +121,10 @@ def regression_for_image(config):
         raise ValueError('Error task type: %s' % config.task)
 
 
+def dcgan_for_image(config):
+    img_dcgan.train()
+
+
 def interface(config):
     """ interface related to command
     """
@@ -133,6 +138,9 @@ def interface(config):
 
     if config.target == 'regression_fuse':
         regression_fuse_for_image(config)
+
+    if config.target == 'dcgan':
+        dcgan_for_image(config)
 
 
 if __name__ == '__main__':

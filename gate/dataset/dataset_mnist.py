@@ -11,10 +11,10 @@ from gate.data import data_loader
 class mnist(database.Database):
 
     def loads(self):
-        return data_loader.load_image_from_memory(
-            self.data_path, self.shuffle, self.data_type, self.channels,
+        return data_loader.load_image_from_text(
+            self.data_path, self.data_type, self.shuffle,
             self.preprocessing_method, self.output_height, self.output_width,
-            self.min_queue_num, self.batch_size, self.reader_thread)
+            self.batch_size, self.min_queue_num, self.reader_thread)
 
     def __init__(self, data_type, name):
         self.data_type = data_type
@@ -22,12 +22,12 @@ class mnist(database.Database):
         self.channels = 1
         self.raw_height = 28
         self.raw_width = 28
-        self.output_height = 28
-        self.output_width = 28
-        self.min_queue_num = 1024
+        self.output_height = 32
+        self.output_width = 32
+        self.min_queue_num = 64
         self.device = '/gpu:0'
         self.num_classes = 10
-        self.preprocessing_method = 'cifarnet'
+        self.preprocessing_method = 'mnist'
 
         if data_type == 'train':
             self._train()
@@ -53,16 +53,16 @@ class mnist(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '_datasets/mnist/test.txt'
+        self.data_path = '../_datasets/mnist/test.txt'
 
     def _train(self):
         # basic param
-        self.batch_size = 128
+        self.batch_size = 32
         self.total_num = 55000
         self.name = self.name + '_train'
         self.reader_thread = 1
         self.shuffle = True
-        self.data_path = '_datasets/mnist/train.txt'
+        self.data_path = '../_datasets/mnist/train.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -73,4 +73,4 @@ class mnist(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.0001)
