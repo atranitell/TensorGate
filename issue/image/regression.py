@@ -443,15 +443,17 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
                 # show text
                 str_label = 'label:%d' % int(label)
                 str_predict = 'predict:%.2f' % float(predict)
-                plt.title(str_label+'    '+str_predict)
                 # plt.xlabel(pp_name+' '+img_base_name+'.jpg')
+
+                plt.close('all')
+                plt.title(str_label+'    '+str_predict)
                 plt.xticks([], [])
                 plt.yticks([], [])
 
                 # show figure
                 plt.imshow(src)
                 plt.imshow(new_img, cmap='jet', alpha=0.5, interpolation='nearest')
-
+            
                 img_name = img_base_name + '-' + net_name + '-' + global_step + '.jpg'
                 plt.savefig(os.path.join(pp_fold_path, img_name), bbox_inches='tight')
 

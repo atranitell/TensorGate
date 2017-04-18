@@ -9,7 +9,7 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class avec2014(database.Database):
+class avec2013(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
@@ -29,7 +29,7 @@ class avec2014(database.Database):
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method = 'avec2014'
+        self.preprocessing_method = 'avec2013'
 
         if data_type == 'train':
             self._train()
@@ -44,7 +44,7 @@ class avec2014(database.Database):
             print_frequency=20,
             save_summaries_iter=2,
             save_model_iter=1000,
-            test_interval=1000)
+            test_interval=10000)
 
         # show
         self._print()
@@ -54,21 +54,21 @@ class avec2014(database.Database):
         self.batch_size = 32
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
         # 17727
-        self.total_num = 17727
+        self.total_num = 109807
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
+        self.data_path = '../_datasets/AVEC2013/pp_tst_img.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 32
-        # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 23564
+        # 0-71960
+        self.total_num = 71960
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
+        self.data_path = '../_datasets/AVEC2013/pp_trn_0_img.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
