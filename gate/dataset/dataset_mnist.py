@@ -2,7 +2,6 @@
 """ updated: 2017/3/16
 """
 
-from gate.utils import filesystem
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
@@ -12,14 +11,17 @@ class mnist(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
-            self.data_path, self.data_type, self.shuffle,
-            self.preprocessing_method, self.output_height, self.output_width,
-            self.batch_size, self.min_queue_num, self.reader_thread)
+            self.data_path, self.shuffle, self.data_type,
+            self.frames, self.channels, self.preprocessing_method,
+            self.raw_height, self.raw_width, 
+            self.output_height, self.output_width,
+            self.min_queue_num, self.batch_size, self.reader_thread)
 
     def __init__(self, data_type, name):
         self.data_type = data_type
         self.name = name
         self.channels = 1
+        self.frames = 1
         self.raw_height = 28
         self.raw_width = 28
         self.output_height = 32

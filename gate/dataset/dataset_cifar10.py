@@ -3,7 +3,6 @@
 """
 
 # from gate.data import data_model
-from gate.utils import filesystem
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
@@ -12,20 +11,23 @@ from gate.data import data_loader
 class cifar10(database.Database):
 
     def loads(self):
-        return data_loader.load_image_from_memory(
-            self.data_path, self.shuffle, self.data_type, self.channels,
-            self.preprocessing_method, self.output_height, self.output_width,
+        return data_loader.load_image_from_text(
+            self.data_path, self.shuffle, self.data_type,
+            self.frames, self.channels, self.preprocessing_method,
+            self.raw_height, self.raw_width, 
+            self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
     def __init__(self, data_type, name):
         self.data_type = data_type
         self.name = name
         self.channels = 3
+        self.frames = 1
         self.raw_height = 32
         self.raw_width = 32
         self.output_height = 28
         self.output_width = 28
-        self.min_queue_num = 1024
+        self.min_queue_num = 256
         self.device = '/gpu:0'
         self.num_classes = 10
         self.preprocessing_method = 'cifarnet'
@@ -42,35 +44,32 @@ class cifar10(database.Database):
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=100,
-            test_interval=1000)
+            save_model_iter=200,
+            test_interval=200)
 
         # show
         self._print()
 
     def _test(self):
-        self.batch_size = 32
+        self.batch_size = 100
         self.total_num = 10000
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '_datasets/cifar10/test_list.txt'
+        self.data_path = '../_datasets/cifar10/test.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 128
-        self.total_num = 55000
+        self.total_num = 50000
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/cifar10/train_list.txt'
+        self.data_path = '../_datasets/cifar10/train.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_momentum(0.9)
 
         # lr
         self.lr = data_param.learning_rate()

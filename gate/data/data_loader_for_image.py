@@ -14,9 +14,10 @@ from gate.utils import filesystem
 
 
 def load_image_from_text(
-        data_path, data_type, shuffle,
-        preprocessing_method, output_height, output_width,
-        batch_size, min_queue_num, reader_thread):
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
     """ a normal loader method from text to parse content
     Format:
         path label
@@ -34,7 +35,8 @@ def load_image_from_text(
 
     # preprocessing
     image_raw = tf.read_file(imgpath)
-    image = tf.image.decode_jpeg(image_raw, channels=3)
+    image = tf.image.decode_image(image_raw, channels=3)
+    image = tf.reshape(image, [raw_height, raw_width, channels])
 
     # image, label, filename
     image = preprocessing.factory.get_preprocessing(
@@ -47,8 +49,9 @@ def load_image_from_text(
 
 
 def load_image_from_memory(
-        data_path, shuffle, data_type, channels,
-        preprocessing_method, output_height, output_width,
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
         min_queue_num, batch_size, reader_thread):
     """ The function will construct a database to store in memory,
             in order to reduce the time of visiting the disk.

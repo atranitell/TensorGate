@@ -35,8 +35,8 @@ from gate.net import net
 class cifarnet(net.Net):
 
     def __init__(self):
-        self.dropout_keep_prob = 1.0
-        self.weight_decay = 0.0001
+        self.dropout_keep_prob = 0.5
+        self.weight_decay = 0.004
 
     def arg_scope(self):
         weight_decay = self.weight_decay

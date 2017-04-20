@@ -20,11 +20,8 @@ from gate.preprocessing import preprocessing_cifarnet
 from gate.preprocessing import preprocessing_inception
 from gate.preprocessing import preprocessing_lenet
 from gate.preprocessing import preprocessing_vgg
-<<<<<<< HEAD
 from gate.preprocessing import preprocessing_mnist
-=======
 from gate.preprocessing import preprocessing_avec2013
->>>>>>> 8bd94bef100418d133076b6b87448b1511b2304c
 from gate.preprocessing import preprocessing_avec2014
 from gate.preprocessing import preprocessing_avec2014_flow
 
