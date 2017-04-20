@@ -160,6 +160,8 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
                 net_name, 'test', images, dataset.num_classes)
 
         with tf.name_scope('loss'):
+            logits = tf.to_float(tf.reshape(
+                logits, [dataset.batch_size, dataset.num_classes]))
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels_orig, logits=logits)
             loss = tf.reduce_mean(losses)

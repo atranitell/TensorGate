@@ -3,7 +3,7 @@
 
 import tensorflow as tf
 
-_PADDING = 4
+_PADDING = 0
 
 
 def preprocess_for_train(image,
