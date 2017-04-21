@@ -7,22 +7,26 @@ from gate.data import data_loader_for_video
 
 
 def load_image_from_text(
-        data_path, data_type, shuffle,
-        preprocessing_method, output_height, output_width,
-        batch_size, min_queue_num, reader_thread):
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
     return data_loader_for_image.load_image_from_text(
-        data_path, data_type, shuffle,
-        preprocessing_method, output_height, output_width,
-        batch_size, min_queue_num, reader_thread)
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
 
 
 def load_image_from_memory(
-        data_path, shuffle, data_type, channels,
-        preprocessing_method, output_height, output_width,
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
         min_queue_num, batch_size, reader_thread):
     return data_loader_for_image.load_image_from_memory(
-        data_path, shuffle, data_type, channels,
-        preprocessing_method, output_height, output_width,
+        data_path, shuffle, data_type,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
         min_queue_num, batch_size, reader_thread)
 
 

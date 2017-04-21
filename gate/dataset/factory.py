@@ -3,6 +3,7 @@
 """
 
 from gate.dataset import dataset_cifar10
+from gate.dataset import dataset_cifar100
 from gate.dataset import dataset_avec2013
 from gate.dataset import dataset_avec2014
 from gate.dataset import dataset_avec2014_16f
@@ -16,6 +17,7 @@ from gate.dataset import dataset_mnist
 dataset_map = {
     'mnist': dataset_mnist.mnist,
     'cifar10': dataset_cifar10.cifar10,
+    'cifar100': dataset_cifar100.cifar100,
     'avec2013': dataset_avec2013.avec2013,
     'avec2014': dataset_avec2014.avec2014,
     'avec2014_16f': dataset_avec2014_16f.avec2014_16f,

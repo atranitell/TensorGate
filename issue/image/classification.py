@@ -35,7 +35,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
-            logits, end_points = gate.net.factory.get_network(
+            logits, _ = gate.net.factory.get_network(
                 net_name, 'train', images, dataset.num_classes)
 
         with tf.name_scope('loss'):
@@ -43,11 +43,11 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 logits, [dataset.batch_size, dataset.num_classes]))
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels, logits=logits)
+            loss = tf.reduce_mean(losses)
 
         with tf.name_scope('error'):
             predictions = tf.to_int32(tf.argmax(logits, axis=1))
             err = tf.reduce_mean(tf.to_float(tf.equal(predictions, labels)))
-            loss = tf.reduce_mean(losses)
 
         with tf.name_scope('train'):
             tf.summary.scalar('iter', global_step)
@@ -60,7 +60,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             updater = gate.solver.Updater()
             updater.init_default_updater(
-                dataset, global_step, losses, exclusions)
+                dataset, global_step, loss, exclusions)
 
             learning_rate = updater.get_learning_rate()
             saver = updater.get_variables_saver()
@@ -107,14 +107,17 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
-                    gate.utils.show.TRAIN('Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms' %
-                                          (cur_iter, _loss, _err, _lr, _duration))
+                    format_str = (
+                        'Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms' %
+                        (cur_iter, _loss, _err, _lr, _duration))
+                    gate.utils.show.TRAIN(format_str)
                     # set zero
                     self.loss, self.err, self.duration = 0, 0, 0
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
-                    test(data_name, net_name, dataset.log.train_dir, summary_test)
+                    test(data_name, net_name, dataset.log.train_dir,
+                         summary_test)
 
         # -------------------------------------------
         # Start to train
@@ -153,18 +156,20 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # Network
         # -------------------------------------------
         with tf.device(dataset.device):
-            logits, end_points = gate.net.factory.get_network(
+            logits, _ = gate.net.factory.get_network(
                 net_name, 'test', images, dataset.num_classes)
 
         with tf.name_scope('loss'):
+            logits = tf.to_float(tf.reshape(
+                logits, [dataset.batch_size, dataset.num_classes]))
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                 labels=labels_orig, logits=logits)
+            loss = tf.reduce_mean(losses)
 
         with tf.name_scope('error'):
             predictions = tf.to_int32(tf.argmax(logits, axis=1))
             err = tf.reduce_mean(tf.to_float(
                 tf.equal(predictions, labels_orig)))
-            loss = tf.reduce_mean(losses)
 
         # -------------------------------------------
         # Start to test
@@ -226,8 +231,9 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
             # output
             # -------------------------------------------
             print()
-            gate.utils.show.TEST('Iter:%d, total test sample:%d, num_batch:%d' %
-                                 (int(global_step), dataset.total_num, num_iter))
+            format_str = 'Iter:%d, total test sample:%d, num_batch:%d' % \
+                (int(global_step), dataset.total_num, num_iter)
+            gate.utils.show.TEST(format_str)
             gate.utils.show.TEST('Loss:%.4f, acc:%.4f' %
                                  (output_loss, output_err))
 

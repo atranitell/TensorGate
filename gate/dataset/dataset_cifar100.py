@@ -8,7 +8,7 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class cifar10(database.Database):
+class cifar100(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
@@ -29,7 +29,7 @@ class cifar10(database.Database):
         self.output_width = 32
         self.min_queue_num = 256
         self.device = '/gpu:0'
-        self.num_classes = 10
+        self.num_classes = 100
         self.preprocessing_method = 'cifarnet'
 
         if data_type == 'train':
@@ -56,7 +56,7 @@ class cifar10(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/cifar10/test.txt'
+        self.data_path = '../_datasets/cifar100/test_fine.txt'
 
     def _train(self):
         # basic param
@@ -65,7 +65,7 @@ class cifar10(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/cifar10/train.txt'
+        self.data_path = '../_datasets/cifar100/train_fine.txt'
 
         # optimizer
         self.opt = data_param.optimizer()

@@ -3,7 +3,6 @@
 """
 
 # from gate.data import data_model
-from gate.utils import filesystem
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
