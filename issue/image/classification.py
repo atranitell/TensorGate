@@ -84,12 +84,13 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             def __init__(self):
                 self.loss, self.err, self.duration = 0, 0, 0
+                self._lrn_rate = 0.1
 
             def before_run(self, run_context):
                 self._start_time = time.time()
                 return tf.train.SessionRunArgs(
                     [global_step, err, loss, learning_rate],
-                    feed_dict=None)
+                    feed_dict={learning_rate: self._lrn_rate})
 
             def after_run(self, run_context, run_values):
                 # accumulate datas
@@ -98,17 +99,27 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 self.loss += run_values.results[2]
                 self.duration += (time.time() - self._start_time)
 
+                # lr
+                if cur_iter < 100:
+                    self._lrn_rate = 0.1
+                elif cur_iter < 200:
+                    self._lrn_rate = 0.01
+                elif cur_iter < 300:
+                    self._lrn_rate = 0.001
+                else:
+                    self._lrn_rate = 0.0001
+
                 # print information
                 if cur_iter % dataset.log.print_frequency == 0:
                     _invl = dataset.log.print_frequency
                     _err = self.err / _invl
                     _loss = self.loss / _invl
-                    _lr = str(run_values.results[3])
+                    _lr = (run_values.results[3])
                     _duration = self.duration * 1000 / _invl
                     # there time is the running time of a iteration
                     # (if 1 GPU, it is a batch)
                     format_str = (
-                        'Iter:%d, loss:%.4f, acc:%.4f, lr:%s, time:%.2fms' %
+                        'Iter:%d, loss:%.4f, acc:%.4f, lr:%f, time:%.2fms' %
                         (cur_iter, _loss, _err, _lr, _duration))
                     gate.utils.show.TRAIN(format_str)
                     # set zero
