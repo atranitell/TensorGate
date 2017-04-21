@@ -10,13 +10,13 @@ def preprocess_for_train(image, output_height, output_width, channels):
     image = tf.to_float(image)
 
     # Randomly crop a [height, width] section of the image.
-    # distorted_image = tf.random_crop(
-    #     image, [output_height, output_width, channels])
+    distorted_image = tf.random_crop(
+        image, [output_height, output_width, channels])
 
     # # Randomly flip the image horizontally.
     # distorted_image = tf.image.random_flip_left_right(distorted_image)
-    distorted_image = tf.image.resize_image_with_crop_or_pad(
-            image, output_height, output_width)
+    # distorted_image = tf.image.resize_image_with_crop_or_pad(
+    #         image, output_height, output_width)
 
     # Subtract off the mean and divide by the variance of the pixels.
     return tf.image.per_image_standardization(distorted_image)

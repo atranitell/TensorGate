@@ -22,7 +22,7 @@ class inception_resnet_v2(net.Net):
     def __init__(self):
         self.dropout_keep_prob = 0.8
         self.weight_decay = 0.00004
-        self.batch_norm_decay = 0.9997
+        self.batch_norm_decay = 0.997
         self.batch_norm_epsilon = 0.001
 
     def arg_scope(self):
@@ -55,6 +55,8 @@ def inception_resnet_v2_arg_scope(weight_decay=0.00004,
         batch_norm_params = {
             'decay': batch_norm_decay,
             'epsilon': batch_norm_epsilon,
+            'scale': True,
+            'updates_collections': None #tf.GraphKeys.UPDATE_OPS,
         }
         # Set activation_fn and parameters for batch_norm.
         with slim.arg_scope([slim.conv2d], activation_fn=tf.nn.relu,
