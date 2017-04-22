@@ -210,7 +210,10 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         with tf.name_scope('dataset'):
             dataset = gate.dataset.factory.get_dataset(name, 'test')
-            dataset.log.test_dir = chkp_path + '/test/'
+            if summary_writer is not None:
+                dataset.log.test_dir = chkp_path + '/val/'
+            else:
+                dataset.log.test_dir = chkp_path + '/test/'
             if not os.path.exists(dataset.log.test_dir):
                 os.mkdir(dataset.log.test_dir)
 
@@ -337,7 +340,7 @@ def test_heatmap(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         with tf.name_scope('dataset'):
             dataset = gate.dataset.factory.get_dataset(name, 'test')
-            dataset.log.test_dir = chkp_path + '/test/'
+            dataset.log.test_dir = chkp_path + '/test_heatmap/'
             if not os.path.exists(dataset.log.test_dir):
                 os.mkdir(dataset.log.test_dir)
 
