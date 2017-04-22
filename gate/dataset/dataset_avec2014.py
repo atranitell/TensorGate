@@ -52,14 +52,14 @@ class avec2014(database.Database):
 
     def _test(self):
         self.test_file_kind = 'img'
-        self.batch_size = 32
+        self.batch_size = 1
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
         # 17727
-        self.total_num = 17727
+        self.total_num = 300
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_img_heatmap.txt'
 
     def _train(self):
         # basic param
