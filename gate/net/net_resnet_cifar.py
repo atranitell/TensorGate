@@ -30,14 +30,14 @@ class resnet_cifar(net.Net):
 
     def __init__(self):
         # regularization
-        self.weight_decay = 0.0002
+        self.weight_decay = 0.0001
         # for bn
         self.batch_norm_epsilon = 1e-5  # 0.001
         self.batch_norm_decay = 0.997
         self.batch_norm_scale = True
         # config
-        self.use_bottleneck = False
-        self.num_residual_units = 5
+        self.use_bottleneck = True
+        self.num_residual_units = 17
 
     def arg_scope(self):
         weight_decay = self.weight_decay
@@ -56,7 +56,7 @@ class resnet_cifar(net.Net):
         with arg_scope([layers.conv2d],
                        weights_regularizer=layers.l2_regularizer(weight_decay),
                        weights_initializer=tf.truncated_normal_initializer(
-                           stddev=0.05),
+                           stddev=0.01),
                        biases_initializer=None,
                        activation_fn=tf.nn.relu,
                        normalizer_fn=layers.batch_norm,

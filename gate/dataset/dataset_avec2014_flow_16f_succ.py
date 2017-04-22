@@ -29,7 +29,7 @@ class avec2014_flow_16f_succ(database.Database):
         self.min_queue_num = 16
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method = 'avec2014_flow'
+        self.preprocessing_method = 'avec2014'
 
         if data_type == 'train':
             self._train()
@@ -43,20 +43,20 @@ class avec2014_flow_16f_succ(database.Database):
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=1000,
+            test_interval=1000)
 
         # show
         self._print()
 
     def _test(self):
         self.test_file_kind = 'succ'
-        self.batch_size = 1
+        self.batch_size = 32
         self.total_num = 16127
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_tst_flow_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_flow_succ.txt'
 
     def _train(self):
         # basic param
@@ -65,7 +65,7 @@ class avec2014_flow_16f_succ(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/AVEC2014/pp_trn_flow_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_trn_flow_succ.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -76,4 +76,4 @@ class avec2014_flow_16f_succ(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_fixed(learning_rate=0.001)

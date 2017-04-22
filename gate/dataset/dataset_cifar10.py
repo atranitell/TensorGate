@@ -44,8 +44,8 @@ class cifar10(database.Database):
         self.log.set_log(
             print_frequency=20,
             save_summaries_iter=2,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=250,
+            test_interval=250)
 
         # show
         self._print()

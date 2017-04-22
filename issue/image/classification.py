@@ -100,11 +100,13 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                 self.duration += (time.time() - self._start_time)
 
                 # lr
-                if cur_iter < 100:
-                    self._lrn_rate = 0.1
-                elif cur_iter < 200:
+                if cur_iter < 400:
                     self._lrn_rate = 0.01
-                elif cur_iter < 300:
+                elif cur_iter < 32000:
+                    self._lrn_rate = 0.1
+                elif cur_iter < 48000:
+                    self._lrn_rate = 0.01
+                elif cur_iter < 64000:
                     self._lrn_rate = 0.001
                 else:
                     self._lrn_rate = 0.0001

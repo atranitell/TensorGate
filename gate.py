@@ -7,14 +7,20 @@ import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 
-# automatically allocate GPU
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+# allocate GPU
+import sys
+gpu_id = sys.argv[1]
+gpu_cluster = ['0', '1', '2', '3']
+if gpu_id not in gpu_cluster:
+    gpu_id = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
+# show
 from gate.utils import show
 show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
 
-# fro debug
-from tensorflow.python.client import device_lib
+# for debug
+# from tensorflow.python.client import device_lib
 # print(device_lib.list_local_devices())
 
 import tensorflow as tf

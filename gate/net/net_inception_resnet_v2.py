@@ -269,8 +269,10 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
 
                 with tf.variable_scope('Logits'):
                     end_points['PrePool'] = net
+                    end_points['end_conv'] = net
                     net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                           scope='AvgPool_1a_8x8')
+                    end_points['end_avg_pool'] = net
                     net = slim.flatten(net)
 
                     net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
