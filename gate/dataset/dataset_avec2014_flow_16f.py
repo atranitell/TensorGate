@@ -42,7 +42,7 @@ class avec2014_flow_16f(database.Database):
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
             print_frequency=20,
-            save_summaries_iter=2,
+            save_summaries_iter=20,
             save_model_iter=200,
             test_interval=200)
 

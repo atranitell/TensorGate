@@ -86,8 +86,8 @@ class Updater():
 
         # summary related
         self._summary_lr()
-        self._summary_grad()
-        self._summary_weight()
+        # self._summary_grad()
+        # self._summary_weight()
 
     def init_layerwise_updater(self, dataset, global_step,
                                losses, prefix, coeff, exclusions=None):
@@ -129,8 +129,8 @@ class Updater():
 
         # add to summary
         self._summary_lr()
-        self._summary_grad()
-        self._summary_weight()
+        # self._summary_grad()
+        # self._summary_weight()
 
     def _moving_average_decay(self, dataset, global_step):
         """
