@@ -17,7 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 # show
 from gate.utils import show
-show.SYS('SYSTEM WILL RUN ON GPU '+os.environ["CUDA_VISIBLE_DEVICES"])
+show.SYS('SYSTEM WILL RUN ON GPU ' + os.environ["CUDA_VISIBLE_DEVICES"])
 
 # for debug
 # from tensorflow.python.client import device_lib
@@ -29,6 +29,7 @@ import issue.image.regression as img_regression
 import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 import issue.image.dcgan as img_dcgan
+import issue.image.regression_share as img_regression_share
 
 
 def raise_invalid_input(*config):
@@ -122,13 +123,30 @@ def regression_for_image(config):
     elif config.task == 'finetune':
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression.train(config.dataset, config.net, config.model,
-                             exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
+                             exclusions=['net/vgg_16/fc7', 'net/vgg_16/fc8'])
     else:
         raise ValueError('Error task type: %s' % config.task)
 
 
 def dcgan_for_image(config):
     img_dcgan.train()
+
+
+def regression_share_for_image(config):
+    # train from start
+    if config.task == 'train' and config.model is None:
+        raise_invalid_input(config.dataset, config.net)
+        img_regression_share.train(config.dataset, config.net)
+
+    # train continue
+    elif config.task == 'train' and config.model is not None:
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression_share.train(config.dataset, config.net, config.model)
+
+    # test all samples once
+    elif config.task == 'test':
+        raise_invalid_input(config.dataset, config.net, config.model)
+        img_regression_share.test(config.dataset, config.net, config.model)
 
 
 def interface(config):
@@ -145,19 +163,22 @@ def interface(config):
     if config.target == 'regression_fuse':
         regression_fuse_for_image(config)
 
+    if config.target == 'regression_share':
+        regression_share_for_image(config)
+
     if config.target == 'dcgan':
         dcgan_for_image(config)
 
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('-target', type=str, default='regression', dest='target',
+    PARSER.add_argument('-target', type=str, default='regression_share', dest='target',
                         help='regression/classification/regression_fuse')
     PARSER.add_argument('-task', type=str, default='train', dest='task',
                         help='train/test/finetune/feature')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
-    PARSER.add_argument('-net', type=str, default=None, dest='net',
+    PARSER.add_argument('-net', type=str, default='lightnet_bn', dest='net',
                         help='lenet/cifarnet')
     PARSER.add_argument('-dataset', type=str, default='avec2014', dest='dataset',
                         help='avec2014/cifar10')

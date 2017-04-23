@@ -65,7 +65,8 @@ class Updater():
         if self.saver is not None:
             return self.saver
         utils.check.raise_none_param(self.variables_to_train)
-        return tf.train.Saver(var_list=self.variables_to_train, name='restore')
+        return tf.train.Saver(var_list=self.variables_to_train,
+                              name='restore', allow_empty=True)
 
     def init_default_updater(self, dataset, global_step,
                              losses, exclusions=None):
@@ -89,7 +90,7 @@ class Updater():
         self._summary_weight()
 
     def init_layerwise_updater(self, dataset, global_step,
-                               losses, exclusions=None):
+                               losses, prefix, coeff, exclusions=None):
         """ The updater method will adjust learning rate
                 for every variables in according to different lr.
         """
@@ -100,8 +101,8 @@ class Updater():
         # setting layerwise coff
         lr_coeff = {}
         for weight in self.variables_to_train:
-            if weight.op.name.find('flow') > 0:
-                lr_coeff[weight.op.name] = 1.0
+            if weight.op.name.find(prefix) >= 0:
+                lr_coeff[weight.op.name] = coeff
 
         self.learning_rate = self.get_learning_rate(dataset, global_step)
         self.optimizer = self.get_optimizer(dataset)
@@ -116,7 +117,7 @@ class Updater():
                 utils.show.INFO(str(lr_coeff[var.op.name]) + ' ' + var.op.name)
                 grad *= lr_coeff[var.op.name]
             self.grads.append((grad, var))
-        
+
         # start to train
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
@@ -158,7 +159,8 @@ class Updater():
                     continue
 
                 if grad_summary:
-                    tf.summary.scalar(var.op.name + '_mean', tf.reduce_mean(grad))
+                    tf.summary.scalar(var.op.name + '_mean',
+                                      tf.reduce_mean(grad))
                     tf.summary.scalar(var.op.name + '_max', tf.reduce_max(grad))
                     tf.summary.scalar(var.op.name + '_sum', tf.reduce_sum(grad))
 
@@ -173,9 +175,12 @@ class Updater():
                     continue
 
                 if weight_summary:
-                    tf.summary.scalar(weight.op.name + '_mean', tf.reduce_mean(weight))
-                    tf.summary.scalar(weight.op.name + '_max', tf.reduce_max(weight))
-                    tf.summary.scalar(weight.op.name + '_sum', tf.reduce_sum(weight))
+                    tf.summary.scalar(weight.op.name + '_mean',
+                                      tf.reduce_mean(weight))
+                    tf.summary.scalar(weight.op.name + '_max',
+                                      tf.reduce_max(weight))
+                    tf.summary.scalar(weight.op.name + '_sum',
+                                      tf.reduce_sum(weight))
 
                 # Add histograms for trainable variables.
                 if weight_hist:

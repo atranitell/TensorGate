@@ -25,9 +25,9 @@ class avec2014_fuse_16f_succ(database.Database):
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
-        self.output_height = 112
-        self.output_width = 112
-        self.min_queue_num = 32
+        self.output_height = 224
+        self.output_width = 224
+        self.min_queue_num = 4
         self.device = '/gpu:0'
         self.num_classes = 63
         self.preprocessing_method = None
@@ -57,9 +57,9 @@ class avec2014_fuse_16f_succ(database.Database):
         self.batch_size = 32
         self.total_num = 16127
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_fuse_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_fuse_tst_succ.txt'
 
     def _train(self):
         # basic param
@@ -68,7 +68,7 @@ class avec2014_fuse_16f_succ(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/AVEC2014/pp_fuse_trn_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_fuse_trn_succ.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -79,4 +79,4 @@ class avec2014_fuse_16f_succ(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_fixed(learning_rate=0.001)
