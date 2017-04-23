@@ -8,10 +8,10 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class avec2014_fuse_16f_succ(database.Database):
+class avec2014_fuse(database.Database):
 
     def loads(self):
-        return data_loader.load_pair_block_succ_video_from_text(
+        return data_loader.load_pair_image_from_text(
             self.data_path, self.shuffle, self.data_type, self.frames, self.channels,
             self.preprocessing_method1, self.preprocessing_method2,
             self.raw_height, self.raw_width,
@@ -21,7 +21,7 @@ class avec2014_fuse_16f_succ(database.Database):
     def __init__(self, data_type, name):
         self.data_type = data_type
         self.name = name
-        self.frames = 16
+        self.frames = 1
         self.channels = 3
         self.raw_height = 256
         self.raw_width = 256
@@ -32,7 +32,7 @@ class avec2014_fuse_16f_succ(database.Database):
         self.num_classes = 63
         self.preprocessing_method = None
         self.preprocessing_method1 = 'avec2014'
-        self.preprocessing_method2 = 'avec2014_flow'
+        self.preprocessing_method2 = 'avec2014'
 
         if data_type == 'train':
             self._train()
@@ -45,7 +45,7 @@ class avec2014_fuse_16f_succ(database.Database):
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
             print_frequency=20,
-            save_summaries_iter=2,
+            save_summaries_iter=20,
             save_model_iter=200,
             test_interval=200)
 
@@ -53,22 +53,22 @@ class avec2014_fuse_16f_succ(database.Database):
         self._print()
 
     def _test(self):
-        self.test_file_kind = 'succ'
-        self.batch_size = 1
-        self.total_num = 100
+        self.test_file_kind = 'img'
+        self.batch_size = 32
+        self.total_num = 17727
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_fuse_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_fuse.txt'
 
     def _train(self):
         # basic param
-        self.batch_size = 1
-        self.total_num = 199
+        self.batch_size = 32
+        self.total_num = 23564
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_fuse_trn_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_trn_0_fuse.txt'
 
         # optimizer
         self.opt = data_param.optimizer()

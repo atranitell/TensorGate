@@ -18,6 +18,18 @@ def load_image_from_text(
         min_queue_num, batch_size, reader_thread)
 
 
+def load_pair_image_from_text(
+        data_path, shuffle, data_type, frames, channels,
+        preprocessing_method1, preprocessing_method2,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_image.load_pair_image_from_text(
+        data_path, shuffle, data_type, frames, channels,
+        preprocessing_method1, preprocessing_method2,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
+
+
 def load_image_from_memory(
         data_path, shuffle, data_type,
         frames, channels, preprocessing_method,
