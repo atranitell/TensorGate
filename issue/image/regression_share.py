@@ -104,7 +104,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             updater = gate.solver.Updater()
             updater.init_layerwise_updater(
-                dataset, global_step, losses, 'net2', 1.0, exclusions)
+                dataset, global_step, losses, 'net2', 0.1, exclusions)
 
             learning_rate = updater.get_learning_rate()
             restore_saver = updater.get_variables_saver()

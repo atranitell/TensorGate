@@ -13,7 +13,7 @@ class mnist(database.Database):
         return data_loader.load_image_from_text(
             self.data_path, self.shuffle, self.data_type,
             self.frames, self.channels, self.preprocessing_method,
-            self.raw_height, self.raw_width, 
+            self.raw_height, self.raw_width,
             self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -44,7 +44,7 @@ class mnist(database.Database):
             print_frequency=20,
             save_summaries_iter=20,
             save_model_iter=100,
-            test_interval=1000)
+            test_interval=100)
 
         # show
         self._print()
