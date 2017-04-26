@@ -55,7 +55,7 @@ class avec2014_16f_succ(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '_datasets/AVEC2014/pp_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_succ.txt'
 
     def _train(self):
         # basic param
@@ -64,7 +64,7 @@ class avec2014_16f_succ(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '_datasets/AVEC2014/pp_trn_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_trn_succ.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
