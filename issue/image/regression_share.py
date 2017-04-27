@@ -15,34 +15,39 @@ import gate
 
 def get_loss(end_points_1, logits_1, end_points_2, logits_2,
              labels, num_classes, batch_size):
-    with tf.name_scope('loss'):
+    with tf.name_scope('share'):
         from tensorflow.contrib import layers
         # new fc layer
         fc_1 = end_points_1['end_avg_pool']
         fc_2 = end_points_2['end_avg_pool']
-        net = tf.concat(axis=3, values=[fc_1, fc_2])
-        net = layers.fully_connected(
-            net, 2048,
-            biases_initializer=tf.zeros_initializer(),
-            weights_initializer=tf.truncated_normal_initializer(
-                stddev=1 / 2048.0),
-            weights_regularizer=layers.l2_regularizer(0.0005),
-            activation_fn=tf.nn.relu)
+
+        t1_s = layers.fully_connected(fc_1, 768, scope='t1_s')
+        c1_s = layers.fully_connected(fc_1, 256, scope='c1_s')
+
+        t2_s = layers.fully_connected(fc_2, 768, scope='t2_s')
+        c2_s = layers.fully_connected(fc_2, 256, scope='c2_s')
+
+        c_s = tf.reduce_mean([c1_s, c2_s], axis=0, name='c_s')
+
+        t_sum = tf.concat(axis=3, values=[c_s, t1_s, t2_s], name='t_sum')
         logits = layers.fully_connected(
-            net, 1,
+            t_sum, 1,
             biases_initializer=tf.zeros_initializer(),
-            weights_initializer=tf.truncated_normal_initializer(
-                stddev=1 / 2048.0),
+            weights_initializer=layers.xavier_initializer(),
             weights_regularizer=None,
             activation_fn=None,
             scope='logits')
 
+    with tf.name_scope('loss'):
         logits = tf.to_float(tf.reshape(logits, [batch_size, 1]))
 
         _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
         _labels = tf.divide(_labels, num_classes)
 
-        losses = tf.nn.l2_loss([_labels - logits], name='l2_loss')
+        loss1 = tf.nn.l2_loss([_labels - logits], name='l2_loss')
+        loss2 = tf.nn.l2_loss([c1_s - c2_s], name='share_loss')
+        losses = loss1 + loss2
+
         return logits, _labels, losses
 
 
