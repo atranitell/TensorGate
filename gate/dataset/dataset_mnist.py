@@ -29,7 +29,7 @@ class mnist(database.Database):
         self.min_queue_num = 64
         self.device = '/gpu:0'
         self.num_classes = 10
-        self.preprocessing_method = 'mnist'
+        self.preprocessing_method = 'mnist_gan'
 
         if data_type == 'train':
             self._train()
