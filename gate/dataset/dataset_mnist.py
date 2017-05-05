@@ -24,8 +24,8 @@ class mnist(database.Database):
         self.frames = 1
         self.raw_height = 28
         self.raw_width = 28
-        self.output_height = 32
-        self.output_width = 32
+        self.output_height = 28
+        self.output_width = 28
         self.min_queue_num = 64
         self.device = '/gpu:0'
         self.num_classes = 10
@@ -50,7 +50,7 @@ class mnist(database.Database):
         self._print()
 
     def _test(self):
-        self.batch_size = 32
+        self.batch_size = 64
         self.total_num = 10000
         self.name = self.name + '_test'
         self.reader_thread = 1
@@ -59,11 +59,11 @@ class mnist(database.Database):
 
     def _train(self):
         # basic param
-        self.batch_size = 32
+        self.batch_size = 64
         self.total_num = 55000
         self.name = self.name + '_train'
         self.reader_thread = 1
-        self.shuffle = True
+        self.shuffle = False
         self.data_path = '../_datasets/mnist/train.txt'
 
         # optimizer

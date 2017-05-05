@@ -1,12 +1,35 @@
 # -*- coding: utf-8 -*-
-""" dcgan
-    updated: 2017/04/17
+""" DCGAN - updated: 2017/05/05
+
+For Mnist:
+g_ -> generator
+d_ -> discriminator
+HyperParam
+    epoch: 25
+    learning_rate: 0.0002
+    adam_beta1: 0.5
+    train_size: np.inf
+    batch_size: 64
+    input_height: 28
+    input_width: 28
+    output_height: 28
+    output_width: 28
+    y_dim: 10
+    c_dim: 1
+    z_dim: 100
+    gf_dim: 64
+    df_dim: 64
+    gfc_dim: 1024
+    dfc_dim: 1024
+    dataset: mnist
+    input_fname_pattern: *.jpg
 """
 
 import os
 import time
 import math
 import re
+import scipy.misc
 
 import tensorflow as tf
 from tensorflow.contrib import framework
@@ -20,90 +43,184 @@ import numpy as np
 from PIL import Image
 
 
-class dcgan():
+class DCGAN():
 
-    def __init__(self):
-        self.weight_decay = 0.0001
+    def __init__(self, is_training=True):
+        self.is_training = is_training
+
+        self.lr = 0.0002
+        self.adam_beta1 = 0.5
+
+        # batch normalization param
         self.batch_norm_decay = 0.9
         self.batch_norm_epsilon = 1e-5
-        self.batch_norm_scale = True
 
-    def arg_scope(self):
-        weight_decay = self.weight_decay
-        batch_norm_decay = self.batch_norm_decay
-        batch_norm_epsilon = self.batch_norm_epsilon
-        batch_norm_scale = self.batch_norm_scale
+        self.batch_size = 64
+        self.sample_num = 64
 
-        batch_norm_params = {
-            'decay': batch_norm_decay,
-            'epsilon': batch_norm_epsilon,
-            'scale': batch_norm_scale,
-            'updates_collections': None,
-            'zero_debias_moving_mean': True
-        }
+        self.input_height = 28
+        self.input_width = 28
+        self.output_height = 28
+        self.output_width = 28
 
-        with arg_scope([layers.conv2d, layers.conv2d_transpose],
-                       weights_regularizer=None,
-                       weights_initializer=tf.truncated_normal_initializer(
-                           stddev=0.02),
-                       biases_initializer=tf.constant_initializer(0.0),
-                       activation_fn=None,
-                       normalizer_fn=layers.batch_norm,
-                       normalizer_params=batch_norm_params,
-                       padding='SAME'):
-            with arg_scope([layers.batch_norm], **batch_norm_params):
-                with arg_scope([layers.max_pool2d, layers.avg_pool2d], padding='SAME') as arg_sc:
-                    return arg_sc
+        self.z_dim = 100
+        self.y_dim = 10
+        self.c_dim = 1
+        # self.image_dims = [28, 28, 1]
+
+        self.gf_dim = 64
+        self.df_dim = 64
+        self.gfc_dim = 1024
+        self.dfc_dim = 1024
+
+        sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
+        self.sample_z = tf.convert_to_tensor(sample_z, dtype=tf.float32)
+
+    # Component area
+    def linear(self, x, output_dim):
+        return layers.fully_connected(
+            x, output_dim,
+            activation_fn=None,
+            biases_initializer=tf.constant_initializer(0.0),
+            weights_initializer=tf.random_normal_initializer(
+                stddev=0.02))
+
+    def conv_cond_concat(self, x, y):
+        """Concatenate conditioning vector on feature map axis."""
+        x_shapes = x.get_shape()
+        y_shapes = y.get_shape()
+        return tf.concat([x, y * tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])], 3)
 
     def leak_relu(self, x, leak=0.2):
         return tf.maximum(x, leak * x)
 
-    def discriminator(self, images, num_classes, is_training):
-        with tf.variable_scope('d_'):
-            with arg_scope(self.arg_scope()):
-                with arg_scope([layers.batch_norm], is_training=is_training):
-                    # for image 32 * 32 * 1
-                    net = self.leak_relu(layers.conv2d(images, 64, [5, 5], 2))
-                    # 16 * 16 * 64
-                    net = self.leak_relu(layers.conv2d(net, 128, [5, 5], 2))
-                    # 8 * 8 * 128
-                    net = self.leak_relu(layers.conv2d(net, 256, [5, 5], 2))
-                    # 4 * 4 * 256
-                    net = self.leak_relu(layers.flatten(net))
-                    # 16
-                    logits = layers.fully_connected(
-                        net, num_classes,
-                        biases_initializer=tf.zeros_initializer(),
-                        weights_initializer=tf.truncated_normal_initializer(
-                            stddev=0.02),
-                        weights_regularizer=None,
-                        activation_fn=tf.nn.sigmoid,
-                        scope='logits')
-                    return logits
+    def batch_norm(self, x, is_training=True):
+        return layers.batch_norm(
+            x, decay=self.batch_norm_decay,
+            updates_collections=None,
+            is_training=is_training,
+            epsilon=self.batch_norm_epsilon,
+            scale=True)
 
-    def generator(self, input, is_training):
-        with tf.variable_scope('g_'):
-            with arg_scope(self.arg_scope()):
-                with arg_scope([layers.batch_norm], is_training=is_training):
-                    net = layers.fully_connected(
-                        input, 4 * 4 * 128,
-                        biases_initializer=tf.zeros_initializer(),
-                        weights_initializer=tf.truncated_normal_initializer(
-                            stddev=0.02),
-                        weights_regularizer=None,
-                        activation_fn=None,
-                        scope='de-fc')
-                    net = tf.reshape(net, [-1, 4, 4, 128])
-                    net = tf.nn.relu(net)
-                    net = layers.conv2d_transpose(
-                        net, 64, [5, 5], 2, padding='SAME')
-                    net = tf.nn.relu(net)
-                    net = layers.conv2d_transpose(
-                        net, 32, [5, 5], 2, padding='SAME')
-                    net = tf.nn.relu(net)
-                    net = layers.conv2d_transpose(
-                        net, 3, [5, 5], 2, padding='SAME')
-                    return tf.nn.sigmoid(net)
+    def conv2d(self, x, output_dim, name):
+        return layers.conv2d(
+            x, output_dim, [5, 5], 2, padding='SAME',
+            activation_fn=None,
+            weights_initializer=tf.truncated_normal_initializer(stddev=0.02),
+            biases_initializer=tf.constant_initializer(0.0),
+            scope=name)
+
+    def deconv2d(self, x, output_dim, name='deconv2d'):
+        return layers.convolution2d_transpose(
+            x, output_dim, [5, 5], 2, padding='SAME',
+            activation_fn=None,
+            weights_initializer=tf.random_normal_initializer(stddev=0.02),
+            biases_initializer=tf.constant_initializer(0.0))
+
+    def model(self, inputs, labels):
+        self.y = labels
+        self.inputs = inputs
+        self.z = tf.random_uniform(
+            [self.batch_size, self.z_dim], minval=-1, maxval=1)
+
+        # True data
+        self.G = self.generator(self.z, self.y, False)
+        self.D, self.D_logits = self.discriminator(inputs, self.y, False)
+
+        # Fake data
+        self.sampler = self.generator(self.sample_z, self.y, True, False)
+        self.D_, self.D_logits_ = self.discriminator(self.G, self.y, True)
+
+        # True data ->
+        self.d_loss_real = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.ones_like(self.D), logits=self.D_logits))
+        # Fake data ->
+        self.d_loss_fake = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.zeros_like(self.D_), logits=self.D_logits_))
+
+        # generator loss
+        self.g_loss = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.ones_like(self.D_), logits=self.D_logits_))
+        # discriminator loss
+        self.d_loss = self.d_loss_real + self.d_loss_fake
+
+        t_vars = tf.trainable_variables()
+        self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
+        self.g_vars = [var for var in t_vars if 'generator' in var.name]
+
+        print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        for var in self.d_vars:
+            print(var)
+        for var in self.g_vars:
+            print(var)
+
+        self.saver = tf.train.Saver()
+
+        d_optim = tf.train.AdamOptimizer(
+            self.lr, beta1=self.adam_beta1).minimize(self.d_loss, var_list=self.d_vars)
+        g_optim = tf.train.AdamOptimizer(
+            self.lr, beta1=self.adam_beta1).minimize(self.g_loss, var_list=self.g_vars)
+
+        return d_optim, g_optim
+
+    def discriminator(self, image, y, reuse=False, name='discriminator'):
+        with tf.variable_scope(name) as scope:
+            if reuse:
+                scope.reuse_variables()
+
+            yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
+            x = self.conv_cond_concat(image, yb)
+
+            h0_conv = self.conv2d(x, self.c_dim + self.y_dim, name='conv_h0')
+            h0 = self.leak_relu(h0_conv)
+            h0 = self.conv_cond_concat(h0, yb)
+
+            h1_conv = self.conv2d(h0, self.df_dim + self.y_dim, name='conv_h1')
+            h1 = self.leak_relu(self.batch_norm(h1_conv))
+            h1 = tf.reshape(h1, [self.batch_size, -1])
+            h1 = tf.concat([h1, y], 1)
+
+            h2_f = self.linear(h1, self.dfc_dim)
+            h2 = self.leak_relu(self.batch_norm(h2_f))
+            h2 = tf.concat([h2, y], 1)
+
+            h3 = self.linear(h2, 1)
+
+            return tf.nn.sigmoid(h3), h3
+
+    def generator(self, z, y, reuse=False, is_training=True, name='generator'):
+        with tf.variable_scope(name) as scope:
+            if reuse:
+                scope.reuse_variables()
+
+            # 28, 28
+            s_h, s_w = self.output_height, self.output_width
+            # 14, 7
+            s_h2, s_h4 = int(s_h / 2), int(s_h / 4)
+            # 14, 7
+            s_w2, s_w4 = int(s_w / 2), int(s_w / 4)
+
+            yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
+            z = tf.concat([z, y], 1)
+
+            h0_f = self.linear(z, self.gfc_dim)
+            h0 = tf.nn.relu(self.batch_norm(h0_f, is_training))
+            h0 = tf.concat([h0, y], 1)
+
+            h1_f = self.linear(h0, self.gf_dim * 2 * s_h4 * s_w4)
+            h1 = tf.nn.relu(self.batch_norm(h1_f, is_training))
+            h1 = tf.reshape(h1, [self.batch_size, s_h4, s_w4, self.gf_dim * 2])
+
+            h1 = self.conv_cond_concat(h1, yb)
+
+            h2_f = self.deconv2d(h1, self.gf_dim * 2)
+            h2 = tf.nn.relu(self.batch_norm(h2_f, is_training))
+            h2 = self.conv_cond_concat(h2, yb)
+
+            return tf.nn.sigmoid(self.deconv2d(h2, self.c_dim))
 
 
 def train():
@@ -115,60 +232,53 @@ def train():
 
         # get data
         images, labels, _ = dataset.loads()
+        labels = tf.to_float(tf.one_hot(
+            labels, depth=dataset.num_classes, on_value=1))
 
-        global_step = framework.create_global_step()
+        # Net
+        net = DCGAN(is_training=True)
+        d_optim, g_optim = net.model(images, labels)
 
-        DCGAN_NET = dcgan()
-        fake_input = tf.random_uniform([32, 100])
-        # fake_input = tf.placeholder(tf.float32, [32, 100])
-        G_net = DCGAN_NET.generator(fake_input, True)
-        D_real = DCGAN_NET.discriminator(images, 2, True)
-        D_fake = DCGAN_NET.discriminator(G_net, 2, True)
-
-        # loss
-        D_real_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=D_real, labels=tf.ones_like(D_real)))
-        D_fake_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=D_fake, labels=tf.zeros_like(D_fake)))
-
-        d_loss = D_real_loss + D_fake_loss
-        g_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                logits=D_fake, labels=tf.ones_like(D_fake)))
-
-        for weight in tf.trainable_variables():
-            gate.utils.show.NET(str(weight))
-
-        t_vars = tf.trainable_variables()
-        d_vars = [var for var in t_vars if 'd_' in var.name]
-        g_vars = [var for var in t_vars if 'g_' in var.name]
-
-        d_optim = tf.train.AdamOptimizer(
-            0.0002, beta1=0.5).minimize(d_loss, var_list=d_vars)
-        g_optim = tf.train.AdamOptimizer(
-            0.0002, beta1=0.5).minimize(g_loss, var_list=g_vars)
+        summary = tf.summary.FileWriter('test', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             tf.train.start_queue_runners(sess=sess)
-            # print(sess.run(D_real))
-            # print(sess.run(D_fake))cls
+
             for i in range(100000):
-                if i % 1000 == 0:
-                    pass
-                    # fake_img = sess.run([D_real, D_fake])
-                    # for idx, img in enumerate(fake_img[0]):
-                    #     img = (img * 255).astype('uint8')
-                    #     # img = np.reshape(img, (32, 32, 3))
-                    #     img_raw = Image.fromarray(img)
-                    #     if not os.path.exists('test/' + str(i)):
-                    #         os.mkdir('test/' + str(i))
-                    #     img_raw.save('test/' + str(i) + '/' + str(idx) + '.bmp')
-                else:
-                    errD_fake, errD_real, errG, _, _ = sess.run(
-                        [D_fake_loss, D_real_loss, g_loss, d_optim, g_optim])
-                    if i % 100 == 0:
-                        print(errD_fake, errD_real, errG)
-                        print(sess.run([D_real, D_fake]))
+                # z, d_loss, _ = sess.run([net.z, net.d_loss, d_optim])
+                # imgs, g_loss, _ = sess.run([net.G, net.g_loss, g_optim])
+                # sess.run(g_optim)
+                d_loss, _ = sess.run([net.d_loss, d_optim])
+                g_loss, _ = sess.run([net.g_loss, g_optim])
+                sess.run(g_optim)
+
+                if i % 10 == 0:
+                    imgs = sess.run(net.sampler)
+                    save_images(
+                        imgs, [8, 8], './{}/test_{:02d}_{:04d}.png'.format('test', 1, i))
+
+                if i % 10 == 0:
+                    print(i, d_loss, g_loss)
+
+
+def save_images(images, size, image_path):
+    return imsave(inverse_transform(images), size, image_path)
+
+
+def inverse_transform(images):
+    return (images + 1.) / 2.
+
+
+def imsave(images, size, path):
+    return scipy.misc.imsave(path, merge(images, size))
+
+
+def merge(images, size):
+    h, w = images.shape[1], images.shape[2]
+    img = np.zeros((h * size[0], w * size[1], 3))
+    for idx, image in enumerate(images):
+        i = idx % size[1]
+        j = idx // size[1]
+        img[j * h:j * h + h, i * w:i * w + w, :] = image
+    return img

@@ -35,7 +35,7 @@ def parse_log_test(path):
     # with open('new_test.txt', 'w') as fw:
     #     for i, v in enumerate(tst_info['iter']):
     #         fw.write(str(tst_info['iter'][i]) + ' ' + str(tst_info['loss'][i]) + ' ' +
-    #                  str(tst_info['mae'][i]) + ' ' + str(tst_info['rmse'][i]) + '\n')
+    # str(tst_info['mae'][i]) + ' ' + str(tst_info['rmse'][i]) + '\n')
 
     return tst_info
 
@@ -47,7 +47,7 @@ def parse_log_train(path):
     _loss = []
     _mae = []
     _rmse = []
-    invl = 5
+    invl = 1
     for idx, line in enumerate(fp):
         if idx % invl != 0:
             continue
@@ -69,7 +69,7 @@ def parse_log_train(path):
     # with open('new.txt', 'w') as fw:
     #     for i, v in enumerate(trn_info['iter']):
     #         fw.write(str(trn_info['iter'][i]) + ' ' + str(trn_info['loss'][i]) + ' ' +
-    #                  str(trn_info['mae'][i]) + ' ' + str(trn_info['rmse'][i]) + '\n')
+    # str(trn_info['mae'][i]) + ' ' + str(trn_info['rmse'][i]) + '\n')
 
     return trn_info
 
@@ -109,6 +109,6 @@ def draw_mae(info):
     plt.title('image')
     plt.show()
 
-# r = parse_log_test('analysis/avec2014/flow.log')
-r = parse_log_train('analysis/avec2014/flow.log')
-draw(r)
+# r = parse_log_test('analysis/avec2014/log.txt')
+# r = parse_log_train('analysis/avec2014/log.txt')
+# draw_mae(r)
