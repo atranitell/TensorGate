@@ -2,7 +2,6 @@
 """ updated: 2017/3/16
 """
 
-# from gate.data import data_model
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
@@ -44,10 +43,10 @@ class avec2014_fuse(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=20,
-            save_summaries_iter=20,
-            save_model_iter=200,
-            test_interval=200)
+            print_frequency=50,
+            save_summaries_iter=50,
+            save_model_iter=1000,
+            test_interval=1000)
 
         # show
         self._print()

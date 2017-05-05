@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/16
+""" updated: 2017/04/26
 """
 
 from gate.data import database
@@ -7,13 +7,13 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class avec2014(database.Database):
+class imagenet(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
             self.data_path, self.shuffle, self.data_type,
             self.frames, self.channels, self.preprocessing_method,
-            self.raw_height, self.raw_width, 
+            self.raw_height, self.raw_width,
             self.output_height, self.output_width,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -29,7 +29,7 @@ class avec2014(database.Database):
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method = 'avec2014'
+        self.preprocessing_method = 'vgg'
 
         if data_type == 'train':
             self._train()
@@ -41,42 +41,35 @@ class avec2014(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=50,
-            save_summaries_iter=50,
-            save_model_iter=1000,
-            test_interval=1000)
+            print_frequency=200,
+            save_summaries_iter=200,
+            save_model_iter=5000,
+            test_interval=5000)
 
         # show
         self._print()
 
     def _test(self):
-        self.test_file_kind = 'img'
-        self.batch_size = 1
-        # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
-        # 17727
-        self.total_num = 300
+        self.batch_size = 100
+        self.total_num = 50000
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_img_heatmap.txt'
+        self.data_path = '../_datasets/ImageNet/test.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 32
-        # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 23564
+        self.total_num = 1272104
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
+        self.data_path = '../_datasets/ImageNet/train.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_momentum(0.9)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.1)

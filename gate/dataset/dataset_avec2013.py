@@ -2,7 +2,6 @@
 """ updated: 2017/3/16
 """
 
-# from gate.data import data_model
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
@@ -12,9 +11,11 @@ class avec2013(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
-            self.data_path, self.data_type, self.shuffle,
-            self.preprocessing_method, self.output_height, self.output_width,
-            self.batch_size, self.min_queue_num, self.reader_thread)
+            self.data_path, self.shuffle, self.data_type,
+            self.frames, self.channels, self.preprocessing_method,
+            self.raw_height, self.raw_width,
+            self.output_height, self.output_width,
+            self.min_queue_num, self.batch_size, self.reader_thread)
 
     def __init__(self, data_type, name):
         self.data_type = data_type
@@ -40,8 +41,8 @@ class avec2013(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=20,
-            save_summaries_iter=2,
+            print_frequency=50,
+            save_summaries_iter=50,
             save_model_iter=1000,
             test_interval=10000)
 

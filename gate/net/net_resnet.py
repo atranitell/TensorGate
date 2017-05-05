@@ -49,8 +49,8 @@ class resent(net.Net):
 
     def __init__(self):
         self.weight_decay = 0.0005
-        self.batch_norm_decay = 0.997
-        self.batch_norm_epsilon = 1e-5
+        self.batch_norm_decay = 0.99
+        self.batch_norm_epsilon = 1e-3
         self.batch_norm_scale = True
         self.global_pool = True
         self.output_stride = None

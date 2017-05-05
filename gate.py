@@ -172,7 +172,7 @@ def interface(config):
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('-target', type=str, default='regression_share', dest='target',
+    PARSER.add_argument('-target', type=str, default='regression', dest='target',
                         help='regression/classification/regression_fuse')
     PARSER.add_argument('-task', type=str, default='train', dest='task',
                         help='train/test/finetune/feature')

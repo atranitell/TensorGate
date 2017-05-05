@@ -2,7 +2,6 @@
 """ updated: 2017/3/16
 """
 
-# from gate.data import data_model
 from gate.data import database
 from gate.data import data_param
 from gate.data import data_loader
@@ -41,8 +40,8 @@ class avec2014_flow_16f_succ(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=20,
-            save_summaries_iter=2,
+            print_frequency=50,
+            save_summaries_iter=50,
             save_model_iter=1000,
             test_interval=1000)
 
@@ -56,16 +55,16 @@ class avec2014_flow_16f_succ(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_flow_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_succ_flow.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 32
-        self.total_num = 199
+        self.total_num = 159
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_flow_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_trn_0_succ_flow.txt'
 
         # optimizer
         self.opt = data_param.optimizer()

@@ -30,10 +30,10 @@ class resnet_cifar(net.Net):
 
     def __init__(self):
         # regularization
-        self.weight_decay = 0.002
+        self.weight_decay = 0.0001
         # for bn
-        self.batch_norm_epsilon = 0.001  # 0.001
-        self.batch_norm_decay = 0.9
+        self.batch_norm_epsilon = 1e-5  # 0.001
+        self.batch_norm_decay = 0.997
         self.batch_norm_scale = True
         # config
         self.use_bottleneck = True
