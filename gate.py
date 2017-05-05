@@ -28,8 +28,9 @@ import tensorflow as tf
 import issue.image.regression as img_regression
 import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
-import issue.image.dcgan as img_dcgan
 import issue.image.regression_share as img_regression_share
+
+import issue.gan.condition_gan as img_dcgan
 
 
 def raise_invalid_input(*config):
