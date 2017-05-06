@@ -30,7 +30,8 @@ import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 import issue.image.regression_share as img_regression_share
 
-import issue.gan.condition_gan as img_dcgan
+import issue.gan.condition_gan as cgan
+import issue.gan.wasserstein_gan as wgan
 
 
 def raise_invalid_input(*config):
@@ -129,10 +130,6 @@ def regression_for_image(config):
         raise ValueError('Error task type: %s' % config.task)
 
 
-def dcgan_for_image(config):
-    img_dcgan.train()
-
-
 def regression_share_for_image(config):
     # train from start
     if config.task == 'train' and config.model is None:
@@ -167,8 +164,11 @@ def interface(config):
     if config.target == 'regression_share':
         regression_share_for_image(config)
 
-    if config.target == 'dcgan':
-        dcgan_for_image(config)
+    if config.target == 'cgan':
+        cgan.train()
+
+    if config.target == 'wgan':
+        wgan.train()
 
 
 if __name__ == '__main__':

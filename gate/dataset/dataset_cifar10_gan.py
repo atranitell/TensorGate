@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/3/16
+""" updated: 2017/5/05
 """
 
 from gate.data import database
@@ -7,7 +7,7 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class mnist(database.Database):
+class cifar10_gan(database.Database):
 
     def loads(self):
         return data_loader.load_image_from_text(
@@ -22,11 +22,11 @@ class mnist(database.Database):
         self.name = name
         self.channels = 3
         self.frames = 1
-        self.raw_height = 28
-        self.raw_width = 28
+        self.raw_height = 32
+        self.raw_width = 32
         self.output_height = 28
         self.output_width = 28
-        self.min_queue_num = 64
+        self.min_queue_num = 256
         self.device = '/gpu:0'
         self.num_classes = 10
         self.preprocessing_method = 'mnist_gan'
@@ -41,10 +41,10 @@ class mnist(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=20,
-            save_summaries_iter=20,
-            save_model_iter=100,
-            test_interval=100)
+            print_frequency=50,
+            save_summaries_iter=50,
+            save_model_iter=1000,
+            test_interval=1000)
 
         # show
         self._print()
@@ -55,24 +55,21 @@ class mnist(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/mnist/test.txt'
+        self.data_path = '../_datasets/cifar10/test.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 64
-        self.total_num = 55000
+        self.total_num = 50000
         self.name = self.name + '_train'
         self.reader_thread = 1
-        self.shuffle = False
-        self.data_path = '../_datasets/mnist/train.txt'
+        self.shuffle = True
+        self.data_path = '../_datasets/cifar10/train.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_momentum(0.9)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.0001)
+        self.lr.set_fixed(learning_rate=0.1)

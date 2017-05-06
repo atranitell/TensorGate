@@ -1,28 +1,10 @@
 # -*- coding: utf-8 -*-
-""" CGAN - updated: 2017/05/05
-
-For Mnist:
-g_ -> generator
-d_ -> discriminator
-HyperParam
-    epoch: 25
-    learning_rate: 0.0002
-    adam_beta1: 0.5
-    train_size: np.inf
-    batch_size: 64
-    input_height: 28
-    input_width: 28
-    output_height: 28
-    output_width: 28
-    y_dim: 10
-    c_dim: 1
-    z_dim: 100
-    gf_dim: 64
-    df_dim: 64
-    gfc_dim: 1024
-    dfc_dim: 1024
-    dataset: mnist
-    input_fname_pattern: *.jpg
+""" WGAN - updated: 2017/05/06
+    Wasserstein GAN has four different point with DCGAN
+    1) there is no sigmoid output of discriminator
+    2) loss does not use log
+    3) clip the gradients with constant c for discriminator
+    4) use RMSProp or SGD optimizer
 """
 
 import os
@@ -43,12 +25,16 @@ import numpy as np
 from PIL import Image
 
 
-class CGAN():
+class WGAN():
 
     def __init__(self, is_training=True):
         self.is_training = is_training
 
-        self.lr = 0.0002
+        # clip with a constant value
+        self.clip_values_min = -0.01
+        self.clip_values_max = 0.01
+
+        self.lr = 0.02
         self.adam_beta1 = 0.5
 
         # batch normalization param
@@ -125,31 +111,23 @@ class CGAN():
 
         # True data
         self.G = self.generator(self.z, self.y, False)
-        self.D, self.D_logits = self.discriminator(inputs, self.y, False)
+        self.D_logits = self.discriminator(inputs, self.y, False)
 
         # Fake data
         self.sampler = self.generator(self.sample_z, self.y, True, False)
-        self.D_, self.D_logits_ = self.discriminator(self.G, self.y, True)
+        self.D_logits_ = self.discriminator(self.G, self.y, True)
 
-        # True data ->
-        self.d_loss_real = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.ones_like(self.D), logits=self.D_logits))
-        # Fake data ->
-        self.d_loss_fake = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.zeros_like(self.D_), logits=self.D_logits_))
-
-        # generator loss
-        self.g_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.ones_like(self.D_), logits=self.D_logits_))
-        # discriminator loss
-        self.d_loss = self.d_loss_real + self.d_loss_fake
+        self.d_loss = tf.reduce_mean(self.D_logits - self.D_logits_)
+        self.g_loss = tf.reduce_mean(self.D_logits_)
 
         t_vars = tf.trainable_variables()
         self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
         self.g_vars = [var for var in t_vars if 'generator' in var.name]
+
+        # WGAN
+        for var in self.d_vars:
+            var = tf.clip_by_value(
+                var, self.clip_values_min, self.clip_values_max)
 
         print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
         for var in self.d_vars:
@@ -159,10 +137,16 @@ class CGAN():
 
         self.saver = tf.train.Saver()
 
-        d_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(self.d_loss, var_list=self.d_vars)
-        g_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(self.g_loss, var_list=self.g_vars)
+        d_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            self.d_loss, var_list=self.d_vars)
+        g_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            self.g_loss, var_list=self.g_vars)
+
+        # d_optim = tf.train.AdamOptimizer(
+        #     self.lr, beta1=self.adam_beta1).minimize(self.d_loss, var_list=self.d_vars)
+        # g_optim = tf.train.AdamOptimizer(
+        #     self.lr, beta1=self.adam_beta1).minimize(self.g_loss,
+        #                                              var_list=self.g_vars)
 
         return d_optim, g_optim
 
@@ -189,7 +173,7 @@ class CGAN():
 
             h3 = self.linear(h2, 1)
 
-            return tf.nn.sigmoid(h3), h3
+            return h3
 
     def generator(self, z, y, reuse=False, is_training=True, name='generator'):
         with tf.variable_scope(name) as scope:
@@ -228,7 +212,7 @@ def train():
         # -------------------------------------------
         # Initail Data related
         # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset('cifar10', 'train')
+        dataset = gate.dataset.factory.get_dataset('mnist', 'train')
 
         # get data
         images, labels, _ = dataset.loads()
@@ -236,7 +220,7 @@ def train():
             labels, depth=dataset.num_classes, on_value=1))
 
         # Net
-        net = CGAN(is_training=True)
+        net = WGAN(is_training=True)
         d_optim, g_optim = net.model(images, labels)
 
         summary = tf.summary.FileWriter('test', graph=tf.get_default_graph())
@@ -246,9 +230,6 @@ def train():
             tf.train.start_queue_runners(sess=sess)
 
             for i in range(100000):
-                # z, d_loss, _ = sess.run([net.z, net.d_loss, d_optim])
-                # imgs, g_loss, _ = sess.run([net.G, net.g_loss, g_optim])
-                # sess.run(g_optim)
                 d_loss, _ = sess.run([net.d_loss, d_optim])
                 g_loss, _ = sess.run([net.g_loss, g_optim])
                 sess.run(g_optim)
