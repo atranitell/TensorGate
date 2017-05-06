@@ -88,9 +88,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-_datasets/
-_output/
-_project/
 analysis/avec2014
 
 # for mac
