@@ -1,7 +1,7 @@
 # TensorGate [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]() [![tg](https://img.shields.io/badge/TensorGate-v1.0-brightgreen.svg)]()
 **TensorGate** is an framework based on [Tensorflow](https://github.com/tensorflow/tensorflow) deep learning open source library. It offers a set of upper layer demo for a variety of deep learning, such as image classification, recognition, GAN network, etc.
 
-### Gate Task
+### Gate Library
 | Group | Component                | Status                                                                  | Details |
 |-------|--------------------------|-------------------------------------------------------------------------|---------|
 | **Image** | Classification           | passed        |         |
@@ -10,11 +10,7 @@
 |       | Regression Fuse Share    | checking      |         |
 | **GAN**   | Conditional GAN          | passed        |         |
 | **Audio** | Audio Recognition - LSTM | unrealized |         |
-
-### Gate Library
-
-| Group         | Component                             | Status                                                                  | Details                                            |
-|---------------|---------------------------------------|-------------------------------------------------------------------------|----------------------------------------------------|
+|----|
 | **Data Loader**   | load_image_from_text                  | passed        | Load Image from list.txt with path and labels.     |
 |               | load_pair_image_from_text             | passed        | Considering two input with different feature data. |
 |               | load_image_from_memory                | passed        | Put all images into memory and load in the system. |
