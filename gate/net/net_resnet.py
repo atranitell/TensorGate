@@ -48,13 +48,13 @@ from gate.net import net_resnet_utils
 class resent(net.Net):
 
     def __init__(self):
-        self.weight_decay = 0.0005
-        self.batch_norm_decay = 0.99
-        self.batch_norm_epsilon = 1e-3
+        self.weight_decay = 0.0005 #0.0005
+        self.batch_norm_decay = 0.997 #0.997
+        self.batch_norm_epsilon = 1e-5 #1e-5
         self.batch_norm_scale = True
         self.global_pool = True
         self.output_stride = None
-        self.resue = None
+        self.resue = False
         self.include_root_block = True
 
     def resnet_v2(self, inputs, blocks, num_classes=None, is_training=True, scope=None):
@@ -166,7 +166,7 @@ class resent(net.Net):
                     if num_classes is not None:
                         end_points['predictions'] = layers.softmax(
                             net, scope='predictions')
-                    # print(end_points)
+
                     return net, end_points
 
     @add_arg_scope

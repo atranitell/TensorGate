@@ -45,7 +45,7 @@ def create_folder_with_date(folder_path):
     Returns:
         dir_log: the actual folder path
     """
-    date_str = datetime.strftime(datetime.now(), '%Y%m%d%H%M')
+    date_str = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')
     dir_log = folder_path + '_' + date_str
     if not os.path.exists(dir_log):
         os.mkdir(dir_log)

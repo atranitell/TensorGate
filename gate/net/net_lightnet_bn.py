@@ -11,6 +11,7 @@ class lightnet_bn(net.Net):
         self.batch_norm_decay = 0.99
         self.batch_norm_epsilon = 1e-3
         self.batch_norm_scale = True
+        self.dropout = 0.5
 
     def arg_scope(self):
         weight_decay = self.weight_decay
@@ -28,8 +29,7 @@ class lightnet_bn(net.Net):
 
         with arg_scope([layers.conv2d],
                        weights_regularizer=layers.l2_regularizer(weight_decay),
-                       weights_initializer=tf.truncated_normal_initializer(
-                           stddev=0.05),
+                       weights_initializer=layers.xavier_initializer(),
                        biases_initializer=tf.constant_initializer(0.1),
                        activation_fn=tf.nn.relu,
                        normalizer_fn=layers.batch_norm,
@@ -45,7 +45,7 @@ class lightnet_bn(net.Net):
 
         with arg_scope([layers.batch_norm], is_training=is_training):
 
-            block_in = layers.conv2d(images, 64, [7, 7], 1)
+            block_in = layers.conv2d(images, 64, [7, 7], 2)
             block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
             with tf.variable_scope('block1'):
@@ -84,15 +84,14 @@ class lightnet_bn(net.Net):
                     net = layers.conv2d(net, 64, [3, 3], 1)
                     branch_4_0 = layers.conv2d(net, 256, [1, 1], 1)
                 net = tf.concat(axis=3, values=[branch_4_0, block_in])
-
-        block_in = layers.conv2d(net, 1024, [1, 1], 1, normalizer_fn=None)
+                block_in = layers.conv2d(net, 1024, [1, 1], 1)
 
         end_points['end_conv'] = block_in
 
         block_in = layers.dropout(
-            block_in, keep_prob=0.5, is_training=is_training)
+            block_in, keep_prob=self.dropout, is_training=is_training)
 
-        block_in = layers.avg_pool2d(block_in, [14, 14], 1, padding='VALID')
+        block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
         end_points['end_avg_pool'] = block_in
 
