@@ -21,6 +21,7 @@ from gate.preprocessing import preprocessing_inception
 from gate.preprocessing import preprocessing_lenet
 from gate.preprocessing import preprocessing_vgg
 from gate.preprocessing import preprocessing_mnist
+from gate.preprocessing import preprocessing_mnist_gan
 from gate.preprocessing import preprocessing_avec2013
 from gate.preprocessing import preprocessing_avec2014
 from gate.preprocessing import preprocessing_avec2014_flow
@@ -32,6 +33,7 @@ preprocessing_map = {
     'resnet': preprocessing_vgg,
     'vgg': preprocessing_vgg,
     'mnist': preprocessing_mnist,
+    'mnist_gan': preprocessing_mnist_gan,
     'avec2014': preprocessing_avec2014,
     'avec2013': preprocessing_avec2013,
     'avec2014_flow': preprocessing_avec2014_flow

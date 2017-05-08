@@ -10,7 +10,7 @@ e.g.
     # parse data
     values = tfevents.get_image_summary(
         '_output/cifar_train_201703251903', tags, iter_tag)
-    
+
     # transfer data to draw
     info = tfevents.get_info_data(values, tags, iter_tag)
 
@@ -29,16 +29,12 @@ def smooth(data_tup, num=3):
     return data_tup
 
 
-def draw(info, tags, iter_tag):
-
-    y_tag = tags[1]
-
-    plt.plot(info[iter_tag], info[y_tag], 'r', alpha=0.3)
-    plt.plot(info[iter_tag], smooth(info[y_tag]), 'b', alpha=0.6)
-
+def draw(info, tag, iter_tag):
+    plt.plot(info[iter_tag], info[tag], 'r', alpha=0.3)
+    plt.plot(info[iter_tag], smooth(info[tag]), 'b', alpha=0.6)
     plt.grid()
     plt.xlim((0, info[iter_tag][-1]))
     plt.xlabel('iter')
-    plt.ylabel(y_tag)
+    plt.ylabel(tag)
     plt.title('')
     plt.show()
