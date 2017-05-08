@@ -34,7 +34,7 @@ class WGAN():
         self.clip_values_min = -0.01
         self.clip_values_max = 0.01
 
-        self.lr = 0.02
+        self.lr = 0.0002
         self.adam_beta1 = 0.5
 
         # batch normalization param
@@ -212,7 +212,7 @@ def train():
         # -------------------------------------------
         # Initail Data related
         # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset('mnist', 'train')
+        dataset = gate.dataset.factory.get_dataset('cifar10_gan', 'train')
 
         # get data
         images, labels, _ = dataset.loads()
@@ -223,7 +223,7 @@ def train():
         net = WGAN(is_training=True)
         d_optim, g_optim = net.model(images, labels)
 
-        summary = tf.summary.FileWriter('test', graph=tf.get_default_graph())
+        summary = tf.summary.FileWriter('../_output/cifar10', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
@@ -234,12 +234,12 @@ def train():
                 g_loss, _ = sess.run([net.g_loss, g_optim])
                 sess.run(g_optim)
 
-                if i % 10 == 0:
+                if i % 100 == 0:
                     imgs = sess.run(net.sampler)
                     save_images(
-                        imgs, [8, 8], './{}/test_{:02d}_{:04d}.png'.format('test', 1, i))
+                        imgs, [8, 8], '../_output/cifar10/test_{:04d}.png'.format(i))
 
-                if i % 10 == 0:
+                if i % 100 == 0:
                     print(i, d_loss, g_loss)
 
 

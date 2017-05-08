@@ -32,7 +32,7 @@ dataset_map = {
     'avec2014_flow_16f': dataset_avec2014_flow_16f.avec2014_flow_16f,
     'avec2014_flow_16f_succ': dataset_avec2014_flow_16f_succ.avec2014_flow_16f_succ,
     'avec2014_fuse_16f_succ': dataset_avec2014_fuse_16f_succ.avec2014_fuse_16f_succ,
-    'cifar10_gan': dataset_cifar10_gan
+    'cifar10_gan': dataset_cifar10_gan.cifar10_gan
 }
 
 

@@ -9,6 +9,7 @@
 |       | Regression Fuse          | passed        |         |
 |       | Regression Fuse Share    | checking      |         |
 | **GAN**   | Conditional GAN          | passed        |         |
+|       | Wasserstein GAN          | passed        |         |
 | **Audio** | Audio Recognition - LSTM | unrealized |         |
 |----|
 | **Data Loader**   | load_image_from_text                  | passed        | Load Image from list.txt with path and labels.     |
