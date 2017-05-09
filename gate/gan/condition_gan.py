@@ -1,66 +1,66 @@
 # -*- coding: utf-8 -*-
-""" WGAN - updated: 2017/05/06
-    Wasserstein GAN has four different point with DCGAN
-    1) there is no sigmoid output of discriminator
-    2) loss does not use log
-    3) clip the gradients with constant c for discriminator
-    4) use RMSProp or SGD optimizer
+
+""" CGAN - updated: 2017/05/05
+For Mnist:
+HyperParam
+    epoch: 25
+    learning_rate: 0.0002
+    adam_beta1: 0.5
+    train_size: np.inf
+    batch_size: 64
+    input_height: 28
+    input_width: 28
+    output_height: 28
+    output_width: 28
+    y_dim: 10
+    c_dim: 1
+    z_dim: 100
+    gf_dim: 64
+    df_dim: 64
+    gfc_dim: 1024
+    dfc_dim: 1024
+    dataset: mnist
+    input_fname_pattern: *.jpg
 """
 
-import os
-import time
-import math
-import re
-import scipy.misc
-
 import tensorflow as tf
-from tensorflow.contrib import framework
-
-import gate
-
-from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
-
 import numpy as np
-from PIL import Image
 
 
-class WGAN():
+class CGAN():
+    """ Conditional GAN
+        g_ -> generator
+        d_ -> discriminator
+    """
 
-    def __init__(self, is_training=True):
+    def __init__(self, dataset, is_training=True):
+        # phase
         self.is_training = is_training
-
-        # clip with a constant value
-        self.clip_values_min = -0.01
-        self.clip_values_max = 0.01
-
-        self.lr = 0.02
-        self.adam_beta1 = 0.5
 
         # batch normalization param
         self.batch_norm_decay = 0.9
         self.batch_norm_epsilon = 1e-5
 
-        self.batch_size = 64
-        self.sample_num = 64
+        # lr - adam
+        self.lr = dataset.lr.learning_rate
+        self.adam_beta1 = 0.5
 
-        self.input_height = 28
-        self.input_width = 28
-        self.output_height = 28
-        self.output_width = 28
+        # data related
+        self.batch_size = dataset.batch_size
+        self.sample_num = dataset.batch_size
+
+        self.output_height = dataset.output_height
+        self.output_width = dataset.output_width
 
         self.z_dim = 100
-        self.y_dim = 10
-        self.c_dim = 3
-        # self.image_dims = [28, 28, 1]
+        self.y_dim = dataset.num_classes
+        self.c_dim = dataset.channels
 
         self.gf_dim = 64
         self.df_dim = 64
         self.gfc_dim = 1024
         self.dfc_dim = 1024
-
-        sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-        self.sample_z = tf.convert_to_tensor(sample_z, dtype=tf.float32)
 
     # Component area
     def linear(self, x, output_dim):
@@ -103,52 +103,62 @@ class WGAN():
             weights_initializer=tf.random_normal_initializer(stddev=0.02),
             biases_initializer=tf.constant_initializer(0.0))
 
-    def model(self, inputs, labels):
-        self.y = labels
+    def model(self, global_step, inputs, labels, sample_z=None, sample_y=None):
+        """ inputs: (batchsize, h, w, c)
+            labels: (batchsize, 1) [single label]
+            sample_z: (batchsize, z_dim)
+            sample_y: (batchsize, y_dim) [one_hot style]
+        """
+        self.y = tf.to_float(tf.one_hot(labels, depth=self.y_dim, on_value=1))
         self.inputs = inputs
         self.z = tf.random_uniform(
             [self.batch_size, self.z_dim], minval=-1, maxval=1)
 
         # True data
         self.G = self.generator(self.z, self.y, False)
-        self.D_logits = self.discriminator(inputs, self.y, False)
+        self.D, self.D_logits = self.discriminator(inputs, self.y, False)
 
         # Fake data
-        self.sampler = self.generator(self.sample_z, self.y, True, False)
-        self.D_logits_ = self.discriminator(self.G, self.y, True)
+        if sample_z is not None and sample_y is not None:
+            self.sampler = self.generator(sample_z, sample_y, True, False)
+        self.D_, self.D_logits_ = self.discriminator(self.G, self.y, True)
 
-        self.d_loss = tf.reduce_mean(self.D_logits - self.D_logits_)
-        self.g_loss = tf.reduce_mean(self.D_logits_)
+        # True data ->
+        self.d_loss_real = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.ones_like(self.D), logits=self.D_logits))
+        # Fake data ->
+        self.d_loss_fake = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.zeros_like(self.D_), logits=self.D_logits_))
+
+        # generator loss
+        self.g_loss = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.ones_like(self.D_), logits=self.D_logits_))
+        # discriminator loss
+        self.d_loss = self.d_loss_real + self.d_loss_fake
 
         t_vars = tf.trainable_variables()
         self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
         self.g_vars = [var for var in t_vars if 'generator' in var.name]
 
-        # WGAN
-        for var in self.d_vars:
-            var = tf.clip_by_value(
-                var, self.clip_values_min, self.clip_values_max)
-
-        print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-')
         for var in self.d_vars:
             print(var)
         for var in self.g_vars:
             print(var)
 
-        self.saver = tf.train.Saver()
+        # pay attention
+        # there global_step just running once
+        d_optim = tf.train.AdamOptimizer(
+            self.lr, beta1=self.adam_beta1).minimize(
+                loss=self.d_loss, global_step=global_step, var_list=self.d_vars)
+        g_optim = tf.train.AdamOptimizer(
+            self.lr, beta1=self.adam_beta1).minimize(
+                loss=self.g_loss, var_list=self.g_vars)
 
-        d_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
-            self.d_loss, var_list=self.d_vars)
-        g_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
-            self.g_loss, var_list=self.g_vars)
-
-        # d_optim = tf.train.AdamOptimizer(
-        #     self.lr, beta1=self.adam_beta1).minimize(self.d_loss, var_list=self.d_vars)
-        # g_optim = tf.train.AdamOptimizer(
-        #     self.lr, beta1=self.adam_beta1).minimize(self.g_loss,
-        #                                              var_list=self.g_vars)
-
-        return d_optim, g_optim
+        return [d_optim, g_optim]
 
     def discriminator(self, image, y, reuse=False, name='discriminator'):
         with tf.variable_scope(name) as scope:
@@ -173,7 +183,7 @@ class WGAN():
 
             h3 = self.linear(h2, 1)
 
-            return h3
+            return tf.nn.sigmoid(h3), h3
 
     def generator(self, z, y, reuse=False, is_training=True, name='generator'):
         with tf.variable_scope(name) as scope:
@@ -205,61 +215,3 @@ class WGAN():
             h2 = self.conv_cond_concat(h2, yb)
 
             return tf.nn.sigmoid(self.deconv2d(h2, self.c_dim))
-
-
-def train():
-    with tf.Graph().as_default():
-        # -------------------------------------------
-        # Initail Data related
-        # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset('mnist', 'train')
-
-        # get data
-        images, labels, _ = dataset.loads()
-        labels = tf.to_float(tf.one_hot(
-            labels, depth=dataset.num_classes, on_value=1))
-
-        # Net
-        net = WGAN(is_training=True)
-        d_optim, g_optim = net.model(images, labels)
-
-        summary = tf.summary.FileWriter('test', graph=tf.get_default_graph())
-
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            tf.train.start_queue_runners(sess=sess)
-
-            for i in range(100000):
-                d_loss, _ = sess.run([net.d_loss, d_optim])
-                g_loss, _ = sess.run([net.g_loss, g_optim])
-                sess.run(g_optim)
-
-                if i % 10 == 0:
-                    imgs = sess.run(net.sampler)
-                    save_images(
-                        imgs, [8, 8], './{}/test_{:02d}_{:04d}.png'.format('test', 1, i))
-
-                if i % 10 == 0:
-                    print(i, d_loss, g_loss)
-
-
-def save_images(images, size, image_path):
-    return imsave(inverse_transform(images), size, image_path)
-
-
-def inverse_transform(images):
-    return (images + 1.) / 2.
-
-
-def imsave(images, size, path):
-    return scipy.misc.imsave(path, merge(images, size))
-
-
-def merge(images, size):
-    h, w = images.shape[1], images.shape[2]
-    img = np.zeros((h * size[0], w * size[1], 3))
-    for idx, image in enumerate(images):
-        i = idx % size[1]
-        j = idx // size[1]
-        img[j * h:j * h + h, i * w:i * w + w, :] = image
-    return img

@@ -14,6 +14,7 @@ from gate.dataset import dataset_avec2014_flow_16f
 from gate.dataset import dataset_avec2014_fuse_16f_succ
 from gate.dataset import dataset_avec2014_flow_16f_succ
 from gate.dataset import dataset_mnist
+from gate.dataset import dataset_mnist_gan
 from gate.dataset import dataset_imagenet
 
 from gate.dataset import dataset_cifar10_gan
@@ -32,7 +33,8 @@ dataset_map = {
     'avec2014_flow_16f': dataset_avec2014_flow_16f.avec2014_flow_16f,
     'avec2014_flow_16f_succ': dataset_avec2014_flow_16f_succ.avec2014_flow_16f_succ,
     'avec2014_fuse_16f_succ': dataset_avec2014_fuse_16f_succ.avec2014_fuse_16f_succ,
-    'cifar10_gan': dataset_cifar10_gan
+    'cifar10_gan': dataset_cifar10_gan.cifar10_gan,
+    'mnist_gan': dataset_mnist_gan.mnist_gan
 }
 
 
