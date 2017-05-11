@@ -52,7 +52,7 @@ def preprocess_for_eval(image, output_height, output_width):
 
 def preprocess_image(image, output_height, output_width, is_training=False, channels=3):
     """ Preprocesses the given image. """
-    with tf.name_scope('avec2014'):
+    with tf.name_scope('avec2013'):
         if is_training:
             with tf.name_scope('train'):
                 return preprocess_for_train(image, output_height, output_width, channels)

@@ -2,7 +2,6 @@
 
 import tensorflow as tf
 from tensorflow.contrib import layers
-import numpy as np
 
 
 class WGAN():

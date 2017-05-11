@@ -15,7 +15,7 @@ import tensorflow as tf
 from tensorflow.contrib import framework
 
 import gate
-import issue.gan.utils as utils
+import issue.image.utils as utils
 
 
 def train(data_name, net_name, chkp_path=None):

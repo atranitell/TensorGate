@@ -30,7 +30,7 @@ import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 import issue.image.regression_share as img_regression_share
 
-import issue.gan.gan as gan
+import issue.image.gan as gan
 
 
 def raise_invalid_input(*config):
