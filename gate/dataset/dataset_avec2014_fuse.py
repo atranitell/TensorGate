@@ -31,7 +31,7 @@ class avec2014_fuse(database.Database):
         self.num_classes = 63
         self.preprocessing_method = None
         self.preprocessing_method1 = 'avec2014'
-        self.preprocessing_method2 = 'avec2014'
+        self.preprocessing_method2 = 'avec2014_flow'
 
         if data_type == 'train':
             self._train()
@@ -53,7 +53,7 @@ class avec2014_fuse(database.Database):
 
     def _test(self):
         self.test_file_kind = 'img'
-        self.batch_size = 32
+        self.batch_size = 1
         self.total_num = 17727
         self.name = self.name + '_test'
         self.reader_thread = 32
@@ -71,11 +71,16 @@ class avec2014_fuse(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_rmsprop(
+            rmsprop_decay=0.9,
+            rmsprop_momentum=0.0,
+            rmsprop_epsilon=1e-10
+        )
+        # self.opt.set_adam(
+        #     adam_beta1=0.9,
+        #     adam_beta2=0.999,
+        #     adam_epsilon=1e-8)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.00001)

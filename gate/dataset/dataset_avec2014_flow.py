@@ -29,7 +29,7 @@ class avec2014_flow(database.Database):
         self.min_queue_num = 128
         self.device = '/gpu:0'
         self.num_classes = 63
-        self.preprocessing_method = 'avec2014'
+        self.preprocessing_method = 'avec2014_flow'
 
         if data_type == 'train':
             self._train()
@@ -70,15 +70,15 @@ class avec2014_flow(database.Database):
         # optimizer
         self.opt = data_param.optimizer()
         # self.opt.set_sgd()
-        self.opt.set_rmsprop(
-            rmsprop_decay=0.9,
-            rmsprop_momentum=0.0,
-            rmsprop_epsilon=1e-10)
-        # self.opt.set_adam(
-        #     adam_beta1=0.9,
-        #     adam_beta2=0.999,
-        #     adam_epsilon=1e-8)
+        # self.opt.set_rmsprop(
+        #     rmsprop_decay=0.9,
+        #     rmsprop_momentum=0.0,
+        #     rmsprop_epsilon=1e-10)
+        self.opt.set_adam(
+            adam_beta1=0.9,
+            adam_beta2=0.999,
+            adam_epsilon=1e-8)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.0001)
