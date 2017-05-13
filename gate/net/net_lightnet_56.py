@@ -4,7 +4,7 @@ from tensorflow.contrib import layers
 from gate.net import net
 
 
-class lightnet_64(net.Net):
+class lightnet_56(net.Net):
 
     def __init__(self):
         self.weight_decay = 0.0005

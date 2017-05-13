@@ -109,6 +109,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             def __init__(self):
                 self.mean_loss, self.duration = 0, 0
+                self.b_iter, self.b_thr, self.b_acc = 0, 0, 0
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -146,10 +147,14 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                         data_name, net_name, threshold, dataset.log.train_dir)
                     test_duration = time.time() - test_start_time
 
-                    # gate.utils.show.TEST(
-                    #     'Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
-                    #     (test_duration, self.best_mae, self.best_iter_mae,
-                    #      self.best_rmse, self.best_iter_rmse))
+                    if test_err > self.b_acc:
+                        self.b_acc = test_err
+                        self.b_iter = cur_iter
+                        self.b_thr = threshold
+
+                    gate.utils.show.TEST(
+                        'Test Time: %.2fs, best ACC: %.4f in %d with threshold %.4f.' %
+                        (test_duration, self.b_acc, self.b_iter, self.b_thr))
 
         # record running information
         running_hook = Running_Hook()

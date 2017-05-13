@@ -30,8 +30,8 @@ class kinface2(database.Database):
         self.device = '/gpu:0'
         self.num_classes = 10
         self.preprocessing_method = None
-        self.preprocessing_method1 = 'avec2014'
-        self.preprocessing_method2 = 'avec2014'
+        self.preprocessing_method1 = 'kinface'
+        self.preprocessing_method2 = 'kinface'
 
         if data_type == 'train':
             self._train()

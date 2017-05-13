@@ -26,6 +26,7 @@ from gate.preprocessing import preprocessing_avec2013
 from gate.preprocessing import preprocessing_avec2014
 from gate.preprocessing import preprocessing_avec2014_flow
 from gate.preprocessing import preprocessing_celeba_gan
+from gate.preprocessing import preprocessing_kinface
 
 
 preprocessing_map = {
@@ -39,7 +40,8 @@ preprocessing_map = {
     'avec2014': preprocessing_avec2014,
     'avec2013': preprocessing_avec2013,
     'avec2014_flow': preprocessing_avec2014_flow,
-    'celeba_gan': preprocessing_celeba_gan
+    'celeba_gan': preprocessing_celeba_gan,
+    'kinface': preprocessing_kinface
 }
 
 
