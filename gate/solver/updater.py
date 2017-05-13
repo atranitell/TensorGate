@@ -48,24 +48,28 @@ class Updater():
             return self.variables_to_train
         if exclusions is not None:
             variables_to_restore = []
+            variables_to_train = []
             for var in tf.global_variables():
                 excluded = False
                 for exclusion in exclusions:
                     if var.op.name.startswith(exclusion):
                         excluded = True
+                        variables_to_train.append(var)
                         break
                 if not excluded:
                     variables_to_restore.append(var)
-            variables_to_train = variables_to_restore
         else:
             variables_to_train = tf.trainable_variables()
-        return variables_to_train
+            variables_to_restore = tf.trainable_variables()
+
+        # train and restore is exclusively.
+        return variables_to_train, variables_to_restore
 
     def get_variables_saver(self):
         if self.saver is not None:
             return self.saver
-        utils.check.raise_none_param(self.variables_to_train)
-        return tf.train.Saver(var_list=self.variables_to_train,
+        utils.check.raise_none_param(self.variables_to_restore)
+        return tf.train.Saver(var_list=self.variables_to_restore,
                               name='restore', allow_empty=True)
 
     def init_default_updater(self, dataset, global_step,
@@ -75,7 +79,7 @@ class Updater():
         self.learning_rate = self.get_learning_rate(dataset, global_step)
         self.optimizer = self.get_optimizer(dataset)
 
-        self.variables_to_train = self.get_trainable_list(exclusions)
+        self.variables_to_train, self.variables_to_restore = self.get_trainable_list(exclusions)
         self.saver = self.get_variables_saver()
 
         self.grads = self.get_gradients(losses)
@@ -95,7 +99,7 @@ class Updater():
                 for every variables in according to different lr.
         """
         # acquire trainable list
-        self.variables_to_train = self.get_trainable_list(exclusions)
+        self.variables_to_train, self.variables_to_restore = self.get_trainable_list(exclusions)
         self.saver = self.get_variables_saver()
 
         # setting layerwise coff
@@ -161,8 +165,10 @@ class Updater():
                 if grad_summary:
                     tf.summary.scalar(var.op.name + '_mean',
                                       tf.reduce_mean(grad))
-                    tf.summary.scalar(var.op.name + '_max', tf.reduce_max(grad))
-                    tf.summary.scalar(var.op.name + '_sum', tf.reduce_sum(grad))
+                    tf.summary.scalar(var.op.name + '_max',
+                                      tf.reduce_max(grad))
+                    tf.summary.scalar(var.op.name + '_sum',
+                                      tf.reduce_sum(grad))
 
                 if grad_hist:
                     tf.summary.histogram(var.op.name + '/gradients', grad)
