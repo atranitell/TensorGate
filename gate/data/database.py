@@ -19,6 +19,9 @@ class Database():
                       % (self.total_num, self.batch_size,
                          self.output_height, self.output_width, self.channels))
             if self.preprocessing_method is not None:
-                show.INFO('preprocessing method: %s' % self.preprocessing_method)
-            show.class_members(self.opt)
-            show.class_members(self.lr)
+                show.INFO('preprocessing method: %s' %
+                          self.preprocessing_method)
+            if self.opt is not None:
+                show.class_members(self.opt)
+            if self.lr is not None:
+                show.class_members(self.lr)

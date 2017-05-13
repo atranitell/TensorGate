@@ -1,80 +1,48 @@
 # -*- coding: utf-8 -*-
-""" CGAN - updated: 2017/05/05
-
-For Mnist:
-g_ -> generator
-d_ -> discriminator
-HyperParam
-    epoch: 25
-    learning_rate: 0.0002
-    adam_beta1: 0.5
-    train_size: np.inf
-    batch_size: 64
-    input_height: 28
-    input_width: 28
-    output_height: 28
-    output_width: 28
-    y_dim: 10
-    c_dim: 1
-    z_dim: 100
-    gf_dim: 64
-    df_dim: 64
-    gfc_dim: 1024
-    dfc_dim: 1024
-    dataset: mnist
-    input_fname_pattern: *.jpg
-"""
-
-import os
-import time
-import math
-import re
-import scipy.misc
 
 import tensorflow as tf
-from tensorflow.contrib import framework
-
-import gate
-
-from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
 
-import numpy as np
-from PIL import Image
 
+class WGAN():
+    """ WGAN - updated: 2017/05/06
+        Wasserstein GAN has four different point with DCGAN
+        1) there is no sigmoid output of discriminator
+        2) loss does not use log
+        3) clip the gradients with constant c for discriminator
+        4) use RMSProp or SGD optimizer
+    """
 
-class CGAN():
+    def __init__(self, dataset, is_training=True):
+        # clip with a constant value
+        self.clip_values_min = -0.01
+        self.clip_values_max = 0.01
 
-    def __init__(self, is_training=True):
+        # phase
         self.is_training = is_training
-
-        self.lr = 0.0002
-        self.adam_beta1 = 0.5
 
         # batch normalization param
         self.batch_norm_decay = 0.9
         self.batch_norm_epsilon = 1e-5
 
-        self.batch_size = 64
-        self.sample_num = 64
+        # lr - rmsprop
+        self.lr = dataset.lr.learning_rate
 
-        self.input_height = 28
-        self.input_width = 28
-        self.output_height = 28
-        self.output_width = 28
+        # data related
+        self.batch_size = dataset.batch_size
+        self.sample_num = dataset.batch_size
+
+        self.output_height = dataset.output_height
+        self.output_width = dataset.output_width
 
         self.z_dim = 100
-        self.y_dim = 10
-        self.c_dim = 3
-        # self.image_dims = [28, 28, 1]
+        self.y_dim = dataset.num_classes
+        self.c_dim = dataset.channels
 
         self.gf_dim = 64
         self.df_dim = 64
         self.gfc_dim = 1024
         self.dfc_dim = 1024
-
-        sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-        self.sample_z = tf.convert_to_tensor(sample_z, dtype=tf.float32)
 
     # Component area
     def linear(self, x, output_dim):
@@ -117,52 +85,45 @@ class CGAN():
             weights_initializer=tf.random_normal_initializer(stddev=0.02),
             biases_initializer=tf.constant_initializer(0.0))
 
-    def model(self, inputs, labels):
-        self.y = labels
+    def model(self, global_step, inputs, labels, sample_z=None, sample_y=None):
+        self.y = tf.to_float(tf.one_hot(labels, depth=self.y_dim, on_value=1))
         self.inputs = inputs
         self.z = tf.random_uniform(
             [self.batch_size, self.z_dim], minval=-1, maxval=1)
 
         # True data
         self.G = self.generator(self.z, self.y, False)
-        self.D, self.D_logits = self.discriminator(inputs, self.y, False)
+        self.D_logits = self.discriminator(inputs, self.y, False)
 
         # Fake data
-        self.sampler = self.generator(self.sample_z, self.y, True, False)
-        self.D_, self.D_logits_ = self.discriminator(self.G, self.y, True)
+        if sample_z is not None and sample_y is not None:
+            self.sampler = self.generator(sample_z, sample_y, True, False)
+        self.D_logits_ = self.discriminator(self.G, self.y, True)
 
-        # True data ->
-        self.d_loss_real = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.ones_like(self.D), logits=self.D_logits))
-        # Fake data ->
-        self.d_loss_fake = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.zeros_like(self.D_), logits=self.D_logits_))
-
-        # generator loss
-        self.g_loss = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(
-                labels=tf.ones_like(self.D_), logits=self.D_logits_))
-        # discriminator loss
-        self.d_loss = self.d_loss_real + self.d_loss_fake
+        self.d_loss = tf.reduce_mean(self.D_logits - self.D_logits_)
+        self.g_loss = tf.reduce_mean(self.D_logits_)
 
         t_vars = tf.trainable_variables()
         self.d_vars = [var for var in t_vars if 'discriminator' in var.name]
         self.g_vars = [var for var in t_vars if 'generator' in var.name]
 
-        print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#')
+        # WGAN
+        for var in self.d_vars:
+            var = tf.clip_by_value(
+                var, self.clip_values_min, self.clip_values_max)
+
+        print('-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-')
         for var in self.d_vars:
             print(var)
         for var in self.g_vars:
             print(var)
 
-        self.saver = tf.train.Saver()
-
-        d_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(self.d_loss, var_list=self.d_vars)
-        g_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(self.g_loss, var_list=self.g_vars)
+        # pay attention
+        # there global_step just running once
+        d_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            global_step=global_step, loss=self.d_loss, var_list=self.d_vars)
+        g_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            loss=self.g_loss, var_list=self.g_vars)
 
         return d_optim, g_optim
 
@@ -189,7 +150,7 @@ class CGAN():
 
             h3 = self.linear(h2, 1)
 
-            return tf.nn.sigmoid(h3), h3
+            return h3
 
     def generator(self, z, y, reuse=False, is_training=True, name='generator'):
         with tf.variable_scope(name) as scope:
@@ -221,6 +182,7 @@ class CGAN():
             h2 = self.conv_cond_concat(h2, yb)
 
             return tf.nn.sigmoid(self.deconv2d(h2, self.c_dim))
+<<<<<<< HEAD:issue/gan/wasserstein_gan.py
 
 
 def train():
@@ -228,7 +190,7 @@ def train():
         # -------------------------------------------
         # Initail Data related
         # -------------------------------------------
-        dataset = gate.dataset.factory.get_dataset('cifar10', 'train')
+        dataset = gate.dataset.factory.get_dataset('cifar10_gan', 'train')
 
         # get data
         images, labels, _ = dataset.loads()
@@ -236,29 +198,26 @@ def train():
             labels, depth=dataset.num_classes, on_value=1))
 
         # Net
-        net = CGAN(is_training=True)
+        net = WGAN(is_training=True)
         d_optim, g_optim = net.model(images, labels)
 
-        summary = tf.summary.FileWriter('test', graph=tf.get_default_graph())
+        summary = tf.summary.FileWriter('../_output/cifar10', graph=tf.get_default_graph())
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             tf.train.start_queue_runners(sess=sess)
 
             for i in range(100000):
-                # z, d_loss, _ = sess.run([net.z, net.d_loss, d_optim])
-                # imgs, g_loss, _ = sess.run([net.G, net.g_loss, g_optim])
-                # sess.run(g_optim)
                 d_loss, _ = sess.run([net.d_loss, d_optim])
                 g_loss, _ = sess.run([net.g_loss, g_optim])
                 sess.run(g_optim)
 
-                if i % 10 == 0:
+                if i % 100 == 0:
                     imgs = sess.run(net.sampler)
                     save_images(
-                        imgs, [8, 8], './{}/test_{:02d}_{:04d}.png'.format('test', 1, i))
+                        imgs, [8, 8], '../_output/cifar10/test_{:04d}.png'.format(i))
 
-                if i % 10 == 0:
+                if i % 100 == 0:
                     print(i, d_loss, g_loss)
 
 
@@ -282,3 +241,5 @@ def merge(images, size):
         j = idx // size[1]
         img[j * h:j * h + h, i * w:i * w + w, :] = image
     return img
+=======
+>>>>>>> 03f8fac3a42c0763d67fe92c8fbed14af70d8673:gate/gan/wassertein_gan.py

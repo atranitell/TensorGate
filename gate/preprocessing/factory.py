@@ -25,6 +25,8 @@ from gate.preprocessing import preprocessing_mnist_gan
 from gate.preprocessing import preprocessing_avec2013
 from gate.preprocessing import preprocessing_avec2014
 from gate.preprocessing import preprocessing_avec2014_flow
+from gate.preprocessing import preprocessing_celeba_gan
+
 
 preprocessing_map = {
     'cifarnet': preprocessing_cifarnet,
@@ -36,7 +38,8 @@ preprocessing_map = {
     'mnist_gan': preprocessing_mnist_gan,
     'avec2014': preprocessing_avec2014,
     'avec2013': preprocessing_avec2013,
-    'avec2014_flow': preprocessing_avec2014_flow
+    'avec2014_flow': preprocessing_avec2014_flow,
+    'celeba_gan': preprocessing_celeba_gan
 }
 
 

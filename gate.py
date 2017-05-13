@@ -30,8 +30,7 @@ import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 import issue.image.regression_share as img_regression_share
 
-import issue.gan.condition_gan as cgan
-import issue.gan.wasserstein_gan as wgan
+import issue.image.gan as gan
 
 
 def raise_invalid_input(*config):
@@ -164,24 +163,21 @@ def interface(config):
     if config.target == 'regression_share':
         regression_share_for_image(config)
 
-    if config.target == 'cgan':
-        cgan.train()
-
-    if config.target == 'wgan':
-        wgan.train()
+    if config.target.find('gan') >= 0:
+        gan.train(config.dataset, config.target, config.model)
 
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('-target', type=str, default='regression', dest='target',
+    PARSER.add_argument('-target', type=str, default=None, dest='target',
                         help='regression/classification/regression_fuse')
-    PARSER.add_argument('-task', type=str, default='train', dest='task',
+    PARSER.add_argument('-task', type=str, default=None, dest='task',
                         help='train/test/finetune/feature')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder: automatically use newest model')
-    PARSER.add_argument('-net', type=str, default='lightnet_bn', dest='net',
+    PARSER.add_argument('-net', type=str, default=None, dest='net',
                         help='lenet/cifarnet')
-    PARSER.add_argument('-dataset', type=str, default='avec2014', dest='dataset',
+    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
                         help='avec2014/cifar10')
     ARGS, _ = PARSER.parse_known_args()
     interface(ARGS)

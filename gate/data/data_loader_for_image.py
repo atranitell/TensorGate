@@ -49,8 +49,56 @@ def load_image_from_text(
         batch_size, min_queue_num, reader_thread)
 
 
+def load_image_from_text_multi_label(
+        data_path, shuffle, data_type, num_classes,
+        frames, channels, preprocessing_method,
+        raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread):
+    """ load image with multi-label data
+    Format:
+        path label1 label2, label3, ..., labeln
+        path-to-fold/img0 0 1 0 0 0 1...
+        path-to-fold/img1 0 0 1 0 0 1...
+    """
+    type_label = (str, )
+    type_path = (True, )
+    for idx_type in range(num_classes):
+        type_label += (int, )
+        type_path += (False, )
+    res = data_entry.parse_from_text(data_path, type_label, type_path)
+    image_list = res[0]
+    
+    # exchange channels
+    label_list = []
+    for idx_pp in range(len(res[0])):
+        label = []
+        for idx_label in range(num_classes):
+            label.append(res[idx_label+1][idx_pp])
+        label_list.append(label)
+
+    # construct a fifo queue
+    image_list = tf.convert_to_tensor(image_list, dtype=tf.string)
+    label_list = tf.convert_to_tensor(label_list, dtype=tf.int32)
+    imgpath, label = tf.train.slice_input_producer(
+        [image_list, label_list], shuffle=shuffle)
+
+    # preprocessing
+    image_raw = tf.read_file(imgpath)
+    image = tf.image.decode_image(image_raw, channels=3)
+    image = tf.reshape(image, [raw_height, raw_width, channels])
+
+    # image, label, filename
+    image = preprocessing.factory.get_preprocessing(
+        preprocessing_method, data_type, image,
+        output_height, output_width)
+
+    return data_prefetch.generate_batch_multi_label(
+        image, label, imgpath, shuffle, num_classes,
+        batch_size, min_queue_num, reader_thread)
+
+
 def load_pair_image_from_text(
-        data_path, shuffle, data_type, frames, channels, 
+        data_path, shuffle, data_type, frames, channels,
         preprocessing_method1, preprocessing_method2,
         raw_height, raw_width, output_height, output_width,
         min_queue_num, batch_size, reader_thread):
