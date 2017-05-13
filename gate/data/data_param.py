@@ -121,6 +121,8 @@ class log():
         # it will be determined by command inputs.
         elif data_type == 'test':
             self.test_dir = None
+        elif data_type == 'val':
+            self.val_dir = None
         else:
             raise ValueError('Unkonwn data type.')
 
