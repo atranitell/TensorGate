@@ -15,7 +15,7 @@ from gate.net import net_vgg_gap
 from gate.net import net_inception_resnet_v2
 from gate.net import net_lightnet
 from gate.net import net_lightnet_bn
-from gate.net import net_lightnet_64
+from gate.net import net_lightnet_56
 
 networks_map = {
     'cifarnet': net_cifarnet.cifarnet(),
@@ -40,7 +40,7 @@ networks_map = {
     'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2(),
     'lightnet': net_lightnet.lightnet(),
     'lightnet_bn': net_lightnet_bn.lightnet_bn(),
-    'lightnet_64': net_lightnet_64.lightnet_64()
+    'lightnet_56': net_lightnet_56.lightnet_56()
 }
 
 

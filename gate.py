@@ -88,7 +88,7 @@ def regression_fuse_for_image(config):
     elif config.task == 'finetune':
         raise_invalid_input(config.dataset, config.net, config.model)
         img_regression_fuse.train(config.dataset, config.net, config.model,
-                                  exclusions=['cifarnet/fc3', 'cifarnet/fc4'])
+                                  exclusions=['fully_connected', 'logits'])
     else:
         raise ValueError('Error task type: %s' % config.task)
 

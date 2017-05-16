@@ -17,30 +17,37 @@ from issue.image import kinface_utils
 def get_loss(end_points_1, logits_1, end_points_2, logits_2,
              labels, num_classes, batch_size):
     with tf.name_scope('loss'):
-        x = end_points_1['fc4']
-        x = x / tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
-        y = end_points_2['fc4']
-        y = y / tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
+        labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
 
-        _labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
-        loss1 = tf.losses.cosine_distance(
-            labels=x, predictions=y, dim=1,
-            weights=_labels, scope='cosine_loss')
-        losses = loss1
+        x = end_points_1['kinface']
+        norm_x = tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
+        y = end_points_2['kinface']
+        norm_y = tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
+
+        x = tf.expand_dims(x, 2)
+        y = tf.expand_dims(y, 2)
+        loss1 = tf.matmul(x[-1], y[-1], transpose_a=True) / (norm_x * norm_y)
+
+        loss1 = tf.reduce_mean(loss1 * labels)
+        losses = -loss1 + 1.0
         return losses
 
 
 def get_error(end_points_1, logits_1, end_points_2, logits_2,
               labels, num_classes, batch_size):
+    """ Input batchsize have to be 1.
+    """
     with tf.name_scope('loss'):
-        x = end_points_1['fc4']
-        x = x / tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
-        y = end_points_2['fc4']
-        y = y / tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
-        loss1 = tf.losses.cosine_distance(
-            labels=x, predictions=y, dim=1,
-            scope='cosine_predict')
-        losses = loss1
+        labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
+
+        x = end_points_1['kinface']
+        norm_x = tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
+        y = end_points_2['kinface']
+        norm_y = tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
+
+        loss1 = tf.matmul(x, y, transpose_b=True) / (norm_x * norm_y)
+        loss1 = tf.reduce_mean(loss1)
+        losses = -loss1 + 1.0
         return losses
 
 
@@ -109,6 +116,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             def __init__(self):
                 self.mean_loss, self.duration = 0, 0
+                self.b_iter, self.b_thr, self.b_acc = 0, 0, 0
 
             def before_run(self, run_context):
                 self._start_time = time.time()
@@ -146,10 +154,14 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
                         data_name, net_name, threshold, dataset.log.train_dir)
                     test_duration = time.time() - test_start_time
 
-                    # gate.utils.show.TEST(
-                    #     'Test Time: %fs, best MAE: %f in %d, best RMSE: %f in %d.' %
-                    #     (test_duration, self.best_mae, self.best_iter_mae,
-                    #      self.best_rmse, self.best_iter_rmse))
+                    if test_err > self.b_acc:
+                        self.b_acc = test_err
+                        self.b_iter = cur_iter
+                        self.b_thr = threshold
+
+                    gate.utils.show.TEST(
+                        'Test Time: %.2fs, best ACC: %.4f in %d with threshold %.4f.' %
+                        (test_duration, self.b_acc, self.b_iter, self.b_thr))
 
         # record running information
         running_hook = Running_Hook()
@@ -158,8 +170,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # Start to train
         # -------------------------------------------
         with tf.train.MonitoredTrainingSession(
-                hooks=[chkp_hook, summary_hook, running_hook,
-                       tf.train.NanTensorHook(losses)],
+                hooks=[chkp_hook, summary_hook, running_hook],
                 config=tf.ConfigProto(allow_soft_placement=True),
                 checkpoint_dir=chkp_path,
                 save_checkpoint_secs=None,

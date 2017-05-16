@@ -4,7 +4,7 @@ from tensorflow.contrib import layers
 from gate.net import net
 
 
-class lightnet_64(net.Net):
+class lightnet_56(net.Net):
 
     def __init__(self):
         self.weight_decay = 0.0005
@@ -58,8 +58,7 @@ class lightnet_64(net.Net):
 
             block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
-            end_points['fc4'] = layers.flatten(block_in)
-
+            end_points['kinface'] = layers.flatten(block_in)
             end_points['end_avg_pool'] = block_in
 
             logits = layers.fully_connected(
