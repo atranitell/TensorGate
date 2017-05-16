@@ -58,8 +58,7 @@ class lightnet_56(net.Net):
 
             block_in = layers.avg_pool2d(block_in, [7, 7], 1, padding='VALID')
 
-            end_points['fc4'] = layers.flatten(block_in)
-
+            end_points['kinface'] = layers.flatten(block_in)
             end_points['end_avg_pool'] = block_in
 
             logits = layers.fully_connected(

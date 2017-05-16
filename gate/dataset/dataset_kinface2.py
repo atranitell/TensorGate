@@ -28,7 +28,7 @@ class kinface2(database.Database):
         self.output_width = 56
         self.min_queue_num = 256
         self.device = '/gpu:0'
-        self.num_classes = 10
+        self.num_classes = 2
         self.preprocessing_method = None
         self.preprocessing_method1 = 'kinface'
         self.preprocessing_method2 = 'kinface'
@@ -45,8 +45,8 @@ class kinface2(database.Database):
         # log
         self.log = data_param.log(self.data_type, self.name)
         self.log.set_log(
-            print_frequency=10,
-            save_summaries_iter=10,
+            print_frequency=20,
+            save_summaries_iter=20,
             save_model_iter=200,
             test_interval=200)
 
@@ -59,7 +59,7 @@ class kinface2(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/fd_val_2.txt'
+        self.data_path = '../_datasets/kinface2/fd_val_1.txt'
 
     def _val(self):
         # basic param
@@ -68,24 +68,30 @@ class kinface2(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
+        self.data_path = '../_datasets/kinface2/fd_train_1.txt'
 
     def _train(self):
         # basic param
-        self.batch_size = 32
-        self.total_num = 400
+        self.batch_size = 1
+        self.total_num = 40200
         self.name = self.name + '_train'
-        self.reader_thread = 32
+        self.reader_thread = 4
         self.shuffle = True
-        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
+        self.data_path = '../_datasets/kinface2/fd_train_1_ex.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        # self.opt.set_adam(
+        #     adam_beta1=0.9,
+        #     adam_beta2=0.999,
+        #     adam_epsilon=1e-8)
+        self.opt.set_sgd()
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.0001)
+        self.lr.set_exponential(
+            learning_rate=0.01,
+            num_epochs_per_decay=100,
+            learning_rate_decay_factor=0.9
+        )
+        # self.lr.set_fixed(learning_rate=0.01)
