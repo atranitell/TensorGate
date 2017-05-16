@@ -24,8 +24,8 @@ class kinface2(database.Database):
         self.frames = 1
         self.raw_height = 64
         self.raw_width = 64
-        self.output_height = 56
-        self.output_width = 56
+        self.output_height = 28
+        self.output_width = 28
         self.min_queue_num = 256
         self.device = '/gpu:0'
         self.num_classes = 2
@@ -59,7 +59,7 @@ class kinface2(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/fd_val_1.txt'
+        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
 
     def _val(self):
         # basic param
@@ -68,16 +68,16 @@ class kinface2(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/fd_train_1.txt'
+        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
 
     def _train(self):
         # basic param
-        self.batch_size = 1
-        self.total_num = 40200
+        self.batch_size = 32
+        self.total_num = 400
         self.name = self.name + '_train'
         self.reader_thread = 4
         self.shuffle = True
-        self.data_path = '../_datasets/kinface2/fd_train_1_ex.txt'
+        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -90,7 +90,7 @@ class kinface2(database.Database):
         # lr
         self.lr = data_param.learning_rate()
         self.lr.set_exponential(
-            learning_rate=0.01,
+            learning_rate=0.1,
             num_epochs_per_decay=100,
             learning_rate_decay_factor=0.9
         )

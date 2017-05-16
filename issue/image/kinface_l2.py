@@ -19,16 +19,16 @@ def get_loss(end_points_1, logits_1, end_points_2, logits_2,
              labels, num_classes, batch_size):
     with tf.name_scope('loss'):
         x = end_points_1['fc4']
-        x = x / tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
+        # x = x / tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
         y = end_points_2['fc4']
-        y = y / tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
+        # y = y / tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
 
         net = tf.concat([x, y], axis=1)
         logits = layers.fully_connected(
             net, num_classes,
             biases_initializer=tf.zeros_initializer(),
             weights_initializer=tf.truncated_normal_initializer(
-                stddev=1.0 / 1024),
+                stddev=1.0 / 192 * 2),
             weights_regularizer=None,
             activation_fn=None,
             scope='logits')
@@ -72,9 +72,9 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         with tf.device(dataset.device):
             global_step = framework.create_global_step()
             logits_1, end_points_1 = gate.net.factory.get_network(
-                net_name, 'train', images_1, 1, '1')
+                net_name, 'train', images_1, dataset.num_classes, '1')
             logits_2, end_points_2 = gate.net.factory.get_network(
-                net_name, 'train', images_2, 1, '2')
+                net_name, 'train', images_2, dataset.num_classes, '2')
 
         losses, logits = get_loss(
             end_points_1, logits_1, end_points_2, logits_2,
@@ -94,8 +94,8 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         with tf.device(dataset.device):
             updater = gate.solver.Updater()
-            updater.init_layerwise_updater(
-                dataset, global_step, losses, 'net2', 1.0, exclusions)
+            updater.init_default_updater(
+                dataset, global_step, losses, exclusions)
 
             learning_rate = updater.get_learning_rate()
             restore_saver = updater.get_variables_saver()
@@ -149,9 +149,9 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
-                    test_start_time = time.time()
-                    test_err = test(data_name, net_name, dataset.log.train_dir)
-                    test_duration = time.time() - test_start_time
+                    # test_start_time = time.time()
+                    test(data_name, net_name, dataset.log.train_dir, summary_test)
+                    # test_duration = time.time() - test_start_time
 
         # record running information
         running_hook = Running_Hook()
@@ -159,6 +159,7 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
         # -------------------------------------------
         # Start to train
         # -------------------------------------------
+        _iter = 0
         with tf.train.MonitoredTrainingSession(
                 hooks=[chkp_hook, summary_hook, running_hook,
                        tf.train.NanTensorHook(losses)],
@@ -172,6 +173,9 @@ def train(data_name, net_name, chkp_path=None, exclusions=None):
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
+                # _iter += 1
+                # if _iter % 20 == 0:
+                #     print(mon_sess.run([logits, labels, predictions]))
 
 
 def test(name, net_name, chkp_path=None, summary_writer=None):
@@ -198,9 +202,9 @@ def test(name, net_name, chkp_path=None, summary_writer=None):
         # -------------------------------------------
         with tf.device(dataset.device):
             logits_1, end_points_1 = gate.net.factory.get_network(
-                net_name, 'train', images_1, 1, '1')
+                net_name, 'train', images_1, dataset.num_classes, '1')
             logits_2, end_points_2 = gate.net.factory.get_network(
-                net_name, 'train', images_2, 1, '2')
+                net_name, 'train', images_2, dataset.num_classes, '2')
 
         losses, logits = get_loss(
             end_points_1, logits_1, end_points_2, logits_2,

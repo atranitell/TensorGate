@@ -54,10 +54,12 @@ def check_network(name, data_type):
         return False
 
 
-def get_network(name, data_type, images, num_classes, name_scope=''):
+def get_network(name, data_type, images, num_classes, name_scope='', reuse=False):
     """ get specified network """
     is_training = check_network(name, data_type)
     net = networks_map[name]
-    with tf.variable_scope('net' + name_scope):
+    with tf.variable_scope('net' + name_scope) as scope:
+        if reuse:
+            scope.reuse_variables()
         with arg_scope(net.arg_scope()):
             return net.model(images, num_classes, is_training)
