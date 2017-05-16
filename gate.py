@@ -29,7 +29,9 @@ import issue.image.regression as img_regression
 import issue.image.regression_fuse as img_regression_fuse
 import issue.image.classification as img_classification
 import issue.image.regression_share as img_regression_share
+
 import issue.image.kinface as img_kinface
+import issue.image.kinface_l2 as img_kinface_l2
 
 import issue.image.gan as gan
 
@@ -169,6 +171,9 @@ def interface(config):
 
     if config.target == 'kinface':
         img_kinface.train(config.dataset, config.net, config.model)
+
+    if config.target == 'kinface_l2':
+        img_kinface_l2.train(config.dataset, config.net, config.model)
 
 
 if __name__ == '__main__':
