@@ -2,9 +2,9 @@
 def get_result(res, val):
     correct = 0.0
     for i in range(len(res)):
-        if res[i][2] == 1 and res[i][3] < val:
+        if res[i][2] == 1 and res[i][3] >= val:
             correct += 1
-        if res[i][2] == -1 and res[i][3] >= val:
+        if res[i][2] == 0 and res[i][3] < val:
             correct += 1
     return correct / len(res)
 
@@ -19,7 +19,7 @@ def get_best_threshold(res):
         if _cur_err > _best_err:
             _best_err = _cur_err
             _best_val = _cur_val
-    # print('Best Threshold:%.4f, Best Error:%.4f' % (_best_val, _best_err))
+    print('Best Threshold:%.4f, Best Error:%.4f' % (_best_val, _best_err))
     return _best_err, _best_val
 
 

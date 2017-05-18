@@ -58,7 +58,7 @@ class avec2014(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_img_heatmap.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
         # basic param

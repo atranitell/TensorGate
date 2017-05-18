@@ -24,8 +24,8 @@ class kinface2(database.Database):
         self.frames = 1
         self.raw_height = 64
         self.raw_width = 64
-        self.output_height = 28
-        self.output_width = 28
+        self.output_height = 160
+        self.output_width = 160
         self.min_queue_num = 256
         self.device = '/gpu:0'
         self.num_classes = 2
@@ -54,16 +54,16 @@ class kinface2(database.Database):
         self._print()
 
     def _test(self):
-        self.batch_size = 1
+        self.batch_size = 100
         self.total_num = 100
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/fd_train_2.txt'
+        self.data_path = '../_datasets/kinface2/fd_val_1.txt'
 
     def _val(self):
         # basic param
-        self.batch_size = 1
+        self.batch_size = 128
         self.total_num = 400
         self.name = self.name + '_train'
         self.reader_thread = 1

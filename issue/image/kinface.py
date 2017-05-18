@@ -19,9 +19,9 @@ def get_loss(end_points_1, logits_1, end_points_2, logits_2,
     with tf.name_scope('loss'):
         labels = tf.to_float(tf.reshape(labels, [batch_size, 1]))
 
-        x = end_points_1['kinface']
+        x = end_points_1['PreLogitsFlatten']
         norm_x = tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
-        y = end_points_2['kinface']
+        y = end_points_2['PreLogitsFlatten']
         norm_y = tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
 
         x = tf.expand_dims(x, 2)

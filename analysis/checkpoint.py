@@ -48,6 +48,27 @@ def change_checkpoint_prefix(infile, outfile, old_prefix, new_prefix):
             saver.save(sess, outfile)
 
 
+def add_checkpoint_prefix(infile, outfile, new_prefix):
+    """ Solve the issue of different name scope of same model.
+    e.g.
+        # change_checkpoint_prefix(
+        #     infile='vgg_16.ckpt', outfile='vgg_16_new',
+        #     old_prefix='vgg_16', new_prefix='net/vgg_16')
+    """
+    with tf.Graph().as_default():
+        reader = pywrap_tensorflow.NewCheckpointReader(infile)
+        var_to_shape_map = reader.get_variable_to_shape_map()
+        # save to Graph
+        for key in var_to_shape_map:
+            tf.Variable(reader.get_tensor(key), name=new_prefix+'/'+key)
+            print("tensor_name_new: ", new_prefix+'/'+key)
+        # save to file
+        saver = tf.train.Saver(var_list=tf.global_variables())
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            saver.save(sess, outfile)
+
+
 def merge_checkpoint(infile_src, infile_dst, outfile):
     """ Solve the model using different optimizer,
         copy old tensor to new model.
@@ -104,3 +125,9 @@ def merge_fuse_checkpoint(model_1, model_2, fuse_model, outfile):
 #     fuse_model='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_fuse_16f_succ_train.ckpt-1',
 #     outfile='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_fuse_16f_succ_train.ckpt-merge'
 # )
+
+print_checkpoint_variables('C:/Users/jk/Desktop/Gate/_output/vgg/vggface16.tfmodel')
+
+# add_checkpoint_prefix(infile='C:/Users/jk/Desktop/Gate/_output/facenet_webface/model-20170511-185253.ckpt-80000',
+#                       outfile='C:/Users/jk/Desktop/Gate/_output/facenet_webface/inception-resnet-v1',
+#                       new_prefix='net')
