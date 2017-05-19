@@ -1,41 +1,22 @@
 # -*- coding: utf-8 -*-
 """ All interface to access the framework
+    Author: Kai JIN
+    Updated: 2017/05/19
 """
-
 import os
 import argparse
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
-
-# allocate GPU
 import sys
-gpu_id = sys.argv[1]
+import logging
+from datetime import datetime
+
+# hidden device output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
+# allocate GPU to sepcify device
 gpu_cluster = ['0', '1', '2', '3']
-if gpu_id not in gpu_cluster:
-    gpu_id = '0'
+gpu_id = '0' if sys.argv[1] not in gpu_cluster else sys.argv[1]
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
-
-# show
-from gate.utils import show
-show.SYS('SYSTEM WILL RUN ON GPU ' + os.environ["CUDA_VISIBLE_DEVICES"])
-
-# for debug
-# from tensorflow.python.client import device_lib
-# print(device_lib.list_local_devices())
-
-import tensorflow as tf
-
-import issue.image.regression as img_regression
-import issue.image.regression_fuse as img_regression_fuse
-import issue.image.classification as img_classification
-import issue.image.regression_share as img_regression_share
-
-import issue.image.kinface as img_kinface
-import issue.image.kinface_l2 as img_kinface_l2
-
-import issue.image.gan as gan
-
-import issue.image.extract_feature as extract_feature
 
 
 def raise_invalid_input(*config):
@@ -151,47 +132,81 @@ def regression_share_for_image(config):
         img_regression_share.test(config.dataset, config.net, config.model)
 
 
+def interface_cnn(config):
+    import issue.cnn as cnn
+
+    if config.task == 'train' and config.model is None:
+        cnn.train.run(config.dataset, config.net)
+
+    elif config.task == 'train' and config.model is not None:
+        cnn.train.run(config.dataset, config.net, config.model)
+
+    elif config.task == 'val' and config.model is not None:
+        cnn.val.run(config.dataset, config.net, config.model)
+
+    elif config.task == 'heatmap' and config.model is not None:
+        cnn.heatmap.run(config.dataset, config.net, config.model)
+
+    elif config.task == 'extract_feature' and config.model is not None:
+        cnn.extract_feature.run(config.dataset, config.net, config.model)
+
+    else:
+        logging.error('Wrong task setting %s' % str(config.task))
+
+
+def interface_cgan(config):
+    pass
+
+
+def interface_vae(config):
+    pass
+
+
 def interface(config):
     """ interface related to command
     """
-    show.SYS(str(config))
+    logging.info(str(config) + str(123))
+    if config.target == 'cnn':
+        interface_cnn(config)
 
-    if config.target == 'regression':
-        regression_for_image(config)
+    elif config.target == 'cgan':
+        interface_cgan(config)
 
-    if config.target == 'classification':
-        classification_for_image(config)
+    elif config.target == 'vae':
+        interface_vae(config)
 
-    if config.target == 'regression_fuse':
-        regression_fuse_for_image(config)
-
-    if config.target == 'regression_share':
-        regression_share_for_image(config)
-
-    if config.target.find('gan') >= 0:
-        gan.train(config.dataset, config.target, config.model)
-
-    if config.target == 'kinface':
-        img_kinface.train(config.dataset, config.net, config.model)
-
-    if config.target == 'kinface_l2':
-        img_kinface_l2.train(config.dataset, config.net, config.model)
-
-    if config.target == 'extract_feature':
-        extract_feature.run(config.dataset, config.net, config.model)
+    else:
+        logging.error('Wrong target setting %s' % str(config.target))
 
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument('-target', type=str, default=None, dest='target',
-                        help='regression/classification/regression_fuse')
+                        help='cnn/cgan/vae.')
     PARSER.add_argument('-task', type=str, default=None, dest='task',
-                        help='train/test/finetune/feature')
+                        help='train/val/heatmap/extract_feature.')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
-                        help='path to model folder: automatically use newest model')
+                        help='path to model folder.')
     PARSER.add_argument('-net', type=str, default=None, dest='net',
-                        help='lenet/cifarnet')
+                        help='defined in net/factory.')
     PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
-                        help='avec2014/cifar10')
+                        help='defined in dataset/factory.')
     ARGS, _ = PARSER.parse_known_args()
+
+    # at least input target, task, dataset
+    raise_invalid_input(ARGS.target, ARGS.task, ARGS.dataset)
+
+    # initalize logger
+    LOG_NAME = '../_output/' + ARGS.dataset + \
+        '_' + ARGS.target + '_' + ARGS.task + \
+        datetime.strftime(datetime.now(), '_%Y%m%d_%H%M%S') + '.txt'
+    logging.basicConfig(
+        level=logging.INFO, filename=LOG_NAME, filemode='w',
+        datefmt='%y.%m.%d %H:%M:%S',
+        format='[%(asctime)s] [%(levelname)s] %(message)s')
+
+    # output GPU info
+    logging.info('SYSTEM WILL RUN ON GPU ' + os.environ["CUDA_VISIBLE_DEVICES"])
+
+    # start
     interface(ARGS)

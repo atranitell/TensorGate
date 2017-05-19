@@ -88,9 +88,11 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# specify
-analysis/avec2014
+# ready for deleting
 _deprecated
+
+# data file
+_data
 
 # for mac
 .DS_Store

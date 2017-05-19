@@ -56,7 +56,7 @@ def check_network(name, data_type):
         return False
 
 
-def get_network(name, data_type, images, num_classes, name_scope='', reuse=False):
+def get_network(name, data_type, images, num_classes, name_scope='', reuse=False, **kwargs):
     """ get specified network """
     is_training = check_network(name, data_type)
     net = networks_map[name]
