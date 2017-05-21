@@ -14,7 +14,8 @@ def preprocess_for_train(image, output_height, output_width, channels):
     image = tf.image.resize_images(image, [256, 256])
 
     # Randomly crop a [height, width] section of the image.
-    distorted_image = tf.random_crop(image, [output_height, output_width, channels])
+    distorted_image = tf.random_crop(
+        image, [output_height, output_width, channels])
     # tf.summary.image('image_crop', tf.expand_dims(distorted_image, 0))
 
     # Randomly flip the image horizontally.
@@ -27,7 +28,8 @@ def preprocess_for_train(image, output_height, output_width, channels):
     distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
     # tf.summary.image('image_brightness', tf.expand_dims(distorted_image, 0))
 
-    distorted_image = tf.image.random_contrast(distorted_image, lower=0.2, upper=1.8)
+    distorted_image = tf.image.random_contrast(
+        distorted_image, lower=0.2, upper=1.8)
     # tf.summary.image('image_contrast', tf.expand_dims(distorted_image, 0))
 
     # Subtract off the mean and divide by the variance of the pixels.
@@ -41,14 +43,15 @@ def preprocess_for_eval(image, output_height, output_width):
     # Transform the image to floats.
     image = tf.to_float(image)
 
-    resized_image = tf.image.resize_images(image, [output_width, output_height], method=tf.image.ResizeMethod.AREA)
+    resized_image = tf.image.resize_images(
+        image, [output_width, output_height], method=tf.image.ResizeMethod.AREA)
 
     # Resize and crop if needed.
     # resized_image = tf.image.resize_image_with_crop_or_pad(image, output_width, output_height)
     # tf.summary.image('image_resize', tf.expand_dims(resized_image, 0))
 
     # Subtract off the mean and divide by the variance of the pixels.
-    return resized_image#tf.image.per_image_standardization(resized_image)
+    return resized_image  # tf.image.per_image_standardization(resized_image)
 
 
 def preprocess_image(image, output_height, output_width, is_training=False, channels=3):

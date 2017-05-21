@@ -1,48 +1,58 @@
-# -*- coding: utf-8 -*-
-""" updated: 2017/3/16
-"""
+# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Contains a factory for building various models."""
 
 import tensorflow as tf
-from tensorflow.contrib.framework import arg_scope
-from gate.net import net_cifarnet
-from gate.net import net_lenet
-from gate.net import net_alexnet
-from gate.net import net_resnet
-from gate.net import net_resnet_v1
-from gate.net import net_resnet_cifar
-from gate.net import net_vgg
-from gate.net import net_vgg_gap
-from gate.net import net_inception_resnet_v2
-from gate.net import net_inception_resnet_v1
-from gate.net import net_lightnet
-from gate.net import net_lightnet_bn
-from gate.net import net_lightnet_56
+
+from gate.net import alexnet
+from gate.net import cifarnet
+from gate.net import inception
+from gate.net import lenet
+from gate.net import overfeat
+from gate.net import resnet_v1
+from gate.net import resnet_v2
+from gate.net import vgg
+from gate.net import lightnet
+from gate.net import mlp
+
+slim = tf.contrib.slim
 
 networks_map = {
-    'cifarnet': net_cifarnet.cifarnet(),
-    'lenet': net_lenet.lenet(),
-    'alexnet': net_alexnet.alexnet(),
-    'alexnet_gap': net_alexnet.alexnet_gap(),
-    'resnet_50': net_resnet.resnet_50(),
-    'resnet_101': net_resnet.resnet_101(),
-    'resnet_152': net_resnet.resnet_152(),
-    'resnet_200': net_resnet.resnet_200(),
-    'resnet_50_v1': net_resnet_v1.resnet_v1_50(),
-    'resnet_101_v1': net_resnet_v1.resnet_v1_101(),
-    'resnet_152_v1': net_resnet_v1.resnet_v1_152(),
-    'resnet_200_v1': net_resnet_v1.resnet_v1_200(),
-    'resnet_cifar': net_resnet_cifar.resnet_cifar(),
-    'vgg_a': net_vgg.vgg_a(),
-    'vgg_16': net_vgg.vgg_16(),
-    'vgg_19': net_vgg.vgg_19(),
-    'vgg_a_gap': net_vgg_gap.vgg_a(),
-    'vgg_16_gap': net_vgg_gap.vgg_16(),
-    'vgg_19_gap': net_vgg_gap.vgg_19(),
-    'inception_resnet_v1': net_inception_resnet_v1.inception_resnet_v1(),
-    'inception_resnet_v2': net_inception_resnet_v2.inception_resnet_v2(),
-    'lightnet': net_lightnet.lightnet(),
-    'lightnet_bn': net_lightnet_bn.lightnet_bn(),
-    'lightnet_56': net_lightnet_56.lightnet_56()
+    'alexnet_v2': alexnet.Alexnet_v2,
+    'cifarnet': cifarnet.Cifarnet,
+    'overfeat': overfeat.Overfeat,
+    'vgg_a': vgg.Vgg_a,
+    'vgg_16': vgg.Vgg_16,
+    'vgg_19': vgg.Vgg_19,
+    'inception_v1': inception.Inception_v1,
+    'inception_v2': inception.Inception_v2,
+    'inception_v3': inception.Inception_v3,
+    'inception_v4': inception.Inception_v4,
+    'inception_resnet_v1': inception.Inception_resnet_v1,
+    'inception_resnet_v2': inception.Inception_resnet_v2,
+    'lenet': lenet.Lenet,
+    'resnet_v1_50': resnet_v1.Resnet_v1_50,
+    'resnet_v1_101': resnet_v1.Resnet_v1_101,
+    'resnet_v1_152': resnet_v1.Resnet_v1_152,
+    'resnet_v1_200': resnet_v1.Resnet_v1_200,
+    'resnet_v2_50': resnet_v2.Resnet_v2_50,
+    'resnet_v2_101': resnet_v2.Resnet_v2_101,
+    'resnet_v2_152': resnet_v2.Resnet_v2_152,
+    'resnet_v2_200': resnet_v2.Resnet_v2_200,
+    'lightnet': lightnet.Lightnet_bn,
+    'mlp': mlp.MLP,
 }
 
 
@@ -52,16 +62,33 @@ def check_network(name, data_type):
         raise ValueError('Unknown data_type %s' % data_type)
     if data_type == 'train':
         return True
+    elif data_type == 'val':
+        return False
     elif data_type == 'test':
         return False
 
 
-def get_network(name, data_type, images, num_classes, name_scope='', reuse=False, **kwargs):
-    """ get specified network """
-    is_training = check_network(name, data_type)
-    net = networks_map[name]
-    with tf.variable_scope('net' + name_scope) as scope:
+def get_network(hps, data_type, images, num_classes, name_scope='', reuse=None):
+    """Returns a network_fn such as `logits, end_points = network_fn(images)`.
+
+    Args:
+      name: The name of the network.
+      num_classes: The number of classes to use for classification.
+      weight_decay: The l2 coefficient for the model weights.
+      is_training: `True` if the model is being used for training and `False`
+        otherwise.
+
+    Returns:
+      network_fn: A function that applies the model to a batch of images. It has
+        the following signature:
+          logits, end_points = network_fn(images)
+    Raises:
+      ValueError: If network `name` is not recognized.
+    """
+    is_training = check_network(hps.net_name, data_type)
+    net = networks_map[hps.net_name](hps, reuse)
+    with tf.variable_scope(name_scope) as scope:
         if reuse:
             scope.reuse_variables()
-        with arg_scope(net.arg_scope()):
+        with slim.arg_scope(net.arguments_scope()):
             return net.model(images, num_classes, is_training)

@@ -10,13 +10,12 @@ def preprocess_for_train(image, output_height, output_width):
     image = tf.to_float(image)
 
     # Randomly crop a [height, width] section of the image.
-    resized_image = tf.image.resize_images(image, (output_height, output_width))
-    # distorted_image = tf.image.resize_image_with_crop_or_pad(
-    #     image, output_width, output_height)
+    resized_image = tf.image.resize_images(
+        image, (output_height, output_width))
     # tf.summary.image('image_crop', tf.expand_dims(distorted_image, 0))
 
     # Subtract off the mean and divide by the variance of the pixels.
-    return resized_image #tf.image.per_image_standardization(distorted_image)
+    return tf.image.per_image_standardization(resized_image)
 
 
 def preprocess_for_eval(image, output_height, output_width):
@@ -29,7 +28,7 @@ def preprocess_for_eval(image, output_height, output_width):
         image, output_width, output_height)
 
     # Subtract off the mean and divide by the variance of the pixels.
-    return resized_image #tf.image.per_image_standardization(resized_image)
+    return tf.image.per_image_standardization(resized_image)
 
 
 def preprocess_image(image, output_height, output_width, is_training=False):

@@ -4,8 +4,8 @@
 
 import os
 from gate.utils import filesystem
-from gate.utils import show
-
+from gate.utils import string
+from gate.utils.logger import logger
 
 def parse_from_text(text_path, dtype_list, path_list):
     """ dtype_list is a tuple, which represent a list of data type.
@@ -25,8 +25,8 @@ def parse_from_text(text_path, dtype_list, path_list):
     assert dtype_size == len(path_list)
 
     # show
-    show.SYS('Parse items from text file %s' % text_path)
-    show.SYS('Items data type: ' + show.type_list_to_str(dtype_list))
+    logger.sys('Parse items from text file %s' % text_path)
+    logger.sys('Items data type: ' + string.type_list_to_str(dtype_list))
 
     # construct the value to return and store
     res = []
@@ -54,5 +54,5 @@ def parse_from_text(text_path, dtype_list, path_list):
             # count
             count += 1
 
-    show.INFO('Total loading in %d files.' % count)
+    logger.sys('Total loading in %d files.' % count)
     return res

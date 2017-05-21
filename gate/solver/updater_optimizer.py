@@ -3,7 +3,8 @@
 """
 
 import tensorflow as tf
-from gate.utils import show
+from gate.utils.logger import logger
+# from gate.utils import show
 
 
 def configure(dataset, learning_rate):
@@ -18,7 +19,7 @@ def configure(dataset, learning_rate):
     Raises:
       ValueError: if dataset.opt.optimizer is not recognized.
     """
-    show.TRAIN('Routine will use %s optimizer.' % dataset.opt.optimizer)
+    logger.info('Routine will use %s optimizer.' % dataset.opt.optimizer)
 
     if dataset.opt.optimizer == 'adadelta':
         optimizer = tf.train.AdadeltaOptimizer(

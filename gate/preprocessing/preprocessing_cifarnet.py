@@ -89,6 +89,8 @@ def preprocess_image(image, output_height, output_width, is_training=False):
     """
     with tf.name_scope('cifarnet'):
         if is_training:
-            return preprocess_for_train(image, output_height, output_width)
+            with tf.name_scope('train'):
+                return preprocess_for_train(image, output_height, output_width)
         else:
-            return preprocess_for_eval(image, output_height, output_width)
+            with tf.name_scope('test'):
+                return preprocess_for_eval(image, output_height, output_width)

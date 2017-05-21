@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" regression task for image
+""" regression task for number
     updated: 2017/05/19
 """
 import os
@@ -8,6 +8,7 @@ import time
 
 import tensorflow as tf
 from tensorflow.contrib import framework
+from tensorflow.contrib import layers
 
 import gate
 from gate.utils.logger import logger
@@ -31,23 +32,29 @@ def train(data_name, chkp_path=None, exclusions=None):
             dataset.log.train_dir = chkp_path
 
         # build data model
-        images, labels, _ = dataset.loads()
+        data1, data2, labels, fname1, fname2 = dataset.loads()
 
         # get global step
         global_step = framework.create_global_step()
         tf.summary.scalar('iter', global_step)
 
         # get Deep Neural Network
-        logits, end_points = gate.net.factory.get_network(
-            dataset.hps, 'train', images, 1)
+        logits1, end_points1 = gate.net.factory.get_network(
+            dataset.hps, 'train', data1, dataset.num_classes, 'net1')
+        logits2, end_points2 = gate.net.factory.get_network(
+            dataset.hps, 'train', data2, dataset.num_classes, 'net2')
+
+        # concat logits
+        fuse_net = tf.concat([logits1, logits2], axis=1)
+        logits = layers.fully_connected(
+            fuse_net, dataset.num_classes, activation_fn=None, scope='fuse')
 
         # get loss
-        losses, labels, logits = gate.loss.l2.get_loss(
+        losses, labels, logits = gate.loss.softmax.get_loss(
             logits, labels, dataset.num_classes, dataset.batch_size)
 
         # get error
-        mae, rmse = gate.loss.l2.get_error(
-            logits, labels, dataset.num_classes)
+        err, _ = gate.loss.softmax.get_error(logits, labels)
 
         # get updater
         with tf.name_scope('updater'):
@@ -69,61 +76,51 @@ def train(data_name, chkp_path=None, exclusions=None):
         class Running_Hook(tf.train.SessionRunHook):
 
             def __init__(self):
-                self.mean_loss, self.duration = 0, 0
-                self.mean_mae, self.mean_rmse = 0, 0
-                self.best_iter_mae, self.best_mae = 0, 1000
-                self.best_iter_rmse, self.best_rmse = 0, 1000
+                self.mean_loss, self.mean_err, self.duration = 0, 0, 0
+                self.best_iter, self.best_err = 0, 1000
 
             def before_run(self, run_context):
                 self._start_time = time.time()
                 return tf.train.SessionRunArgs(
-                    [global_step, losses, mae, rmse, learning_rate],
+                    [global_step, losses, err, learning_rate],
                     feed_dict=None)
 
             def after_run(self, run_context, run_values):
                 # accumulate datas
                 cur_iter = run_values.results[0] - 1
                 self.mean_loss += run_values.results[1]
-                self.mean_mae += run_values.results[2]
-                self.mean_rmse += run_values.results[3]
+                self.mean_err += run_values.results[2]
                 self.duration += (time.time() - self._start_time)
 
                 # print information
                 if cur_iter % dataset.log.print_frequency == 0:
                     _invl = dataset.log.print_frequency
                     _loss = self.mean_loss / _invl
-                    _mae = self.mean_mae / _invl
-                    _rmse = self.mean_rmse / _invl
-                    _lr = str(run_values.results[4])
+                    _err = self.mean_err / _invl
+                    _lr = str(run_values.results[3])
                     _duration = self.duration * 1000 / _invl
 
-                    format_str = 'Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, lr:%s, time:%.2fms.'
+                    format_str = 'Iter:%d, loss:%.4f, error:%.4f, lr:%s, time:%.2fms.'
                     format_str = format_str % (
-                        cur_iter, _loss, _mae, _rmse, _lr, _duration)
+                        cur_iter, _loss, _err, _lr, _duration)
                     logger.train(format_str)
 
                     # set zero
-                    self.mean_mae, self.mean_rmse = 0, 0
-                    self.mean_loss, self.duration = 0, 0
+                    self.mean_err, self.mean_loss, self.duration = 0, 0, 0
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     test_start_time = time.time()
-                    test_mae, test_rmse = test(
+                    test_err = test(
                         data_name, dataset.log.train_dir, summary_test)
                     test_duration = time.time() - test_start_time
 
-                    if test_mae < self.best_mae:
-                        self.best_mae = test_mae
-                        self.best_iter_mae = cur_iter
-                    if test_rmse < self.best_rmse:
-                        self.best_rmse = test_rmse
-                        self.best_iter_rmse = cur_iter
+                    if test_err < self.best_err:
+                        self.best_err = test_err
+                        self.best_iter = cur_iter
 
-                    logger.info(
-                        'Test Time: %fs, best mae: %f in %d, best rmse: %f in %d.' %
-                        (test_duration, self.best_mae, self.best_iter_mae,
-                         self.best_rmse, self.best_iter_rmse))
+                    logger.info('Test Time: %fs, best error: %f in %d.' %
+                                (test_duration, self.best_err, self.best_iter))
 
         # record running information
         running_hook = Running_Hook()
@@ -159,20 +156,30 @@ def test(data_name, chkp_path, summary_writer=None):
         if not os.path.exists(dataset.log.test_dir):
             os.mkdir(dataset.log.test_dir)
 
-        # load data
-        images, labels, filenames = dataset.loads()
+        # build data model
+        data1, data2, labels, fname1, fname2 = dataset.loads()
 
-        # create network
-        logits, end_points = gate.net.factory.get_network(
-            dataset.hps, 'test', images, 1)
+        # get global step
+        global_step = framework.create_global_step()
+        tf.summary.scalar('iter', global_step)
+
+        # get Deep Neural Network
+        logits1, end_points1 = gate.net.factory.get_network(
+            dataset.hps, 'test', data1, dataset.num_classes, 'net1')
+        logits2, end_points2 = gate.net.factory.get_network(
+            dataset.hps, 'test', data2, dataset.num_classes, 'net2')
+
+        # concat logits
+        fuse_net = tf.concat([logits1, logits2], axis=1)
+        logits = layers.fully_connected(
+            fuse_net, dataset.num_classes, activation_fn=None, scope='fuse')
 
         # get loss
-        losses, _labels, _logits = gate.loss.l2.get_loss(
+        losses, labels, logits = gate.loss.softmax.get_loss(
             logits, labels, dataset.num_classes, dataset.batch_size)
 
         # get error
-        mae, rmse = gate.loss.l2.get_error(
-            logits, _labels, dataset.num_classes)
+        err, predictions = gate.loss.softmax.get_error(logits, labels)
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -191,15 +198,15 @@ def test(data_name, chkp_path, summary_writer=None):
 
             # Initial some variables
             num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
-            mean_mae, mean_rmse, mean_loss = 0, 0, 0
+            mean_err, mean_loss = 0, 0
 
             # output to file
             tab = tf.constant(' ', shape=[dataset.batch_size])
             labels_str = tf.as_string(tf.reshape(
                 labels, shape=[dataset.batch_size]))
-            logits_str = tf.as_string(tf.reshape(
-                logits * dataset.num_classes, shape=[dataset.batch_size]))
-            test_batch_info = filenames + tab + labels_str + tab + logits_str
+            preds_str = tf.as_string(tf.reshape(
+                predictions, shape=[dataset.batch_size]))
+            test_batch_info = fname1 + tab + fname2 + tab + labels_str + tab + preds_str
 
             test_info_path = os.path.join(
                 dataset.log.test_dir, '%s.txt' % global_step)
@@ -211,11 +218,10 @@ def test(data_name, chkp_path, summary_writer=None):
                     break
 
                 # running session to acuqire value
-                feeds = [losses, mae, rmse, test_batch_info]
-                _loss, _mae, _rmse, _info = sess.run(feeds)
+                feeds = [losses, err, test_batch_info]
+                _loss, _err, _info = sess.run(feeds)
                 mean_loss += _loss
-                mean_mae += _mae
-                mean_rmse += _rmse
+                mean_err += _err
 
                 # save tensor info to text file
                 for _line in _info:
@@ -228,34 +234,19 @@ def test(data_name, chkp_path, summary_writer=None):
 
             # statistic
             mean_loss = 1.0 * mean_loss / num_iter
-            mean_rmse = 1.0 * mean_rmse / num_iter
-            mean_mae = 1.0 * mean_mae / num_iter
+            mean_err = 1.0 * mean_err / num_iter
 
             # output result
-            logger.test('Iter:%d, total test sample:%d, num_batch:%d' %
-                        (int(global_step), dataset.total_num, num_iter))
-            logger.test('Loss:%.4f, mae:%.4f, rmse:%.4f' %
-                        (mean_loss, mean_mae, mean_rmse))
-
-            # for specify dataset
-            # it use different compute method for mae/rmse
-            # rewrite the mean_x value
-            if dataset.name == 'avec2014_test':
-                from project.avec2014 import avec2014_error
-                mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
-                    test_info_path, dataset.avec2014_error_type)
-                logger.test('Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' %
-                            (mean_loss, mean_mae, mean_rmse))
+            logger.test(
+                'Iter:%d, total test sample:%d, num_batch:%d, loss:%.4f, error:%.4f.' %
+                (int(global_step), dataset.total_num, num_iter, mean_loss, mean_err))
 
             # write to summary
             if summary_writer is not None:
                 summary = tf.Summary()
-                summary.value.add(
-                    tag='test/iter', simple_value=int(global_step))
-                summary.value.add(tag='test/mae', simple_value=mean_mae)
-                summary.value.add(tag='test/rmse', simple_value=mean_rmse)
+                summary.value.add(tag='test/iter', simple_value=int(global_step))
+                summary.value.add(tag='test/err', simple_value=mean_err)
                 summary.value.add(tag='test/loss', simple_value=mean_loss)
                 summary_writer.add_summary(summary, global_step)
 
-            return mean_mae, mean_rmse
-
+            return mean_err

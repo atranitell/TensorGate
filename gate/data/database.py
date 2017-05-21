@@ -1,5 +1,6 @@
 
-from gate.utils import show
+from gate.utils import string
+from gate.utils.logger import logger
 
 
 class Database():
@@ -14,14 +15,20 @@ class Database():
 
     def _print(self):
         if self.data_type == 'train':
-            show.class_members(self.log)
-            show.INFO('Total num: %d, batch size: %d, height: %d, width: %d, channels: %d'
-                      % (self.total_num, self.batch_size,
-                         self.output_height, self.output_width, self.channels))
+            logger.info(string.class_members(self.log))
+
+            logger.info('Total num: %d, batch size: %d, height: %d, width: %d, channels: %d'
+                        % (self.total_num, self.batch_size, self.output_height, self.output_width, self.channels))
+
             if self.preprocessing_method is not None:
-                show.INFO('preprocessing method: %s' %
-                          self.preprocessing_method)
+                logger.info('preprocessing method: %s' %
+                            self.preprocessing_method)
+
             if self.opt is not None:
-                show.class_members(self.opt)
+                logger.info(string.class_members(self.opt))
+
             if self.lr is not None:
-                show.class_members(self.lr)
+                logger.info(string.class_members(self.lr))
+
+            if self.hps is not None:
+                logger.info(string.class_members(self.hps))

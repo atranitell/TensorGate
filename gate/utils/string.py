@@ -15,3 +15,13 @@ def clip_last_sub_string(string, separator='/', keep_sep=False):
         else:
             nw += st[i] + separator
     return nw
+
+
+def type_list_to_str(dtype_list):
+    """ (type1, type2, type3)
+    """
+    return '(' + ', '.join([item.__name__ for item in dtype_list]) + ')'
+
+
+def class_members(obj):
+    return ', '.join(['%s: %s' % item for item in sorted(obj.__dict__.items())])

@@ -1,3 +1,17 @@
+# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 """Contains the definition of the Inception Resnet V2 architecture.
 
 As described in http://arxiv.org/abs/1602.07261.
@@ -7,62 +21,25 @@ As described in http://arxiv.org/abs/1602.07261.
   Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi
 """
 
-
 import tensorflow as tf
-# from tensorflow.contrib.framework import arg_scope
-# from tensorflow.contrib import layers
-# from tensorflow.contrib.layers.python.layers import utils
 from gate.net import net
 
 slim = tf.contrib.slim
 
 
-class inception_resnet_v2(net.Net):
+class Inception_resnet_v2(net.Net):
 
-    def __init__(self):
-        self.dropout_keep_prob = 0.8
-        self.weight_decay = 0.00004
-        self.batch_norm_decay = 0.997
-        self.batch_norm_epsilon = 0.001
+    default_image_size = 224
 
-    def arg_scope(self):
-        return inception_resnet_v2_arg_scope(self.weight_decay,
-                                             self.batch_norm_decay,
-                                             self.batch_norm_epsilon)
+    def arguments_scope(self):
+        return inception_resnet_v2_arg_scope(
+            self.weight_decay,
+            self.batch_norm_decay,
+            self.batch_norm_epsilon)
 
     def model(self, images, num_classes, is_training):
-        return inception_resnet_v2_net(images, num_classes, is_training, self.dropout_keep_prob)
-
-
-def inception_resnet_v2_arg_scope(weight_decay=0.00004,
-                                  batch_norm_decay=0.9997,
-                                  batch_norm_epsilon=0.001):
-    """Yields the scope with the default parameters for inception_resnet_v2.
-
-    Args:
-      weight_decay: the weight decay for weights variables.
-      batch_norm_decay: decay for the moving average of batch_norm momentums.
-      batch_norm_epsilon: small float added to variance to avoid dividing by zero.
-
-    Returns:
-      a arg_scope with the parameters needed for inception_resnet_v2.
-    """
-    # Set weight_decay for weights in conv2d and fully_connected layers.
-    with slim.arg_scope([slim.conv2d, slim.fully_connected],
-                        weights_regularizer=slim.l2_regularizer(weight_decay),
-                        biases_regularizer=slim.l2_regularizer(weight_decay)):
-
-        batch_norm_params = {
-            'decay': batch_norm_decay,
-            'epsilon': batch_norm_epsilon,
-            'scale': True,
-            'updates_collections': None #tf.GraphKeys.UPDATE_OPS,
-        }
-        # Set activation_fn and parameters for batch_norm.
-        with slim.arg_scope([slim.conv2d], activation_fn=tf.nn.relu,
-                            normalizer_fn=slim.batch_norm,
-                            normalizer_params=batch_norm_params) as scope:
-            return scope
+        return inception_resnet_v2(images, num_classes + 1, is_training,
+                                   self.dropout, self.reuse)
 
 
 def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
@@ -72,12 +49,16 @@ def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
             tower_conv = slim.conv2d(net, 32, 1, scope='Conv2d_1x1')
         with tf.variable_scope('Branch_1'):
             tower_conv1_0 = slim.conv2d(net, 32, 1, scope='Conv2d_0a_1x1')
-            tower_conv1_1 = slim.conv2d(tower_conv1_0, 32, 3, scope='Conv2d_0b_3x3')
+            tower_conv1_1 = slim.conv2d(
+                tower_conv1_0, 32, 3, scope='Conv2d_0b_3x3')
         with tf.variable_scope('Branch_2'):
             tower_conv2_0 = slim.conv2d(net, 32, 1, scope='Conv2d_0a_1x1')
-            tower_conv2_1 = slim.conv2d(tower_conv2_0, 48, 3, scope='Conv2d_0b_3x3')
-            tower_conv2_2 = slim.conv2d(tower_conv2_1, 64, 3, scope='Conv2d_0c_3x3')
-        mixed = tf.concat(axis=3, values=[tower_conv, tower_conv1_1, tower_conv2_2])
+            tower_conv2_1 = slim.conv2d(
+                tower_conv2_0, 48, 3, scope='Conv2d_0b_3x3')
+            tower_conv2_2 = slim.conv2d(
+                tower_conv2_1, 64, 3, scope='Conv2d_0c_3x3')
+        mixed = tf.concat(
+            axis=3, values=[tower_conv, tower_conv1_1, tower_conv2_2])
         up = slim.conv2d(mixed, net.get_shape()[3], 1, normalizer_fn=None,
                          activation_fn=None, scope='Conv2d_1x1')
         net += scale * up
@@ -126,10 +107,10 @@ def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
     return net
 
 
-def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
-                            dropout_keep_prob=0.8,
-                            reuse=None,
-                            scope='InceptionResnetV2'):
+def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
+                        dropout_keep_prob=0.8,
+                        reuse=None,
+                        scope='InceptionResnetV2'):
     """Creates the Inception Resnet V2 model.
 
     Args:
@@ -184,13 +165,16 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
                 # 35 x 35 x 320
                 with tf.variable_scope('Mixed_5b'):
                     with tf.variable_scope('Branch_0'):
-                        tower_conv = slim.conv2d(net, 96, 1, scope='Conv2d_1x1')
+                        tower_conv = slim.conv2d(
+                            net, 96, 1, scope='Conv2d_1x1')
                     with tf.variable_scope('Branch_1'):
-                        tower_conv1_0 = slim.conv2d(net, 48, 1, scope='Conv2d_0a_1x1')
+                        tower_conv1_0 = slim.conv2d(
+                            net, 48, 1, scope='Conv2d_0a_1x1')
                         tower_conv1_1 = slim.conv2d(tower_conv1_0, 64, 5,
                                                     scope='Conv2d_0b_5x5')
                     with tf.variable_scope('Branch_2'):
-                        tower_conv2_0 = slim.conv2d(net, 64, 1, scope='Conv2d_0a_1x1')
+                        tower_conv2_0 = slim.conv2d(
+                            net, 64, 1, scope='Conv2d_0a_1x1')
                         tower_conv2_1 = slim.conv2d(tower_conv2_0, 96, 3,
                                                     scope='Conv2d_0b_3x3')
                         tower_conv2_2 = slim.conv2d(tower_conv2_1, 96, 3,
@@ -206,13 +190,14 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
                 end_points['Mixed_5b'] = net
                 net = slim.repeat(net, 10, block35, scale=0.17)
 
-                # 17 x 17 x 1024
+                # 17 x 17 x 1088
                 with tf.variable_scope('Mixed_6a'):
                     with tf.variable_scope('Branch_0'):
                         tower_conv = slim.conv2d(net, 384, 3, stride=2, padding='VALID',
                                                  scope='Conv2d_1a_3x3')
                     with tf.variable_scope('Branch_1'):
-                        tower_conv1_0 = slim.conv2d(net, 256, 1, scope='Conv2d_0a_1x1')
+                        tower_conv1_0 = slim.conv2d(
+                            net, 256, 1, scope='Conv2d_0a_1x1')
                         tower_conv1_1 = slim.conv2d(tower_conv1_0, 256, 3,
                                                     scope='Conv2d_0b_3x3')
                         tower_conv1_2 = slim.conv2d(tower_conv1_1, 384, 3,
@@ -221,12 +206,13 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
                     with tf.variable_scope('Branch_2'):
                         tower_pool = slim.max_pool2d(net, 3, stride=2, padding='VALID',
                                                      scope='MaxPool_1a_3x3')
-                    net = tf.concat(axis=3, values=[tower_conv, tower_conv1_2, tower_pool])
+                    net = tf.concat(
+                        axis=3, values=[tower_conv, tower_conv1_2, tower_pool])
 
                 end_points['Mixed_6a'] = net
                 net = slim.repeat(net, 20, block17, scale=0.10)
 
-                # Auxillary tower
+                # Auxiliary tower
                 with tf.variable_scope('AuxLogits'):
                     aux = slim.avg_pool2d(net, 5, stride=3, padding='VALID',
                                           scope='Conv2d_1a_3x3')
@@ -240,15 +226,18 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
 
                 with tf.variable_scope('Mixed_7a'):
                     with tf.variable_scope('Branch_0'):
-                        tower_conv = slim.conv2d(net, 256, 1, scope='Conv2d_0a_1x1')
+                        tower_conv = slim.conv2d(
+                            net, 256, 1, scope='Conv2d_0a_1x1')
                         tower_conv_1 = slim.conv2d(tower_conv, 384, 3, stride=2,
                                                    padding='VALID', scope='Conv2d_1a_3x3')
                     with tf.variable_scope('Branch_1'):
-                        tower_conv1 = slim.conv2d(net, 256, 1, scope='Conv2d_0a_1x1')
+                        tower_conv1 = slim.conv2d(
+                            net, 256, 1, scope='Conv2d_0a_1x1')
                         tower_conv1_1 = slim.conv2d(tower_conv1, 288, 3, stride=2,
                                                     padding='VALID', scope='Conv2d_1a_3x3')
                     with tf.variable_scope('Branch_2'):
-                        tower_conv2 = slim.conv2d(net, 256, 1, scope='Conv2d_0a_1x1')
+                        tower_conv2 = slim.conv2d(
+                            net, 256, 1, scope='Conv2d_0a_1x1')
                         tower_conv2_1 = slim.conv2d(tower_conv2, 288, 3,
                                                     scope='Conv2d_0b_3x3')
                         tower_conv2_2 = slim.conv2d(tower_conv2_1, 320, 3, stride=2,
@@ -269,10 +258,8 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
 
                 with tf.variable_scope('Logits'):
                     end_points['PrePool'] = net
-                    end_points['end_conv'] = net
                     net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                           scope='AvgPool_1a_8x8')
-                    end_points['end_avg_pool'] = net
                     net = slim.flatten(net)
 
                     net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
@@ -282,8 +269,36 @@ def inception_resnet_v2_net(inputs, num_classes=1001, is_training=True,
                     logits = slim.fully_connected(net, num_classes, activation_fn=None,
                                                   scope='Logits')
                     end_points['Logits'] = logits
-                    end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
+                    end_points['Predictions'] = tf.nn.softmax(
+                        logits, name='Predictions')
 
         return logits, end_points
 
-# inception_resnet_v2.default_image_size = 299
+
+def inception_resnet_v2_arg_scope(weight_decay=0.00004,
+                                  batch_norm_decay=0.9997,
+                                  batch_norm_epsilon=0.001):
+    """Yields the scope with the default parameters for inception_resnet_v2.
+
+    Args:
+      weight_decay: the weight decay for weights variables.
+      batch_norm_decay: decay for the moving average of batch_norm momentums.
+      batch_norm_epsilon: small float added to variance to avoid dividing by zero.
+
+    Returns:
+      a arg_scope with the parameters needed for inception_resnet_v2.
+    """
+    # Set weight_decay for weights in conv2d and fully_connected layers.
+    with slim.arg_scope([slim.conv2d, slim.fully_connected],
+                        weights_regularizer=slim.l2_regularizer(weight_decay),
+                        biases_regularizer=slim.l2_regularizer(weight_decay)):
+
+        batch_norm_params = {
+            'decay': batch_norm_decay,
+            'epsilon': batch_norm_epsilon,
+        }
+        # Set activation_fn and parameters for batch_norm.
+        with slim.arg_scope([slim.conv2d], activation_fn=tf.nn.relu,
+                            normalizer_fn=slim.batch_norm,
+                            normalizer_params=batch_norm_params) as scope:
+            return scope

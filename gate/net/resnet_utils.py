@@ -1,3 +1,17 @@
+# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 """Contains building blocks for various versions of Residual Networks.
 
 Residual networks (ResNets) were proposed in:
@@ -22,10 +36,8 @@ implementation is more memory efficient.
 
 import collections
 import tensorflow as tf
-from tensorflow.contrib.framework import arg_scope
-from tensorflow.contrib.framework import add_arg_scope
-from tensorflow.contrib import layers
-from tensorflow.contrib.layers.python.layers import utils
+
+slim = tf.contrib.slim
 
 
 class Block(collections.namedtuple('Block', ['scope', 'unit_fn', 'args'])):
@@ -56,7 +68,7 @@ def subsample(inputs, factor, scope=None):
     if factor == 1:
         return inputs
     else:
-        return layers.max_pool2d(inputs, [1, 1], stride=factor, scope=scope)
+        return slim.max_pool2d(inputs, [1, 1], stride=factor, scope=scope)
 
 
 def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
@@ -71,12 +83,12 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
 
     is equivalent to
 
-       net = layers.conv2d(inputs, num_outputs, 3, stride=1, padding='SAME')
+       net = slim.conv2d(inputs, num_outputs, 3, stride=1, padding='SAME')
        net = subsample(net, factor=stride)
 
     whereas
 
-       net = layers.conv2d(inputs, num_outputs, 3, stride=stride, padding='SAME')
+       net = slim.conv2d(inputs, num_outputs, 3, stride=stride, padding='SAME')
 
     is different when the input's height or width is even, which is why we add the
     current function. For more details, see ResnetUtilsTest.testConv2DSameEven().
@@ -94,8 +106,8 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
         the convolution output.
     """
     if stride == 1:
-        return layers.conv2d(inputs, num_outputs, kernel_size, stride=1, rate=rate,
-                             padding='SAME', scope=scope)
+        return slim.conv2d(inputs, num_outputs, kernel_size, stride=1, rate=rate,
+                           padding='SAME', scope=scope)
     else:
         kernel_size_effective = kernel_size + (kernel_size - 1) * (rate - 1)
         pad_total = kernel_size_effective - 1
@@ -103,11 +115,11 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
         pad_end = pad_total - pad_beg
         inputs = tf.pad(inputs,
                         [[0, 0], [pad_beg, pad_end], [pad_beg, pad_end], [0, 0]])
-        return layers.conv2d(inputs, num_outputs, kernel_size, stride=stride,
-                             rate=rate, padding='VALID', scope=scope)
+        return slim.conv2d(inputs, num_outputs, kernel_size, stride=stride,
+                           rate=rate, padding='VALID', scope=scope)
 
 
-@add_arg_scope
+@slim.add_arg_scope
 def stack_blocks_dense(net, blocks, output_stride=None,
                        outputs_collections=None):
     """Stacks ResNet `Blocks` and controls output feature density.
@@ -184,10 +196,57 @@ def stack_blocks_dense(net, blocks, output_stride=None,
                                             stride=unit_stride,
                                             rate=1)
                         current_stride *= unit_stride
-            net = utils.collect_named_outputs(
+            net = slim.utils.collect_named_outputs(
                 outputs_collections, sc.name, net)
 
     if output_stride is not None and current_stride != output_stride:
         raise ValueError('The target output_stride cannot be reached.')
 
     return net
+
+
+def resnet_arg_scope(weight_decay=0.0001,
+                     batch_norm_decay=0.997,
+                     batch_norm_epsilon=1e-5,
+                     batch_norm_scale=True):
+    """Defines the default ResNet arg scope.
+
+    TODO(gpapan): The batch-normalization related default values above are
+      appropriate for use in conjunction with the reference ResNet models
+      released at https://github.com/KaimingHe/deep-residual-networks. When
+      training ResNets from scratch, they might need to be tuned.
+
+    Args:
+      weight_decay: The weight decay to use for regularizing the model.
+      batch_norm_decay: The moving average decay when estimating layer activation
+        statistics in batch normalization.
+      batch_norm_epsilon: Small constant to prevent division by zero when
+        normalizing activations by their variance in batch normalization.
+      batch_norm_scale: If True, uses an explicit `gamma` multiplier to scale the
+        activations in the batch normalization layer.
+
+    Returns:
+      An `arg_scope` to use for the resnet models.
+    """
+    batch_norm_params = {
+        'decay': batch_norm_decay,
+        'epsilon': batch_norm_epsilon,
+        'scale': batch_norm_scale,
+        'updates_collections': None,
+    }
+
+    with slim.arg_scope(
+        [slim.conv2d],
+        weights_regularizer=slim.l2_regularizer(weight_decay),
+        weights_initializer=slim.variance_scaling_initializer(),
+        activation_fn=tf.nn.relu,
+            normalizer_fn=slim.batch_norm, normalizer_params=batch_norm_params):
+        with slim.arg_scope([slim.batch_norm], **batch_norm_params):
+            # The following implies padding='SAME' for pool1, which makes feature
+            # alignment easier for dense prediction tasks. This is also used in
+            # https://github.com/facebook/fb.resnet.torch. However the accompanying
+            # code of 'Deep Residual Learning for Image Recognition' uses
+            # padding='VALID' for pool1. You can switch to that choice by setting
+            # slim.arg_scope([slim.max_pool2d], padding='VALID').
+            with slim.arg_scope([slim.max_pool2d], padding='SAME') as arg_sc:
+                return arg_sc

@@ -4,6 +4,7 @@
 """
 from gate.data import data_loader_for_image
 from gate.data import data_loader_for_video
+from gate.data import data_loader_for_numeric
 
 
 def load_image_from_text(
@@ -87,4 +88,12 @@ def load_pair_block_succ_video_from_text(
         data_path, shuffle, data_type, frames, channels,
         preprocessing_method1, preprocessing_method2,
         raw_height, raw_width, output_height, output_width,
+        min_queue_num, batch_size, reader_thread)
+
+
+def load_pair_numeric_data_from_npy(
+        data_path, shuffle, data_type,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_numeric.load_pair_numeric_data_from_npy(
+        data_path, shuffle, data_type,
         min_queue_num, batch_size, reader_thread)

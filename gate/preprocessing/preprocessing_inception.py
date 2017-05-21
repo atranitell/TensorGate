@@ -285,6 +285,8 @@ def preprocess_image(image, height, width,
     """
     with tf.name_scope('inception'):
         if is_training:
-            return preprocess_for_train(image, height, width, bbox, fast_mode)
+            with tf.name_scope('train'):
+                return preprocess_for_train(image, height, width, bbox, fast_mode)
         else:
-            return preprocess_for_eval(image, height, width)
+            with tf.name_scope('test'):
+                return preprocess_for_eval(image, height, width)

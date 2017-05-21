@@ -77,7 +77,7 @@ class learning_rate():
         "exponential", or "polynomial"
     """
 
-    def __init__(self):
+    def __init__(self, moving_average_decay=None):
         # Whether or not to synchronize the replicas during training.
         self.sync_replicas = False
         # The amount of label smoothing.
@@ -86,9 +86,7 @@ class learning_rate():
         # self.replicas_to_aggregate = 1
         # The decay to use for the moving average.
         # If left as None, then moving averages are not used.
-        # self.moving_average_decay = None
-        # init
-        # self.init = False
+        self.moving_average_decay = moving_average_decay
 
     def set_fixed(self, learning_rate=0.1):
         self.learning_rate_decay_type = 'fixed'
@@ -121,6 +119,7 @@ class log():
         # it will be determined by command inputs.
         elif data_type == 'test':
             self.test_dir = None
+        # it will be determined by train
         elif data_type == 'val':
             self.val_dir = None
         else:
@@ -129,15 +128,37 @@ class log():
     def set_log(self, print_frequency=20,
                 save_summaries_iter=2,
                 save_model_iter=100,
-                test_interval=100):
+                test_interval=100,
+                max_iter=999999):
         # The frequency with which logs are print.
         self.print_frequency = print_frequency
-
         # The frequency with which summaries are saved, in iteration.
         self.save_summaries_iter = save_summaries_iter
-
         # The frequency with which the model is saved, in iteration.
         self.save_model_iter = save_model_iter
-
         # test iteration
         self.test_interval = test_interval
+        # max iter to stop
+        self.max_iter = max_iter
+
+
+class hps():
+
+    def __init__(self, net_name):
+        self.net_name = net_name
+        self.dropout = None
+        self.weight_decay = None
+        self.batch_norm_decay = None
+        self.batch_norm_epsilon = None
+        self.batch_norm_scale = None
+
+    def set_dropout(self, dropout=None):
+        self.dropout = dropout
+
+    def set_weight_decay(self, weight_decay=None):
+        self.weight_decay = weight_decay
+
+    def set_batch_norm(self, batch_norm_decay=None, batch_norm_epsilon=None):
+        self.batch_norm_decay = batch_norm_decay
+        self.batch_norm_epsilon = batch_norm_epsilon
+        self.batch_norm_scale = True

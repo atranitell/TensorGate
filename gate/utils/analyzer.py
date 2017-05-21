@@ -2,6 +2,7 @@
 """ updated: 2017/3/16
     Tools for analyzing the operations and variables in a TensorFlow graph.
 """
+from gate.utils.logger import logger
 
 
 def desc_tensor(var):
@@ -35,9 +36,9 @@ def desc_ops(graph, print_info=True):
       total size of the ops.outputs
     """
     if print_info:
-        print('---------')
-        print('Operations: name -> (type shapes) [size]')
-        print('---------')
+        logger.info('---------')
+        logger.info('Operations: name -> (type shapes) [size]')
+        logger.info('---------')
     total_size = 0
     for op in graph.get_operations():
         op_size = 0
@@ -49,7 +50,7 @@ def desc_ops(graph, print_info=True):
                 shapes.append(desc_tensor(output))
             op_size += output_size
         if print_info:
-            print(op.name, '\t->', ', '.join(shapes), '[' + str(op_size) + ']')
+            logger.info(op.name, '\t->', ', '.join(shapes), '[' + str(op_size) + ']')
         total_size += op_size
     return total_size
 
@@ -65,9 +66,9 @@ def desc_variables(variables, print_info=True):
       (total size of the variables, total bytes of the variables)
     """
     if print_info:
-        print('---------')
-        print('Variables: name (type shape) [size]')
-        print('---------')
+        logger.info('---------')
+        logger.info('Variables: name (type shape) [size]')
+        logger.info('---------')
     total_size = 0
     total_bytes = 0
     for var in variables:
@@ -77,9 +78,9 @@ def desc_variables(variables, print_info=True):
         total_size += var_size
         total_bytes += var_bytes
         if print_info:
-            print(var.name, desc_tensor(var), '[%d, bytes: %d]' %
+            logger.info(var.name, desc_tensor(var), '[%d, bytes: %d]' %
                   (var_size, var_bytes))
     if print_info:
-        print('Total size of variables: %d' % total_size)
-        print('Total bytes of variables: %d' % total_bytes)
+        logger.info('Total size of variables: %d' % total_size)
+        logger.info('Total bytes of variables: %d' % total_bytes)
     return total_size, total_bytes

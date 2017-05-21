@@ -67,13 +67,13 @@ def load_image_from_text_multi_label(
         type_path += (False, )
     res = data_entry.parse_from_text(data_path, type_label, type_path)
     image_list = res[0]
-    
+
     # exchange channels
     label_list = []
     for idx_pp in range(len(res[0])):
         label = []
         for idx_label in range(num_classes):
-            label.append(res[idx_label+1][idx_pp])
+            label.append(res[idx_label + 1][idx_pp])
         label_list.append(label)
 
     # construct a fifo queue

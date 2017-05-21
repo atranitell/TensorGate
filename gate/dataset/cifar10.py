@@ -27,9 +27,14 @@ class cifar10(database.Database):
         self.output_height = 32
         self.output_width = 32
         self.min_queue_num = 256
-        self.device = '/gpu:0'
         self.num_classes = 10
         self.preprocessing_method = 'cifarnet'
+
+        # hps
+        self.net_name = 'cifarnet'
+        self.hps = data_param.hps(self.net_name)
+        self.hps.set_dropout(0.5)
+        self.hps.set_weight_decay(0.002)
 
         if data_type == 'train':
             self._train()
@@ -39,12 +44,14 @@ class cifar10(database.Database):
             raise ValueError('Unknown command %s' % self.data_type)
 
         # log
-        self.log = data_param.log(self.data_type, self.name)
+        self.log = data_param.log(
+            self.data_type, self.name + '_' + self.net_name)
         self.log.set_log(
-            print_frequency=50,
-            save_summaries_iter=50,
-            save_model_iter=1000,
-            test_interval=1000)
+            print_frequency=10,
+            save_summaries_iter=10,
+            save_model_iter=50,
+            test_interval=50,
+            max_iter=100000)
 
         # show
         self._print()
@@ -59,7 +66,7 @@ class cifar10(database.Database):
 
     def _train(self):
         # basic param
-        self.batch_size = 128
+        self.batch_size = 16
         self.total_num = 50000
         self.name = self.name + '_train'
         self.reader_thread = 32
@@ -72,4 +79,4 @@ class cifar10(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.001)

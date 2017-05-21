@@ -23,23 +23,20 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
 from gate.net import net
-# Inception-Renset-A
 
 
-class inception_resnet_v1(net.Net):
+class Inception_resnet_v1(net.Net):
 
-    def __init__(self):
-        pass
-        # self.dropout_keep_prob = 0.8
-        # self.weight_decay = 0.00004
-        # self.batch_norm_decay = 0.997
-        # self.batch_norm_epsilon = 0.001
-
-    def arg_scope(self):
-        return inception_resnet_v1_arg_scope()
+    def arguments_scope(self):
+        return inception_resnet_v1_arg_scope(self.weight_decay)
 
     def model(self, images, num_classes, is_training):
-        return net_inception_resnet_v1(images, num_classes, is_training)
+        return net_inception_resnet_v1(
+            inputs=images,
+            num_classes=num_classes,
+            is_training=is_training,
+            dropout_keep_prob=self.dropout,
+            reuse=self.reuse)
 
 
 def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
@@ -169,16 +166,12 @@ def inception_resnet_v1_arg_scope(weight_decay=0.0):
                         normalizer_fn=slim.batch_norm,
                         normalizer_params=batch_norm_params) as scope:
         return scope
-        
-        # return inception_resnet_v1(images, is_training=phase_train,
-        # dropout_keep_prob=keep_probability,
-        # bottleneck_layer_size=bottleneck_layer_size, reuse=reuse)
 
 
-def net_inception_resnet_v1(inputs, bottleneck_layer_size=128, is_training=True,
-                        dropout_keep_prob=0.8,
-                        reuse=None,
-                        scope='InceptionResnetV1'):
+def net_inception_resnet_v1(inputs, num_classes=128, is_training=True,
+                            dropout_keep_prob=0.8,
+                            reuse=None,
+                            scope='InceptionResnetV1'):
     """Creates the Inception Resnet V1 model.
     Args:
       inputs: a 4-D tensor of size [batch_size, height, width, 3].
@@ -254,14 +247,14 @@ def net_inception_resnet_v1(inputs, bottleneck_layer_size=128, is_training=True,
                     net = slim.avg_pool2d(net, net.get_shape()[1:3], padding='VALID',
                                           scope='AvgPool_1a_8x8')
                     net = slim.flatten(net)
-                    end_points['kinface'] = net
+                    end_points['PostPool'] = net
 
                     net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                                        scope='Dropout')
 
                     end_points['PreLogitsFlatten'] = net
 
-                net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None,
+                net = slim.fully_connected(net, num_classes, activation_fn=None,
                                            scope='Bottleneck', reuse=False)
 
     return net, end_points

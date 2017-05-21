@@ -3,6 +3,7 @@
 
     For check input content
 """
+from gate.utils.logger import logger
 
 
 def raise_none_param(*config):
@@ -10,5 +11,5 @@ def raise_none_param(*config):
     """
     for arg in config:
         if arg is None:
-            print(config)
+            logger.error(config)
             raise ValueError('Input is None type, Please check again.')
