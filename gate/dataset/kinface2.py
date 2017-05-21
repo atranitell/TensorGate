@@ -119,8 +119,8 @@ class kinface2_feature(database.Database):
         # hps
         self.net_name = 'mlp'
         self.hps = data_param.hps(self.net_name)
-        self.hps.set_dropout(0.9)
-        self.hps.set_weight_decay(0.0005)
+        self.hps.set_dropout(0.5)
+        self.hps.set_weight_decay(0.002)
         # self.hps.set_batch_norm(
         #     batch_norm_decay=0.997,
         #     batch_norm_epsilon=1e-5)
@@ -129,6 +129,8 @@ class kinface2_feature(database.Database):
             self._train()
         elif data_type == 'test':
             self._test()
+        elif data_type == 'val':
+            self._val()
         else:
             raise ValueError('Unknown command %s' % self.data_type)
 
@@ -144,16 +146,25 @@ class kinface2_feature(database.Database):
         # self._print()
 
     def _test(self):
-        self.batch_size = 100
+        self.batch_size = 50
         self.total_num = 400
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
         self.data_path = '../_datasets/kinface2_feature/val_1_idx.txt'
 
+    def _val(self):
+        # basic param
+        self.batch_size = 50
+        self.total_num = 1600
+        self.name = self.name + '_val'
+        self.reader_thread = 1
+        self.shuffle = False
+        self.data_path = '../_datasets/kinface2_feature/train_1_idx.txt'
+
     def _train(self):
         # basic param
-        self.batch_size = 32
+        self.batch_size = 50
         self.total_num = 1600
         self.name = self.name + '_train'
         self.reader_thread = 4
@@ -162,11 +173,12 @@ class kinface2_feature(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_rmsprop()
+        # self.opt.set_adam(
+        #     adam_beta1=0.9,
+        #     adam_beta2=0.999,
+        #     adam_epsilon=1e-8)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.00005)

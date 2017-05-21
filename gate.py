@@ -33,7 +33,7 @@ def interface_cnn(config):
     elif config.target == 'classification':
         import issue.cnn.classifier as cnn
     elif config.target == 'mlp_pair':
-        import issue.cnn.numeric_pair as cnn
+        import issue.cnn.numeric_cosine as cnn
     else:
         raise ValueError('Unkonwn target type.')
 

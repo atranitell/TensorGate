@@ -4,13 +4,12 @@
 """
 import os
 import math
+import numpy as np
+
 import tensorflow as tf
 
 import gate
 from gate.utils.logger import logger
-
-import numpy as np
-import tools.checkpoint as checkpoint
 
 
 def extract_feature(data_name, chkp_path, layer_name):
@@ -27,6 +26,7 @@ def extract_feature(data_name, chkp_path, layer_name):
         images, labels, filenames = dataset.loads()
 
         # show content - check network info
+        # import tools.checkpoint as checkpoint
         # chkp_file_path = checkpoint.get_latest_chkp_path(chkp_path)
         # checkpoint.print_checkpoint_variables(chkp_file_path)
 

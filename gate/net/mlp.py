@@ -38,11 +38,11 @@ def mlp(inputs, num_classes, is_training=False,
     end_points = {}
 
     with tf.variable_scope(scope, 'MLP', [inputs, num_classes]):
-        net = slim.fully_connected(inputs, 1024, scope='fc1')
-        net = slim.dropout(
+        net = slim.fully_connected(inputs, 512, scope='fc1')
+        logits = slim.dropout(
             net, dropout_keep_prob, is_training=is_training, scope='dropout1')
-        logits = slim.fully_connected(
-            net, num_classes, activation_fn=None, scope='fc2')
+        # logits = slim.fully_connected(
+        #     net, 100, activation_fn=None, scope='fc2')
 
     end_points['Logits'] = logits
 
@@ -61,6 +61,6 @@ def mlp_arg_scope(weight_decay=0.0):
     with slim.arg_scope(
         [slim.conv2d, slim.fully_connected],
         weights_regularizer=slim.l2_regularizer(weight_decay),
-        weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
+        weights_initializer=tf.truncated_normal_initializer(stddev=0.02),
             activation_fn=tf.nn.relu) as sc:
         return sc

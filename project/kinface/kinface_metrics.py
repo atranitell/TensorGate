@@ -149,13 +149,13 @@ def compute(use_PCA=False):
         print()
 
 
-def compute_all(use_PCA=False, save_feature=True):
+def compute_all(use_PCA=True, save_feature=True):
     pca = PCA.PCA(n_components=399)
     # concat all database
     for idx, M in enumerate(['_data/fd_', '_data/fs_', '_data/md_', '_data/ms_']):
-        feat = np.load(M + 'kinface2_250000_PostPool_features.npy')
+        # feat = np.load(M + 'kinface2_250000_PostPool_features.npy')
         # feat = parse_data_from_file(M + 'kinface2_vgg_fc6_features.txt')
-        # feat = np.load(M + 'kinface2_80000_PostPool_features.npy')
+        feat = np.load(M + 'kinface2_80000_PostPool_features.npy')
         name = np.load(M + 'kinface2_250000_PostPool_names.npy')
         if idx == 0:
             feats = feat
