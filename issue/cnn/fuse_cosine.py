@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 """ fuse cosine task for image
     updated: 2017/05/19
+
+    X->[Inception_Resnet_V1(face)-freeze]->X1(N, 1792)->[mlp-train]->X2(N, 512)
+    Y->[Inception_Resnet_V1(face)-freeze]->Y1(N, 1792)->[mlp-train]->Y2(N, 512)
+    [X2, Y2](N, 512*2) -> [cosine loss]
+
 """
 import os
 import math
@@ -8,7 +13,6 @@ import time
 
 import tensorflow as tf
 from tensorflow.contrib import framework
-from tensorflow.contrib import layers
 
 import gate
 from gate.utils.logger import logger

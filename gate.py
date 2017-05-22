@@ -34,10 +34,10 @@ def interface_cnn(config):
         import issue.cnn.regression as cnn
 
     elif config.target == 'classification':
-        import issue.cnn.classifier as cnn
+        import issue.cnn.classification as cnn
 
     elif config.target == 'mlp_cosine':
-        import issue.cnn.numeric_cosine as cnn
+        import issue.cnn.mlp_cosine as cnn
 
     elif config.target == 'fuse_cosine':
         import issue.cnn.fuse_cosine as cnn
@@ -69,7 +69,7 @@ def interface_cnn(config):
         cnn.val(config.dataset, config.model)
 
     elif config.task == 'heatmap' and config.model is not None:
-        cnn.heatmap(config.dataset, config.model)
+        pass
 
     elif config.task == 'extract_feature' and config.model is not None:
         import issue.cnn.extract_feature as extract_feature
@@ -78,14 +78,6 @@ def interface_cnn(config):
 
     else:
         logger.error('Wrong task setting %s' % str(config.task))
-
-
-def interface_cgan(config):
-    pass
-
-
-def interface_vae(config):
-    pass
 
 
 def interface(config):
@@ -98,10 +90,10 @@ def interface(config):
         interface_cnn(config)
 
     elif config.target == 'cgan':
-        interface_cgan(config)
+        pass
 
     elif config.target == 'vae':
-        interface_vae(config)
+        pass
 
     else:
         logger.error('Wrong target setting %s' % str(config.target))

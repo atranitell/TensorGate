@@ -46,8 +46,6 @@ def preprocess_image(image, output_height, output_width,
                      is_training=False, channels=3):
     """ Preprocesses the given image. """
     if is_training:
-        return preprocess_for_train(image, output_height,
-                                    output_width, channels)
+        return preprocess_for_train(image, output_height, output_width, channels)
     else:
-        return preprocess_for_eval(image, output_height,
-                                   output_width)
+        return preprocess_for_eval(image, output_height, output_width)

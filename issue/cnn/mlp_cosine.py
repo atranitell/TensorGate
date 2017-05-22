@@ -8,10 +8,22 @@ import time
 
 import tensorflow as tf
 from tensorflow.contrib import framework
-from tensorflow.contrib import layers
 
 import gate
 from gate.utils.logger import logger
+
+
+def get_network(data1, data2, labels, dataset, phase):
+    # get netowkr
+    logits1, end_points1 = gate.net.factory.get_network(
+        dataset.hps, phase, data1, 1, 'net1')
+    logits2, end_points2 = gate.net.factory.get_network(
+        dataset.hps, phase, data2, 1, 'net2')
+    # cosine loss
+    is_training = True if phase is 'train' else False
+    losses, loss = gate.loss.cosine.get_loss(
+        logits1, logits2, labels, dataset.batch_size, is_training)
+    return losses, loss
 
 
 def train(data_name, chkp_path=None, exclusions=None):
@@ -39,14 +51,7 @@ def train(data_name, chkp_path=None, exclusions=None):
         tf.summary.scalar('iter', global_step)
 
         # get Deep Neural Network
-        logits1, end_points1 = gate.net.factory.get_network(
-            dataset.hps, 'train', data1, 1, 'net1')
-        logits2, end_points2 = gate.net.factory.get_network(
-            dataset.hps, 'train', data2, 1, 'net2')
-
-        # cosine loss
-        losses, _ = gate.loss.cosine.get_loss(
-            logits1, logits2, labels, dataset.batch_size)
+        losses, _ = get_network(data1, data2, labels, dataset, 'train')
 
         # get updater
         with tf.name_scope('updater'):
@@ -101,7 +106,7 @@ def train(data_name, chkp_path=None, exclusions=None):
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     # acquire best threshold
-                    trn_err, threshold = _validation(
+                    trn_err, threshold = val(
                         data_name, dataset.log.train_dir, summary_test)
                     # acquire test error
                     test_start_time = time.time()
@@ -115,8 +120,9 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_iter = cur_iter
 
                     logger.info(
-                        'Test Time: %fs, best train error: %f, test error: %f, in %d.' %
-                        (test_duration, self.best_err, self.best_err_t, self.best_iter))
+                        'Test Time: %fs, best train error: %f, test error: % f, in % d.' %
+                        (test_duration, self.best_err,
+                         self.best_err_t, self.best_iter))
 
         # record running information
         running_hook = Running_Hook()
@@ -126,7 +132,6 @@ def train(data_name, chkp_path=None, exclusions=None):
                 hooks=[chkp_hook, summary_hook, running_hook,
                        tf.train.NanTensorHook(losses)],
                 config=tf.ConfigProto(allow_soft_placement=True),
-                checkpoint_dir=chkp_path,
                 save_checkpoint_secs=None,
                 save_summaries_steps=None) as mon_sess:
 
@@ -142,28 +147,15 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
     """
     with tf.Graph().as_default():
         # get dataset
-        dataset = gate.dataset.factory.get_dataset(data_name, 'test')
-        dataset.log.test_dir = chkp_path + '/test/'
-
-        if not os.path.exists(dataset.log.test_dir):
-            os.mkdir(dataset.log.test_dir)
+        dataset = gate.dataset.factory.get_dataset(
+            data_name, 'test', chkp_path)
 
         # build data model
         data1, data2, labels, fname1, fname2 = dataset.loads()
 
-        # get global step
-        global_step = framework.create_global_step()
-        tf.summary.scalar('iter', global_step)
-
         # get Deep Neural Network
-        logits1, end_points1 = gate.net.factory.get_network(
-            dataset.hps, 'test', data1, 1, 'net1')
-        logits2, end_points2 = gate.net.factory.get_network(
-            dataset.hps, 'test', data2, 1, 'net2')
-
-        # get loss
-        losses, predictions = gate.loss.cosine.get_loss(
-            logits1, logits2, labels, dataset.batch_size, False)
+        losses, predictions = get_network(
+            data1, data2, labels, dataset, 'test')
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -196,7 +188,7 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
                 dataset.log.test_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
 
-            for cur in range(num_iter):
+            for _ in range(num_iter):
                 # if ctrl-c
                 if coord.should_stop():
                     break
@@ -225,7 +217,8 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             # output result
             logger.test(
                 'Iter:%d, total test sample:%d, num_batch:%d, loss:%.4f, error:%.4f.' %
-                (int(global_step), dataset.total_num, num_iter, mean_loss, mean_err))
+                (int(global_step), dataset.total_num,
+                 num_iter, mean_loss, mean_err))
 
             # write to summary
             if summary_writer is not None:
@@ -239,35 +232,20 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             return mean_err
 
 
-def _validation(data_name, chkp_path, summary_writer=None):
+def val(data_name, chkp_path, summary_writer=None):
     """ acquire best cosine value
     """
     with tf.Graph().as_default():
         # get dataset
-        dataset = gate.dataset.factory.get_dataset(data_name, 'val')
-        dataset.shuffle = False
-
-        dataset.log.val_dir = chkp_path + '/val/'
-
-        if not os.path.exists(dataset.log.val_dir):
-            os.mkdir(dataset.log.val_dir)
+        dataset = gate.dataset.factory.get_dataset(
+            data_name, 'val', chkp_path)
 
         # build data model
         data1, data2, labels, fname1, fname2 = dataset.loads()
 
-        # get global step
-        global_step = framework.create_global_step()
-        tf.summary.scalar('iter', global_step)
-
         # get Deep Neural Network
-        logits1, end_points1 = gate.net.factory.get_network(
-            dataset.hps, 'test', data1, 1, 'net1')
-        logits2, end_points2 = gate.net.factory.get_network(
-            dataset.hps, 'test', data2, 1, 'net2')
-
-        # get loss
-        losses, predictions = gate.loss.cosine.get_loss(
-            logits1, logits2, labels, dataset.batch_size, False)
+        losses, predictions = get_network(
+            data1, data2, labels, dataset, 'test')
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -294,13 +272,14 @@ def _validation(data_name, chkp_path, summary_writer=None):
                 labels, shape=[dataset.batch_size]))
             preds_str = tf.as_string(tf.reshape(
                 predictions, shape=[dataset.batch_size]))
-            test_batch_info = fname1 + tab + fname2 + tab + labels_str + tab + preds_str
+            test_batch_info = fname1 + tab + fname2 + tab + \
+                labels_str + tab + preds_str
 
             test_info_path = os.path.join(
                 dataset.log.val_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
 
-            for cur in range(num_iter):
+            for _ in range(num_iter):
                 # if ctrl-c
                 if coord.should_stop():
                     break
@@ -329,7 +308,8 @@ def _validation(data_name, chkp_path, summary_writer=None):
             # output result
             logger.train(
                 'Iter:%d, total test sample:%d, num_batch:%d, loss:%.4f, error:%.4f.' %
-                (int(global_step), dataset.total_num, num_iter, mean_loss, mean_err))
+                (int(global_step), dataset.total_num,
+                 num_iter, mean_loss, mean_err))
 
             # write to summary
             if summary_writer is not None:

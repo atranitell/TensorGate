@@ -16,7 +16,7 @@ class kinface2_feature(database.Database):
     def __init__(self, data_type, name, chkp_path=None):
         # init basic class
         database.Database.__init__(self)
-        
+
         self.data_type = data_type
         self.name = name
         self.num_classes = 2
@@ -45,7 +45,7 @@ class kinface2_feature(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.0001)
+        self.lr.set_fixed(learning_rate=0.01)
 
         self._print()
 

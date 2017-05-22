@@ -17,10 +17,8 @@ def extract_feature(data_name, chkp_path, layer_name):
     """
     with tf.Graph().as_default():
         # get dataset
-        dataset = gate.dataset.factory.get_dataset(data_name, 'test')
-
-        # set model file as root path
-        dataset.log.test_dir = chkp_path
+        dataset = gate.dataset.factory.get_dataset(
+            data_name, 'test', chkp_path)
 
         # load data
         images, labels, filenames = dataset.loads()

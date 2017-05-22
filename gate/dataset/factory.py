@@ -9,7 +9,7 @@ from gate.dataset.cifar import cifar100
 from gate.dataset.imagenet import imagenet
 from gate.dataset.mnist import mnist
 # depression
-from gate.dataset import avec2014
+from gate.dataset.avec import avec2014
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features

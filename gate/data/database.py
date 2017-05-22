@@ -9,7 +9,10 @@ class Database():
 
     def __init__(self):
         """ basic info"""
-        pass
+        self.image = None
+        self.lr = None
+        self.opt = None
+        self.hps = None
 
     def loads(self):
         """ data loader
