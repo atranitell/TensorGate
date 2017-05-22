@@ -7,11 +7,12 @@ import os
 import argparse
 import sys
 from datetime import datetime
-from gate.utils.logger import logger
 
 # hidden device output
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
+from gate.utils.logger import logger
 
 # allocate GPU to sepcify device
 gpu_cluster = ['0', '1', '2', '3']
@@ -28,23 +29,44 @@ def raise_invalid_input(*config):
 
 
 def interface_cnn(config):
+    # choose different task
     if config.target == 'regression':
         import issue.cnn.regression as cnn
+
     elif config.target == 'classification':
         import issue.cnn.classifier as cnn
-    elif config.target == 'mlp_pair':
+
+    elif config.target == 'mlp_cosine':
         import issue.cnn.numeric_cosine as cnn
+
+    elif config.target == 'fuse_cosine':
+        import issue.cnn.fuse_cosine as cnn
+
     else:
         raise ValueError('Unkonwn target type.')
 
+    # differnt method to finish task
     if config.task == 'train' and config.model is None:
         cnn.train(config.dataset)
 
+    # continue to train
     elif config.task == 'train' and config.model is not None:
         cnn.train(config.dataset, config.model)
 
+    # freeze all weights except extension, and train extension
+    # from zero to start
+    elif config.task == 'finetune' and config.model is not None:
+        cnn.train(config.dataset, config.model,
+                  ['net1', 'net2', 'global_step'])
+
+    # test model
     elif config.task == 'test' and config.model is not None:
         cnn.test(config.dataset, config.model)
+
+    # validation a model, for specific method.
+    #   get a value through val and then test
+    elif config.task == 'val' and config.model is not None:
+        cnn.val(config.dataset, config.model)
 
     elif config.task == 'heatmap' and config.model is not None:
         cnn.heatmap(config.dataset, config.model)
@@ -70,8 +92,9 @@ def interface(config):
     """ interface related to command
     """
     logger.info(str(config))
+    cnn_list = ['regression', 'classification', 'mlp_cosine', 'fuse_cosine']
 
-    if config.target in ['regression', 'classification', 'mlp_pair']:
+    if config.target in cnn_list:
         interface_cnn(config)
 
     elif config.target == 'cgan':

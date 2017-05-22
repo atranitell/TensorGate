@@ -112,18 +112,22 @@ class learning_rate():
 
 class log():
 
-    def __init__(self, data_type, dirname):
-        if data_type == 'train':
-            self.train_dir = filesystem.create_folder_with_date(
-                '../_output/' + dirname)
-        # it will be determined by command inputs.
-        elif data_type == 'test':
-            self.test_dir = None
-        # it will be determined by train
-        elif data_type == 'val':
-            self.val_dir = None
+    def __init__(self, data_type, dirname, chkp_path=None):
+        if chkp_path is None:
+            if data_type == 'train':
+                self.train_dir = filesystem.create_folder_with_date(
+                    '../_output/' + dirname)
         else:
-            raise ValueError('Unkonwn data type.')
+            if data_type == 'train':
+                self.train_dir = chkp_path
+            elif data_type == 'test':
+                self.test_dir = chkp_path + '/test/'
+                filesystem.create_folder(self.test_dir)
+            elif data_type == 'val':
+                self.val_dir = chkp_path + '/val/'
+                filesystem.create_folder(self.val_dir)
+            else:
+                raise ValueError('Unkonwn data type.')
 
     def set_log(self, print_frequency=20,
                 save_summaries_iter=2,
@@ -162,3 +166,43 @@ class hps():
         self.batch_norm_decay = batch_norm_decay
         self.batch_norm_epsilon = batch_norm_epsilon
         self.batch_norm_scale = True
+
+
+class image():
+
+    def __init__(self):
+        self.channels = None
+        self.frames = None
+        self.raw_height = None
+        self.raw_width = None
+        self.output_height = None
+        self.output_width = None
+        self.preprocessing_method1 = None
+        self.preprocessing_method2 = None
+
+    def set_format(self, channels, frames=1):
+        """ For RGB, channels is 3
+            For video input, frames is N else 1 (for single image)
+        """
+        self.channels = channels
+        self.frames = frames
+
+    def set_raw_size(self, height, width):
+        """ the size of raw image when loaded in system
+        """
+        self.raw_height = height
+        self.raw_width = width
+
+    def set_output_size(self, height, width):
+        """ the order is:
+            image to be reshape to raw size
+            and output via random crop/center crop
+        """
+        self.output_height = height
+        self.output_width = width
+
+    def set_preprocessing(self, method1=None, method2=None):
+        """ method1 for image1, method2 for image2
+        """
+        self.preprocessing_method1 = method1
+        self.preprocessing_method2 = method2

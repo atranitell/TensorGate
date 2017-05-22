@@ -8,27 +8,46 @@ class Database():
     """
 
     def __init__(self):
+        """ basic info"""
         pass
 
     def loads(self):
+        """ data loader
+        """
         pass
+
+    def _set_phase(self, data_type):
+        """ for different phase use differnt data_path and shuffle
+            train for config lr and optimizer
+        """
+        if data_type == 'train':
+            self._train()
+        elif data_type == 'val':
+            self._val()
+        elif data_type == 'test':
+            self._test()
+        else:
+            raise ValueError('Unknown command %s' % data_type)
+
+    def _train(self):
+        raise ValueError('Function Should defined in inherited class.')
+
+    def _val(self):
+        raise ValueError('Function Should defined in inherited class.')
+
+    def _test(self):
+        raise ValueError('Function Should defined in inherited class.')
 
     def _print(self):
         if self.data_type == 'train':
             logger.info(string.class_members(self.log))
-
-            logger.info('Total num: %d, batch size: %d, height: %d, width: %d, channels: %d'
-                        % (self.total_num, self.batch_size, self.output_height, self.output_width, self.channels))
-
-            if self.preprocessing_method is not None:
-                logger.info('preprocessing method: %s' %
-                            self.preprocessing_method)
-
+            logger.info('Total num: %d, batch size: %d.' %
+                        (self.total_num, self.batch_size))
+            if self.image is not None:
+                logger.info(string.class_members(self.image))
             if self.opt is not None:
                 logger.info(string.class_members(self.opt))
-
             if self.lr is not None:
                 logger.info(string.class_members(self.lr))
-
             if self.hps is not None:
                 logger.info(string.class_members(self.hps))

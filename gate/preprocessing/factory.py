@@ -50,12 +50,16 @@ def check_preprocessing(name, data_type):
         return True
     elif data_type == 'test':
         return False
+    elif data_type == 'val':
+        return False
 
 
-def get_preprocessing(name, data_type, image, output_height, output_width, **kwargs):
-    """
+def get_preprocessing(name, data_type, image,
+                      output_height, output_width, **kwargs):
+    """ name scope like ' preprocessing_cifar10_train'
     """
     is_training = check_preprocessing(name, data_type)
-    with tf.name_scope('preprocessing'):
+    with tf.name_scope('preprocessing_' + name + '_' + data_type):
         return preprocessing_map[name].preprocess_image(
-            image, output_height, output_width, is_training=is_training, **kwargs)
+            image, output_height, output_width,
+            is_training=is_training, **kwargs)

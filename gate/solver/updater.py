@@ -36,7 +36,8 @@ class Updater():
         if self.grads is not None:
             return self.grads
         utils.check.raise_none_param(losses, self.optimizer)
-        return self.optimizer.compute_gradients(losses)
+        return self.optimizer.compute_gradients(
+            losses, var_list=self.variables_to_train)
 
     def get_train_op(self):
         if self.train_op is not None:

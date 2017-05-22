@@ -7,6 +7,7 @@ from gate.utils import filesystem
 from gate.utils import string
 from gate.utils.logger import logger
 
+
 def parse_from_text(text_path, dtype_list, path_list):
     """ dtype_list is a tuple, which represent a list of data type.
         e.g. the file format like:

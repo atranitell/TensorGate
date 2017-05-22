@@ -9,7 +9,7 @@ class Logger():
         self.logger = logging.getLogger('TensorGate')
         self.logger.setLevel(logging.DEBUG)
         self._DATE = True
-        self._SYS = False
+        self._SYS = True
         self._TRAIN = True
         self._TEST = True
         self._NET = True

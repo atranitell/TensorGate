@@ -52,6 +52,11 @@ def create_folder_with_date(folder_path):
     return dir_log
 
 
+def create_folder(folder_path):
+    if not os.path.exists(folder_path):
+        os.mkdir(folder_path)
+
+
 def raise_path_not_exists(path):
     if not os.path.exists(path):
         raise ValueError('Path could not find in %s' % path)
