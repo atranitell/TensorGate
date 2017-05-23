@@ -42,6 +42,9 @@ def interface_cnn(config):
     elif config.target == 'fuse_cosine':
         import issue.cnn.fuse_cosine as cnn
 
+    elif config.target == 'fuse_cosine_pair':
+        import issue.cnn.fuse_cosine_pair as cnn
+
     else:
         raise ValueError('Unkonwn target type.')
 
@@ -84,7 +87,8 @@ def interface(config):
     """ interface related to command
     """
     logger.info(str(config))
-    cnn_list = ['regression', 'classification', 'mlp_cosine', 'fuse_cosine']
+    cnn_list = ['regression', 'classification',
+                'mlp_cosine', 'fuse_cosine', 'fuse_cosine_pair']
 
     if config.target in cnn_list:
         interface_cnn(config)

@@ -9,7 +9,7 @@ from gate.data import data_loader
 class kinface2(database.Database):
 
     def loads(self):
-        return data_loader.load_pair_image_from_text(
+        return data_loader.load_pair_image_from_text_with_multiview(
             self.data_path, self.shuffle, self.data_type, self.image,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -75,6 +75,6 @@ class kinface2(database.Database):
         self.batch_size = 50
         self.total_num = 1600
         self.name = self.name + '_train'
-        self.reader_thread = 4
+        self.reader_thread = 1
         self.shuffle = True
         self.data_path = '../_datasets/kinface2/train_1.txt'

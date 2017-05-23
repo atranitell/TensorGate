@@ -31,6 +31,14 @@ def load_pair_image_from_text(
         min_queue_num, batch_size, reader_thread)
 
 
+def load_pair_image_from_text_with_multiview(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_image.load_pair_image_from_text_with_multiview(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread)
+
+
 def load_image_from_memory(
         data_path, shuffle, data_type, image,
         min_queue_num, batch_size, reader_thread):

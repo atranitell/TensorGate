@@ -11,6 +11,7 @@ from gate import preprocessing
 from gate.data import data_entry
 from gate.data import data_prefetch
 from gate.utils import filesystem
+from tools import handcrafted
 
 
 def load_image_from_text(
@@ -138,6 +139,93 @@ def load_pair_image_from_text(
 
     return data_prefetch.generate_pair_batch(
         image1, image2, label, imgpath1, imgpath2, shuffle,
+        batch_size, min_queue_num, reader_thread)
+
+
+def _handcrafted_feature_extract(image, feature_type=None):
+
+    if feature_type is None:
+        return image
+    else:
+        _type = str(feature_type, encoding="utf-8")
+        if _type in ['LBP', 'lbp']:
+            img = handcrafted.LBP(image)
+            img = np.float32(np.reshape(img, (img.shape[0], img.shape[1], 1)))
+            return img
+        else:
+            raise ValueError('Error input with feature type.')
+
+
+def load_pair_image_from_text_with_multiview(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    """ load pair data
+    Format:
+        img_x1 img_y1 0
+        img_x2 img_y2 10
+
+    e.g.
+        for x -> preprocessing -> distorted image (x1_1)
+                                       |-> handcrafted image (x1_2)
+        for y -> preprocessing -> distorted image (y1_1)
+                                       |-> handcrafted image (y1_2)
+        net input:
+        x1_1 -> net1 |
+                     | -> _x1 |
+        x1_2 -> net2 |        |
+                              | -> metric distance
+        y1_1 -> net1'|        |
+                     | -> _y1 |
+        y1_2 -> net2'|
+
+    """
+    res = data_entry.parse_from_text(
+        data_path, (str, str, int), (True, True, False))
+    image1_list = res[0]
+    image2_list = res[1]
+    label_list = res[2]
+
+    # construct a fifo queue
+    image1_list = tf.convert_to_tensor(image1_list, dtype=tf.string)
+    image2_list = tf.convert_to_tensor(image2_list, dtype=tf.string)
+    label_list = tf.convert_to_tensor(label_list, dtype=tf.int32)
+    imgpath1, imgpath2, label = tf.train.slice_input_producer(
+        [image1_list, image2_list, label_list], shuffle=shuffle)
+
+    # preprocessing
+    image_raw1 = tf.read_file(imgpath1)
+    image1 = tf.image.decode_image(image_raw1, channels=image.channels)
+    image1 = tf.reshape(
+        image1, [image.raw_height, image.raw_width, image.channels])
+
+    image_raw2 = tf.read_file(imgpath2)
+    image2 = tf.image.decode_image(image_raw2, channels=image.channels)
+    image2 = tf.reshape(
+        image2, [image.raw_height, image.raw_width, image.channels])
+
+    # image, label, filename
+    imageX_1 = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method1, data_type, image1,
+        image.output_height, image.output_width)
+
+    imageY_1 = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method2, data_type, image2,
+        image.output_height, image.output_width)
+
+    # extract handcrafted feature
+    imageX_2 = tf.py_func(_handcrafted_feature_extract,
+                          [imageX_1, 'LBP'], [tf.float32])
+    imageX_2 = tf.to_float(tf.reshape(
+        imageX_2, [image.output_height*image.output_width*1]))
+
+    imageY_2 = tf.py_func(_handcrafted_feature_extract,
+                          [imageY_1, 'LBP'], [tf.float32])
+    imageY_2 = tf.to_float(tf.reshape(
+        imageY_2, [image.output_height*image.output_width*1]))
+
+    return data_prefetch.generate_pair_multiview_batch(
+        imageX_1, imageX_2, imageY_1, imageY_2,
+        label, imgpath1, imgpath2, shuffle,
         batch_size, min_queue_num, reader_thread)
 
 
