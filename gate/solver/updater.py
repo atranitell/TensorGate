@@ -45,22 +45,29 @@ class Updater():
         else:
             raise ValueError('train op does not exist.')
 
-    def get_trainable_list(self, inclusion=None):
-        """ inclusion is a list, including name trained.
-            if it is None, all trainable variables will be trained.
+    def _inclusion_var(self, exclusions, var_list):
+        """ exclude prefix elements of exclusions in var_list
+        """
+        _vars = []
+        for var in var_list:
+            excluded = False
+            for exclusion in exclusions:
+                if var.op.name.startswith(exclusion):
+                    excluded = True
+                    break
+            if not excluded:
+                _vars.append(var)
+        return _vars
+
+    def get_trainable_list(self, exclusions=None):
+        """ var for train.
         """
         if self.variables_to_train is not None:
             return self.variables_to_train
-        if inclusion is not None:
-            variables_to_train = []
-            for var in tf.trainable_variables():
-                for exclusion in inclusion:
-                    if var.op.name.startswith(exclusion):
-                        variables_to_train.append(var)
-                        break
+        if exclusions is not None:
+            return self._inclusion_var(exclusions, tf.trainable_variables())
         else:
-            variables_to_train = tf.trainable_variables()
-        return variables_to_train
+            return tf.trainable_variables()
 
     def get_restore_list(self, exclusions=None):
         """ import variables excluded from exclusions.
@@ -68,20 +75,13 @@ class Updater():
         if self.variables_to_restore is not None:
             return self.variables_to_restore
         if exclusions is not None:
-            variables_to_restore = []
-            for var in tf.global_variables():
-                excluded = False
-                for exclusion in exclusions:
-                    if var.op.name.startswith(exclusion):
-                        excluded = True
-                        break
-                if not excluded:
-                    variables_to_restore.append(var)
+            return self._inclusion_var(exclusions, tf.global_variables())
         else:
-            variables_to_restore = tf.global_variables()
-        return variables_to_restore
+            return tf.global_variables()
 
     def get_variables_saver(self):
+        """ restore list.
+        """
         if self.saver is not None:
             return self.saver
         utils.check.raise_none_param(self.variables_to_restore)
@@ -92,13 +92,18 @@ class Updater():
                              losses, exclusions=None):
         """ init_default_updater
         """
+        # choose part of weights to restore or train
+        if exclusions is not None:
+            if 'restore' in exclusions:
+                ex_restore = exclusions['restore']
+            if 'train' in exclusions:
+                ex_train = exclusions['train']
+
         self.learning_rate = self.get_learning_rate(dataset, global_step)
         self.optimizer = self.get_optimizer(dataset)
 
         # variables_to_train just includes items in exclusions
-        #   it will freeze bottom layer, and train top layer.
-        # exclusions = ['LeNet/fc4']
-        self.variables_to_train = self.get_trainable_list(inclusion=exclusions)
+        self.variables_to_train = self.get_trainable_list(ex_train)
 
         # normal compute gradients
         self.grads = self.get_gradients(losses)
@@ -116,10 +121,7 @@ class Updater():
             self.train_op = grad_op
 
         # restore weights from self.variables to restore
-        # variables_to_restore does not include items in exclusions
-        #   it will restore bottom layer param, and not import
-        #       top layer parameters.
-        self.variables_to_restore = self.get_restore_list(exclusions)
+        self.variables_to_restore = self.get_restore_list(ex_restore)
         self.saver = self.get_variables_saver()
 
         # print info

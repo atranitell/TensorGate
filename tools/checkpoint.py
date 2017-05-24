@@ -1,7 +1,6 @@
 
 import os
 import re
-import gate
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
@@ -25,7 +24,8 @@ def write_checkpoint_model_items(chkp_file_path, chkp_model_list):
         all_model_checkpoint_paths: "train.ckpt-2001"
         all_model_checkpoint_paths: "train.ckpt-3001"
     """
-    gate.utils.filesystem.raise_path_exists(chkp_file_path)
+    if not os.path.exists(chkp_file_path):
+        raise ValueError('checkpoint file path is wrong.')
     with open(chkp_file_path, 'w') as fp:
         fp.write('model_checkpoint_path: "' + chkp_model_list[0] + '"\n')
         for idx in range(1, len(chkp_model_list)):
@@ -163,16 +163,6 @@ def merge_fuse_checkpoint(model_1, model_2, fuse_model, outfile):
     merge_checkpoint(model_2 + '_2', fuse_model + '_tmp', outfile)
     print('\n Finished!')
 
-# merge_fuse_checkpoint(
-#     model_1='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_train.ckpt-100001',
-#     model_2='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_flow_train.ckpt-43401',
-#     fuse_model='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_fuse_16f_succ_train.ckpt-1',
-#     outfile='C:/Users/jk/Desktop/Gate/_output/t1/avec2014_fuse_16f_succ_train.ckpt-merge'
-# )
 
-# print_checkpoint_variables(
-#     'C:/Users/jk/Desktop/Gate/_output/vgg/vggface16.tfmodel')
-
-# add_checkpoint_prefix(infile='C:/Users/jk/Desktop/Gate/_output/facenet_webface/model-20170511-185253.ckpt-80000',
-#                       outfile='C:/Users/jk/Desktop/Gate/_output/facenet_webface/inception-resnet-v1',
-#                       new_prefix='net')
+print_checkpoint_variables(
+    'C:/Users/jk/Desktop/Gate/_output/face/kinface2_train.ckpt-96400')

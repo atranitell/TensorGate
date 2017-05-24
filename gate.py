@@ -57,10 +57,11 @@ def interface_cnn(config):
         cnn.train(config.dataset, config.model)
 
     # freeze all weights except extension, and train extension
-    # from zero to start
     elif config.task == 'finetune' and config.model is not None:
-        cnn.train(config.dataset, config.model,
-                  ['net1', 'net2', 'global_step'])
+        # exclusions = {'restore': ['net1', 'net2', 'global_step'],
+        exclusions = {'restore': None,
+                      'train': ['InceptionResnetV1']}
+        cnn.train(config.dataset, config.model, exclusions)
 
     # test model
     elif config.task == 'test' and config.model is not None:
