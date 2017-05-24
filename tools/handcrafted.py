@@ -17,8 +17,9 @@ def image_to_array(x):
 
 def LBP(img):
     img = array_to_image(img).convert('L')
+    img = img.resize((64, 64))
     lbp = skimage.feature.local_binary_pattern(img, 8, 4)
-    return image_to_array(lbp)
+    return lbp
 
 
 def read_image(imgpath):

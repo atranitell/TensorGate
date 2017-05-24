@@ -216,12 +216,12 @@ def load_pair_image_from_text_with_multiview(
     imageX_2 = tf.py_func(_handcrafted_feature_extract,
                           [imageX_1, 'LBP'], [tf.float32])
     imageX_2 = tf.to_float(tf.reshape(
-        imageX_2, [image.output_height*image.output_width*1]))
+        imageX_2, [image.raw_height*image.raw_width*1]))
 
     imageY_2 = tf.py_func(_handcrafted_feature_extract,
                           [imageY_1, 'LBP'], [tf.float32])
     imageY_2 = tf.to_float(tf.reshape(
-        imageY_2, [image.output_height*image.output_width*1]))
+        imageY_2, [image.raw_height*image.raw_width*1]))
 
     return data_prefetch.generate_pair_multiview_batch(
         imageX_1, imageX_2, imageY_1, imageY_2,
