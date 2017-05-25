@@ -59,7 +59,7 @@ networks_map = {
 def check_network(name, data_type):
     """ check network name """
     if name not in networks_map:
-        raise ValueError('Unknown data_type %s' % data_type)
+        raise ValueError('Unknown network name %s' % name)
     if data_type == 'train':
         return True
     elif data_type == 'val':
