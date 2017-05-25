@@ -28,7 +28,7 @@ class avec2014(database.Database):
         self.image = data_param.image()
         self.image.set_format(channels=3)
         self.image.set_raw_size(256, 256)
-        self.image.set_output_size(28, 28)
+        self.image.set_output_size(224, 224)
         self.image.set_preprocessing('avec2014')
 
         # specify information
@@ -44,8 +44,8 @@ class avec2014(database.Database):
             test_interval=200)
 
         # setting hps
-        self.hps = data_param.hps('cifarnet')
-        self.hps.set_dropout(0.5)
+        self.hps = data_param.hps('resnet_v2_50')
+        self.hps.set_dropout(1.0)
         self.hps.set_weight_decay(0.0005)
         self.hps.set_batch_norm(
             batch_norm_decay=0.997,
@@ -59,19 +59,19 @@ class avec2014(database.Database):
             adam_epsilon=1e-8)
 
         # lr
-        self.lr = data_param.learning_rate(0.999)
+        self.lr = data_param.learning_rate()
         self.lr.set_fixed(learning_rate=0.001)
 
         self._print()
 
     def _test(self):
-        self.batch_size = 32
+        self.batch_size = 50
         # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
         # 17727
-        self.total_num = 1000
+        self.total_num = 17727
         self.name = self.name + '_test'
-        self.reader_thread = 1
-        self.shuffle = False
+        self.reader_thread = 4
+        self.shuffle = True
         self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
