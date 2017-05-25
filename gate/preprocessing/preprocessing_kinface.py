@@ -11,9 +11,9 @@ def preprocess_for_train(image, output_height,
 
     # resize to [160, 160] and then add padding to [184, 184]
     image = tf.image.resize_images(
-        image, [output_width, output_height],
+        image, [224, 224],
         method=tf.image.ResizeMethod.AREA)
-    image = tf.image.resize_image_with_crop_or_pad(image, 184, 184)
+    # image = tf.image.resize_image_with_crop_or_pad(image, 184, 184)
 
     image = tf.random_crop(
         image, [output_height, output_width, channels])
