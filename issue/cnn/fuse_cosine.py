@@ -11,14 +11,16 @@ import os
 import math
 import time
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.contrib import framework
 
 import gate
 from gate.utils.logger import logger
+import project.kinface.kinface_distance as kinface
 
 
-def get_network(image1, image2, labels, dataset, phase):
+def get_network(image1, image2, dataset, phase):
     # use Inception-Resnet-V1
     dataset.hps.net_name = 'inception_resnet_v1'
     _, end_points1 = gate.net.factory.get_network(
@@ -31,15 +33,23 @@ def get_network(image1, image2, labels, dataset, phase):
 
     # get Deep Neural Network
     dataset.hps.net_name = 'mlp'
-    logits1, end_points1 = gate.net.factory.get_network(
-        dataset.hps, phase, data1, 1, 'net1')
-    logits2, end_points2 = gate.net.factory.get_network(
-        dataset.hps, phase, data2, 1, 'net2')
+    logits1, end_points3 = gate.net.factory.get_network(
+        dataset.hps, phase, data1, dataset.num_classes, 'net1')
+    logits2, end_points4 = gate.net.factory.get_network(
+        dataset.hps, phase, data2, dataset.num_classes, 'net2')
 
+    nets = [end_points1, end_points2, end_points3, end_points4]
+
+    return logits1, logits2, nets
+
+
+def get_loss(logits1, logits2, labels, batch_size, phase):
+    """ get loss should receive target variables
+            and output corresponding loss
+    """
     is_training = True if phase is 'train' else False
     losses, predictions = gate.loss.cosine.get_loss(
-        logits1, logits2, labels, dataset.batch_size, is_training)
-
+        logits1, logits2, labels, batch_size, is_training)
     return losses, predictions
 
 
@@ -64,9 +74,13 @@ def train(data_name, chkp_path=None, exclusions=None):
         global_step = framework.create_global_step()
         tf.summary.scalar('iter', global_step)
 
-        # setting loss and get network
-        losses, predications = get_network(
-            image1, image2, labels, dataset, 'train')
+        # get network
+        logits1, logits2, nets = get_network(
+            image1, image2, dataset, 'train')
+
+        # get loss
+        losses, predictions = get_loss(
+            logits1, logits2, labels, dataset.batch_size, 'train')
 
         # get updater
         with tf.name_scope('updater'):
@@ -110,10 +124,11 @@ def train(data_name, chkp_path=None, exclusions=None):
                     _lr = str(run_values.results[2])
                     _duration = self.duration * 1000 / _invl
 
-                    format_str = 'Iter:%d, loss:%.4f, lr:%s, time:%.2fms.'
-                    format_str = format_str % (
-                        cur_iter, _loss, _lr, _duration)
-                    logger.train(format_str)
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('loss', _loss, float)
+                    f_str.add('lr', _lr)
+                    f_str.add('time', _duration, float)
+                    logger.train(f_str.get())
 
                     # set zero
                     self.mean_loss, self.duration = 0, 0
@@ -134,9 +149,12 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_err_t = test_err
                         self.best_iter = cur_iter
 
-                    logger.info(
-                        'Test Time: %fs, best train error: %f, test error: %f, in %d.' %
-                        (test_duration, self.best_err, self.best_err_t, self.best_iter))
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('test time', test_duration, float)
+                    f_str.add('best train error', self.best_err, float)
+                    f_str.add('test error', self.best_err_t, float)
+                    f_str.add('in', self.best_iter, int)
+                    logger.test(f_str.get())
 
         # record running information
         running_hook = Running_Hook()
@@ -167,9 +185,13 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
         # build data model
         image1, image2, labels, fname1, fname2 = dataset.loads()
 
-        # setting loss and get network
-        losses, predictions = get_network(
-            image1, image2, labels, dataset, 'test')
+        # get network
+        logits1, logits2, nets = get_network(
+            image1, image2, dataset, 'test')
+
+        # get loss
+        losses, predictions = get_loss(
+            logits1, logits2, labels, dataset.batch_size, 'test')
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -196,7 +218,8 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
                 labels, shape=[dataset.batch_size]))
             preds_str = tf.as_string(tf.reshape(
                 predictions, shape=[dataset.batch_size]))
-            test_batch_info = fname1 + tab + fname2 + tab + labels_str + tab + preds_str
+            test_batch_info = fname1 + tab + fname2 + tab
+            test_batch_info += labels_str + tab + preds_str
 
             test_info_path = os.path.join(
                 dataset.log.test_dir, '%s.txt' % global_step)
@@ -225,13 +248,15 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             mean_loss = 1.0 * mean_loss / num_iter
 
             # acquire actual accuracy
-            import project.kinface.kinface_distance as kinface
             mean_err = kinface.get_kinface_error(test_info_path, threshold)
 
             # output result
-            logger.test(
-                'Iter:%d, total test sample:%d, num_batch:%d, loss:%.4f, error:%.4f.' %
-                (int(global_step), dataset.total_num, num_iter, mean_loss, mean_err))
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('error', mean_err, float)
+            logger.test(f_str.get())
 
             # write to summary
             if summary_writer is not None:
@@ -256,9 +281,13 @@ def val(data_name, chkp_path, summary_writer=None):
         # build data model
         image1, image2, labels, fname1, fname2 = dataset.loads()
 
-        # setting loss and get network
-        losses, predictions = get_network(
-            image1, image2, labels, dataset, 'test')
+        # get network
+        logits1, logits2, nets = get_network(
+            image1, image2, dataset, 'test')
+
+        # get loss
+        losses, predictions = get_loss(
+            logits1, logits2, labels, dataset.batch_size, 'test')
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -285,7 +314,8 @@ def val(data_name, chkp_path, summary_writer=None):
                 labels, shape=[dataset.batch_size]))
             preds_str = tf.as_string(tf.reshape(
                 predictions, shape=[dataset.batch_size]))
-            test_batch_info = fname1 + tab + fname2 + tab + labels_str + tab + preds_str
+            test_batch_info = fname1 + tab + fname2 + tab
+            test_batch_info += labels_str + tab + preds_str
 
             test_info_path = os.path.join(
                 dataset.log.val_dir, '%s.txt' % global_step)
@@ -314,13 +344,15 @@ def val(data_name, chkp_path, summary_writer=None):
             mean_loss = 1.0 * mean_loss / num_iter
 
             # acquire actual accuracy
-            import project.kinface.kinface_distance as kinface
             mean_err, threshold = kinface.get_kinface_error(test_info_path)
 
             # output result
-            logger.train(
-                'Iter:%d, total test sample:%d, num_batch:%d, loss:%.4f, error:%.4f.' %
-                (int(global_step), dataset.total_num, num_iter, mean_loss, mean_err))
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('error', mean_err, float)
+            logger.val(f_str.get())
 
             # write to summary
             if summary_writer is not None:
@@ -332,3 +364,145 @@ def val(data_name, chkp_path, summary_writer=None):
                 summary_writer.add_summary(summary, global_step)
 
             return mean_err, threshold
+
+
+def heatmap(name, chkp_path):
+    """ generate heatmap
+    """
+    with tf.Graph().as_default():
+        # Preparing the dataset
+        dataset = gate.dataset.factory.get_dataset(name, 'test', chkp_path)
+        dataset.log.test_dir = chkp_path + '/test_heatmap/'
+        if not os.path.exists(dataset.log.test_dir):
+            os.mkdir(dataset.log.test_dir)
+
+        # build data model
+        image1, image2, labels, fname1, fname2 = dataset.loads()
+
+        # get network
+        logits1, logits2, nets = get_network(
+            image1, image2, dataset, 'test')
+
+        # get loss
+        losses, predictions = get_loss(
+            logits1, logits2, labels, dataset.batch_size, 'test')
+
+        # restore from checkpoint
+        saver = tf.train.Saver(name='restore_all')
+        with tf.Session() as sess:
+            # load checkpoint
+            snapshot = gate.solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
+
+            # start queue from runner
+            coord = tf.train.Coordinator()
+            threads = []
+            for queuerunner in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+                threads.extend(queuerunner.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
+
+            # Initial some variables
+            num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
+            mean_loss = 0
+
+            # output test information
+            tab = tf.constant(' ', shape=[dataset.batch_size])
+            labels_str = tf.as_string(tf.reshape(
+                labels, shape=[dataset.batch_size]))
+            preds_str = tf.as_string(tf.reshape(
+                predictions, shape=[dataset.batch_size]))
+            test_batch_info = fname1 + tab + fname2 + tab
+            test_batch_info += labels_str + tab + preds_str
+
+            # open log file
+            test_info_path = os.path.join(
+                dataset.log.test_dir, '%s.txt' % global_step)
+
+            test_info_fp = open(test_info_path, 'wb')
+
+            # -------------------------------------------------
+            # heatmap related
+            heatmap_path = chkp_path + '/heatmap/'
+            if not os.path.exists(heatmap_path):
+                os.mkdir(heatmap_path)
+
+            # heatmap weights
+            W1 = gate.utils.analyzer.find_weights('net1/MLP/fc1/weights')
+            W2 = gate.utils.analyzer.find_weights('net2/MLP/fc1/weights')
+
+            # heatmap data
+            X1 = nets[0]['PrePool']
+            X2 = nets[1]['PrePool']
+
+            # Start to TEST
+            for cur in range(num_iter):
+                if coord.should_stop():
+                    break
+
+                # running session to acuqire value
+                feeds = [losses, test_batch_info,
+                         X1, W1, X2, W2, logits1, logits2]
+                _loss, _info, x1, w1, x2, w2, l1, l2 = sess.run(feeds)
+
+                # generate heatmap
+                # transpose dim for index
+                x1 = np.transpose(x1, (0, 3, 1, 2))
+                x2 = np.transpose(x2, (0, 3, 1, 2))
+                w1 = np.transpose(w1, (1, 0))
+                w2 = np.transpose(w2, (1, 0))
+
+                for _n in range(dataset.batch_size):
+
+                    _, pos = gate.utils.math.find_max(l1[_n], l2[_n])
+                    _w1 = w1[pos]
+                    _w2 = w2[pos]
+
+                    img1 = str(_info[_n], encoding='utf-8').split(' ')[0]
+                    img2 = str(_info[_n], encoding='utf-8').split(' ')[1]
+
+                    f1_bn = os.path.basename(img1)
+                    f2_bn = os.path.basename(img2)
+                    fname1 = f1_bn.split('.')[0] + '_' + global_step + '.jpg'
+                    fname2 = f2_bn.split('.')[0] + '_' + global_step + '.jpg'
+
+                    gate.utils.heatmap.single_map(
+                        path=img1, data=x1[_n], weight=_w1,
+                        raw_h=dataset.image.raw_height,
+                        raw_w=dataset.image.raw_width,
+                        save_path=os.path.join(heatmap_path, fname1))
+
+                    gate.utils.heatmap.single_map(
+                        path=img2, data=x2[_n], weight=_w2,
+                        raw_h=dataset.image.raw_height,
+                        raw_w=dataset.image.raw_width,
+                        save_path=os.path.join(heatmap_path, fname2))
+
+                logger.info('Has Processed %d of %d.' %
+                            (cur * dataset.batch_size, dataset.total_num))
+
+                # save tensor info to text file
+                for _line in _info:
+                    test_info_fp.write(_line + b'\r\n')
+
+            test_info_fp.close()
+            mean_loss = 1.0 * mean_loss / num_iter
+
+            # output - acquire actual accuracy
+            mean_err, _ = kinface.get_kinface_error(test_info_path)
+
+            # output result
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total test sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('error', mean_err, float)
+
+            logger.test(f_str.get())
+
+            # -------------------------------------------
+            # terminate all threads
+            # -------------------------------------------
+            coord.request_stop()
+            coord.join(threads, stop_grace_period_secs=10)
+
+            return mean_err

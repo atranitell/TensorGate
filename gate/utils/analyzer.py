@@ -2,7 +2,14 @@
 """ updated: 2017/3/16
     Tools for analyzing the operations and variables in a TensorFlow graph.
 """
+import tensorflow as tf
 from gate.utils.logger import logger
+
+
+def find_weights(prefix):
+    for var in tf.global_variables():
+        if var.op.name.startswith(prefix):
+            return var
 
 
 def desc_tensor(var):
@@ -50,7 +57,8 @@ def desc_ops(graph, print_info=True):
                 shapes.append(desc_tensor(output))
             op_size += output_size
         if print_info:
-            logger.info(op.name, '\t->', ', '.join(shapes), '[' + str(op_size) + ']')
+            logger.info(op.name, '\t->', ', '.join(shapes),
+                        '[' + str(op_size) + ']')
         total_size += op_size
     return total_size
 
@@ -79,7 +87,7 @@ def desc_variables(variables, print_info=True):
         total_bytes += var_bytes
         if print_info:
             logger.info(var.name, desc_tensor(var), '[%d, bytes: %d]' %
-                  (var_size, var_bytes))
+                        (var_size, var_bytes))
     if print_info:
         logger.info('Total size of variables: %d' % total_size)
         logger.info('Total bytes of variables: %d' % total_bytes)

@@ -12,6 +12,7 @@ class Logger():
         self._SYS = True
         self._TRAIN = True
         self._TEST = True
+        self._VAL = True
         self._NET = True
         self._WARN = True
         self._INFO = True
@@ -58,6 +59,12 @@ class Logger():
         """
         if self._TRAIN:
             self._print('[TRN]', content)
+
+    def val(self, content):
+        """ relate to the validation processing.
+        """
+        if self._TRAIN:
+            self._print('[VAL]', content)
 
     def test(self, content):
         """ relate to the test processing.

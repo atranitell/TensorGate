@@ -25,3 +25,23 @@ def type_list_to_str(dtype_list):
 
 def class_members(obj):
     return ', '.join(['%s: %s' % item for item in sorted(obj.__dict__.items())])
+
+
+class format_iter():
+
+    def __init__(self, cur_iter):
+        self._cur_iter = int(cur_iter)
+        self._data = 'Iter:%d' % self._cur_iter
+
+    def add(self, key, value, dtype=None):
+        if dtype == int:
+            self._data += ', %s:%d' % (str(key), dtype(value))
+        elif dtype == float:
+            self._data += ', %s:%.4f' % (str(key), dtype(value))
+        elif dtype == str:
+            self._data += ', %s:%s' % (str(key), dtype(value))
+        elif dtype is None:
+            self._data += ', %s:%s' % (str(key), str(value))
+
+    def get(self):
+        return self._data + '.'

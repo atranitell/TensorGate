@@ -30,20 +30,14 @@ def raise_invalid_input(*config):
 
 def interface_cnn(config):
     # choose different task
-    if config.target == 'regression':
+    if config.target == 'cnn.regression':
         import issue.cnn.regression as cnn
 
-    elif config.target == 'classification':
+    elif config.target == 'cnn.classification':
         import issue.cnn.classification as cnn
 
-    elif config.target == 'mlp_cosine':
-        import issue.cnn.mlp_cosine as cnn
-
-    elif config.target == 'fuse_cosine':
+    elif config.target == 'cnn.fuse_cosine':
         import issue.cnn.fuse_cosine as cnn
-
-    elif config.target == 'fuse_cosine_pair':
-        import issue.cnn.fuse_cosine_pair as cnn
 
     else:
         raise ValueError('Unkonwn target type.')
@@ -58,9 +52,11 @@ def interface_cnn(config):
 
     # freeze all weights except extension, and train extension
     elif config.task == 'finetune' and config.model is not None:
-        exclusions = {'restore': ['net1', 'net2', 'global_step'],
-        # exclusions = {'restore': None,
-                      'train': ['InceptionResnetV1']}
+        if config.init:
+            exclusions = {'restore': ['net1', 'net2', 'global_step'],
+                          'train': ['InceptionResnetV1']}
+        else:
+            exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
         cnn.train(config.dataset, config.model, exclusions)
 
     # test model
@@ -73,7 +69,7 @@ def interface_cnn(config):
         cnn.val(config.dataset, config.model)
 
     elif config.task == 'heatmap' and config.model is not None:
-        pass
+        cnn.heatmap(config.dataset, config.model)
 
     elif config.task == 'extract_feature' and config.model is not None:
         import issue.cnn.extract_feature as extract_feature
@@ -88,10 +84,8 @@ def interface(config):
     """ interface related to command
     """
     logger.info(str(config))
-    cnn_list = ['regression', 'classification',
-                'mlp_cosine', 'fuse_cosine', 'fuse_cosine_pair']
 
-    if config.target in cnn_list:
+    if config.target.find('cnn') == 0:
         interface_cnn(config)
 
     elif config.target == 'cgan':
@@ -114,6 +108,7 @@ if __name__ == '__main__':
                         help='path to model folder.')
     PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
                         help='defined in dataset/factory.')
+    PARSER.add_argument('-init', type=bool, default=True, dest='init')
     ARGS, _ = PARSER.parse_known_args()
 
     # at least input target, task, dataset

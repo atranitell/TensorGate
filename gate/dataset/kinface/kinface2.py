@@ -9,12 +9,12 @@ from gate.data import data_loader
 class kinface2(database.Database):
 
     def loads(self):
-        # return data_loader.load_pair_image_from_text(
-        #     self.data_path, self.shuffle, self.data_type, self.image,
-        #     self.min_queue_num, self.batch_size, self.reader_thread)
-        return data_loader.load_pair_image_from_text_with_multiview(
+        return data_loader.load_pair_image_from_text(
             self.data_path, self.shuffle, self.data_type, self.image,
             self.min_queue_num, self.batch_size, self.reader_thread)
+        # return data_loader.load_pair_image_from_text_with_multiview(
+        #     self.data_path, self.shuffle, self.data_type, self.image,
+        #     self.min_queue_num, self.batch_size, self.reader_thread)
 
     def __init__(self, data_type, name, chkp_path=None):
         # init basic class
@@ -52,7 +52,7 @@ class kinface2(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_fixed(learning_rate=0.1)
 
         self._print()
 
