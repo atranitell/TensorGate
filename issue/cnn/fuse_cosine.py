@@ -492,11 +492,10 @@ def heatmap(name, chkp_path):
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total test sample', dataset.total_num, int)
+            f_str.add('total sample', dataset.total_num, int)
             f_str.add('num batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('error', mean_err, float)
-
             logger.test(f_str.get())
 
             # -------------------------------------------

@@ -13,20 +13,21 @@ import gate
 from gate.utils.logger import logger
 
 
-def get_network(images, labels, dataset, phase):
+def get_network(images, dataset, phase):
     # get Deep Neural Network
-    logits, _ = gate.net.factory.get_network(
+    logits, end_points = gate.net.factory.get_network(
         dataset.hps, phase, images, dataset.num_classes)
+    return logits, end_points
 
+
+def get_loss(logits, labels, batch_size, num_classes):
     # get loss
-    _losses, _labels, _logits = gate.loss.softmax.get_loss(
-        logits, labels, dataset.num_classes, dataset.batch_size)
-
+    losses, _labels, _logits = gate.loss.softmax.get_loss(
+        logits, labels, num_classes, batch_size)
     # get error
     err, predictions = gate.loss.softmax.get_error(
         _logits, _labels)
-
-    return _losses, predictions, err
+    return losses, predictions, err
 
 
 def train(data_name, chkp_path=None, exclusions=None):
@@ -50,15 +51,18 @@ def train(data_name, chkp_path=None, exclusions=None):
         global_step = framework.create_global_step()
         tf.summary.scalar('iter', global_step)
 
-        # get loss and error
-        losses, logits, err = get_network(
-            images, labels, dataset, 'train')
+        # get network
+        logits, nets = get_network(images, dataset, 'train')
+
+        # get loss
+        losses, logits, err = get_loss(logits, labels, dataset.batch_size,
+                                       dataset.num_classes)
 
         # get updater
         with tf.name_scope('updater'):
             updater = gate.solver.Updater()
-            updater.init_default_updater(
-                dataset, global_step, losses, exclusions)
+            updater.init_default_updater(dataset, global_step,
+                                         losses, exclusions)
             learning_rate = updater.get_learning_rate()
             restore_saver = updater.get_variables_saver()
             train_op = updater.get_train_op()
@@ -98,10 +102,12 @@ def train(data_name, chkp_path=None, exclusions=None):
                     _lr = str(run_values.results[3])
                     _duration = self.duration * 1000 / _invl
 
-                    format_str = 'Iter:%d, loss:%.4f, err:%.4f, lr:%s, time:%.2fms.'
-                    format_str = format_str % (
-                        cur_iter, _loss, _err, _lr, _duration)
-                    logger.train(format_str)
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('loss', _loss, float)
+                    f_str.add('err', _err, float)
+                    f_str.add('lr', _lr)
+                    f_str.add('time', _duration, float)
+                    logger.train(f_str.get())
 
                     # set zero
                     self.mean_err, self.mean_loss, self.duration = 0, 0, 0
@@ -117,9 +123,11 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_err = test_err
                         self.best_iter_err = cur_iter
 
-                    logger.info(
-                        'Test Time: %fs, best err: %f in %d.' %
-                        (test_duration, self.best_err, self.best_iter_err))
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('err', self.best_err, float)
+                    f_str.add('in', self.best_iter_err, int)
+                    f_str.add('time', test_duration, float)
+                    logger.test(f_str.get())
 
         # record running information
         running_hook = Running_Hook()
@@ -150,9 +158,12 @@ def test(data_name, chkp_path, summary_writer=None):
         # load data
         images, labels, filenames = dataset.loads()
 
-        # get loss and error
-        losses, logits, err = get_network(
-            images, labels, dataset, 'test')
+        # get network
+        logits, nets = get_network(images, dataset, 'test')
+
+        # get loss
+        losses, logits, err = get_loss(logits, labels, dataset.batch_size,
+                                       dataset.num_classes)
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -210,9 +221,12 @@ def test(data_name, chkp_path, summary_writer=None):
             mean_err = 1.0 * mean_err / num_iter
 
             # output result
-            logger.test('Iter:%d, total test sample:%d, num_batch:%d' %
-                        (int(global_step), dataset.total_num, num_iter))
-            logger.test('Loss:%.4f, err:%.4f' % (mean_loss, mean_err))
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('err', mean_err, float)
+            logger.test(f_str.get())
 
             # write to summary
             if summary_writer is not None:

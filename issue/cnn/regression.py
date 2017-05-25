@@ -13,20 +13,21 @@ import gate
 from gate.utils.logger import logger
 
 
-def get_network(images, labels, dataset, phase):
+def get_network(images, dataset, phase):
     # get Deep Neural Network
     logits, end_points = gate.net.factory.get_network(
         dataset.hps, phase, images, 1)
+    return logits, end_points
 
+
+def get_loss(logits, labels, batch_size, num_classes):
     # get loss
     losses, labels, logits = gate.loss.l2.get_loss(
-        logits, labels, dataset.num_classes, dataset.batch_size)
-
+        logits, labels, num_classes, batch_size)
     # get error
     mae, rmse = gate.loss.l2.get_error(
-        logits, labels, dataset.num_classes)
-
-    return losses, logits, mae, rmse
+        logits, labels, num_classes)
+    return losses, mae, rmse
 
 
 def train(data_name, chkp_path=None, exclusions=None):
@@ -50,9 +51,13 @@ def train(data_name, chkp_path=None, exclusions=None):
         global_step = framework.create_global_step()
         tf.summary.scalar('iter', global_step)
 
-        # get loss and error
-        losses, logits, mae, rmse = get_network(
-            images, labels, dataset, 'train')
+        # get network
+        logits, nets = get_network(
+            images, dataset, 'train')
+
+        # get loss
+        losses, mae, rmse = get_loss(
+            logits, labels, dataset.batch_size, dataset.num_classes)
 
         # get updater
         with tf.name_scope('updater'):
@@ -102,10 +107,13 @@ def train(data_name, chkp_path=None, exclusions=None):
                     _lr = str(run_values.results[4])
                     _duration = self.duration * 1000 / _invl
 
-                    format_str = 'Iter:%d, loss:%.4f, mae:%.4f, rmse:%.4f, lr:%s, time:%.2fms.'
-                    format_str = format_str % (
-                        cur_iter, _loss, _mae, _rmse, _lr, _duration)
-                    logger.train(format_str)
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('loss', _loss, float)
+                    f_str.add('mae', _mae, float)
+                    f_str.add('rmse', _rmse, float)
+                    f_str.add('lr', _lr)
+                    f_str.add('time', _duration, float)
+                    logger.train(f_str.get())
 
                     # set zero
                     self.mean_mae, self.mean_rmse = 0, 0
@@ -125,10 +133,13 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_rmse = test_rmse
                         self.best_iter_rmse = cur_iter
 
-                    logger.info(
-                        'Test Time: %fs, best mae: %f in %d, best rmse: %f in %d.' %
-                        (test_duration, self.best_mae, self.best_iter_mae,
-                         self.best_rmse, self.best_iter_rmse))
+                    f_str = gate.utils.string.format_iter(cur_iter)
+                    f_str.add('best mae', self.best_mae, float)
+                    f_str.add('in', self.best_iter_mae, int)
+                    f_str.add('best rmse', self.best_rmse, float)
+                    f_str.add('in', self.best_iter_rmse, int)
+                    f_str.add('time', test_duration, float)
+                    logger.train(f_str.get())
 
         # record running information
         running_hook = Running_Hook()
@@ -159,9 +170,12 @@ def test(data_name, chkp_path, summary_writer=None):
         # load data
         images, labels, filenames = dataset.loads()
 
-        # get loss and error
-        losses, logits, mae, rmse = get_network(
-            images, labels, dataset, 'test')
+        # get network
+        logits, nets = get_network(images, dataset, 'test')
+
+        # get loss
+        losses, mae, rmse = get_loss(
+            logits, labels, dataset.batch_size, dataset.num_classes)
 
         # get saver
         saver = tf.train.Saver(name='restore_all_test')
@@ -221,10 +235,13 @@ def test(data_name, chkp_path, summary_writer=None):
             mean_mae = 1.0 * mean_mae / num_iter
 
             # output result
-            logger.test('Iter:%d, total test sample:%d, num_batch:%d' %
-                        (int(global_step), dataset.total_num, num_iter))
-            logger.test('Loss:%.4f, mae:%.4f, rmse:%.4f' %
-                        (mean_loss, mean_mae, mean_rmse))
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('mae', mean_mae, float)
+            f_str.add('rmse', mean_rmse, float)
+            logger.test(f_str.get())
 
             # for specify dataset
             # it use different compute method for mae/rmse
@@ -233,8 +250,11 @@ def test(data_name, chkp_path, summary_writer=None):
                 from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
-                logger.test('Loss:%.4f, video_mae:%.4f, video_rmse:%.4f' %
-                            (mean_loss, mean_mae, mean_rmse))
+                f_str = gate.utils.string.format_iter(global_step)
+                f_str.add('loss', mean_loss, float)
+                f_str.add('video_mae', mean_mae, float)
+                f_str.add('video_rmse', mean_rmse, float)
+                logger.test(f_str.get())
 
             # write to summary
             if summary_writer is not None:

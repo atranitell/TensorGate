@@ -98,6 +98,9 @@ class Updater():
                 ex_restore = exclusions['restore']
             if 'train' in exclusions:
                 ex_train = exclusions['train']
+        else:
+            ex_restore = None
+            ex_train = None
 
         self.learning_rate = self.get_learning_rate(dataset, global_step)
         self.optimizer = self.get_optimizer(dataset)
