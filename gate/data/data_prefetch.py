@@ -26,6 +26,28 @@ def generate_batch(image, label, filename, shuffle,
     return images, tf.reshape(labels, [batch_size]), filenames
 
 
+def generate_4view_batch(image, image1, image2, image3,
+                         label, filename, shuffle,
+                         batch_size, min_queue_num, reader_thread):
+    """ for 4view: full + 3part
+    """
+    if shuffle:
+        img, img1, img2, img3, labels, filenames = tf.train.shuffle_batch(
+            tensors=[image, image1, image2, image3, label, filename],
+            batch_size=batch_size,
+            capacity=min_queue_num + 3 * batch_size,
+            min_after_dequeue=min_queue_num,
+            num_threads=reader_thread)
+    else:
+        img, img1, img2, img3, labels, filenames = tf.train.batch(
+            tensors=[image, image1, image2, image3, label, filename],
+            batch_size=batch_size,
+            capacity=min_queue_num + 3 * batch_size,
+            num_threads=reader_thread)
+
+    return img, img1, img2, img3, tf.reshape(labels, [batch_size]), filenames
+
+
 def generate_batch_multi_label(image, label, filename, shuffle, num_classes,
                                batch_size, min_queue_num, reader_thread):
     """ for single image and label

@@ -11,7 +11,7 @@ def preprocess_for_train(image, output_height,
 
     # resize to [160, 160] and then add padding to [184, 184]
     image = tf.image.resize_images(
-        image, [224, 224],
+        image, [200, 200],
         method=tf.image.ResizeMethod.AREA)
     # image = tf.image.resize_image_with_crop_or_pad(image, 184, 184)
 
@@ -23,7 +23,7 @@ def preprocess_for_train(image, output_height,
     tf.summary.image('image_flip', tf.expand_dims(image, 0))
 
     # distorted_image = tf.image.random_brightness(distorted_image, max_delta=63)
-    # # tf.summary.image('image_brightness', tf.expand_dims(distorted_image, 0))
+    # tf.summary.image('image_brightness', tf.expand_dims(distorted_image, 0))
 
     # distorted_image = tf.image.random_contrast(
     #     distorted_image, lower=0.2, upper=1.8)

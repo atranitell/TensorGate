@@ -43,20 +43,17 @@ class kinface2(database.Database):
 
         # setting hps
         self.hps = data_param.hps(net_name='mlp')
-        self.hps.set_weight_decay(0.002)
+        self.hps.set_weight_decay(0.01)
         self.hps.set_dropout(0.9)
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1.0
-        )
+        self.opt.set_sgd()
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        # self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_exponential(1.0, 100, 0.9)
 
         self._print()
 

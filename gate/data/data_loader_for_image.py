@@ -49,6 +49,75 @@ def load_image_from_text(
         batch_size, min_queue_num, reader_thread)
 
 
+def load_image_4view_from_text(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    """ a normal loader method from text to parse content
+    Format:
+        path label
+        path-to-fold/img0 0
+        path-to-fold/img1 10
+    """
+    res = data_entry.parse_from_text(data_path, (str, int), (True, False))
+    image_list = res[0]
+    label_list = res[1]
+
+    image_list1 = res[0].copy()
+    image_list2 = res[0].copy()
+    image_list3 = res[0].copy()
+    for _i in range(len(image_list)):
+        image_list1[_i] = image_list1[_i].replace('frames', 'top_frames')
+        image_list2[_i] = image_list2[_i].replace('frames', 'middle_frames')
+        image_list3[_i] = image_list3[_i].replace('frames', 'bottom_frames')
+
+    # construct a fifo queue
+    image_list = tf.convert_to_tensor(image_list, dtype=tf.string)
+    image1_list = tf.convert_to_tensor(image_list1, dtype=tf.string)
+    image2_list = tf.convert_to_tensor(image_list2, dtype=tf.string)
+    image3_list = tf.convert_to_tensor(image_list3, dtype=tf.string)
+    label_list = tf.convert_to_tensor(label_list, dtype=tf.int32)
+    imgpath, imgpath1, imgpath2, imgpath3, label = tf.train.slice_input_producer(
+        [image_list, image_list1, image_list2, image_list3, label_list], shuffle=shuffle)
+
+    # preprocessing
+    image_raw = tf.read_file(imgpath)
+    image_content = tf.image.decode_image(image_raw, channels=image.channels)
+    image_content = tf.reshape(
+        image_content, [image.raw_height, image.raw_width, image.channels])
+    image_content = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method1, data_type, image_content,
+        image.output_height, image.output_width)
+
+    # preprocessing
+    image_raw1 = tf.read_file(imgpath1)
+    image_content1 = tf.image.decode_image(image_raw1, channels=image.channels)
+    image_content1 = tf.reshape(image_content1, [156, 156, 3])
+    image_content1 = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method2, data_type, image_content1,
+        image.output_height, image.output_width)
+
+    # preprocessing
+    image_raw2 = tf.read_file(imgpath2)
+    image_content2 = tf.image.decode_image(image_raw2, channels=image.channels)
+    image_content2 = tf.reshape(image_content2, [156, 156, 3])
+    image_content2 = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method2, data_type, image_content2,
+        image.output_height, image.output_width)
+
+    # preprocessing
+    image_raw3 = tf.read_file(imgpath3)
+    image_content3 = tf.image.decode_image(image_raw3, channels=image.channels)
+    image_content3 = tf.reshape(image_content3, [156, 156, 3])
+    image_content3 = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method2, data_type, image_content3,
+        image.output_height, image.output_width)
+
+    return data_prefetch.generate_4view_batch(
+        image_content, image_content1, image_content2, image_content3, 
+        label, imgpath, shuffle,
+        batch_size, min_queue_num, reader_thread)
+
+
 def load_image_from_text_multi_label(
         data_path, shuffle, data_type, num_classes, image,
         min_queue_num, batch_size, reader_thread):
@@ -216,12 +285,12 @@ def load_pair_image_from_text_with_multiview(
     imageX_2 = tf.py_func(_handcrafted_feature_extract,
                           [imageX_1, 'LBP'], [tf.float32])
     imageX_2 = tf.to_float(tf.reshape(
-        imageX_2, [image.raw_height*image.raw_width*1]))
+        imageX_2, [image.raw_height * image.raw_width * 1]))
 
     imageY_2 = tf.py_func(_handcrafted_feature_extract,
                           [imageY_1, 'LBP'], [tf.float32])
     imageY_2 = tf.to_float(tf.reshape(
-        imageY_2, [image.raw_height*image.raw_width*1]))
+        imageY_2, [image.raw_height * image.raw_width * 1]))
 
     return data_prefetch.generate_pair_multiview_batch(
         imageX_1, imageX_2, imageY_1, imageY_2,

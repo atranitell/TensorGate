@@ -33,6 +33,9 @@ def interface_cnn(config):
     if config.target == 'cnn.regression':
         import issue.cnn.regression as cnn
 
+    elif config.target == 'cnn.regression.4view':
+        import issue.cnn.regression_4view as cnn
+
     elif config.target == 'cnn.classification':
         import issue.cnn.classification as cnn
 

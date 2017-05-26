@@ -23,6 +23,7 @@ from gate.preprocessing import preprocessing_vgg
 from gate.preprocessing import preprocessing_mnist
 from gate.preprocessing import preprocessing_mnist_gan
 from gate.preprocessing import preprocessing_avec2014
+from gate.preprocessing import preprocessing_avec2014_3view
 from gate.preprocessing import preprocessing_celeba_gan
 from gate.preprocessing import preprocessing_kinface
 
@@ -36,8 +37,9 @@ preprocessing_map = {
     'mnist': preprocessing_mnist,
     'mnist_gan': preprocessing_mnist_gan,
     'avec2014': preprocessing_avec2014,
+    'avec2014_3view': preprocessing_avec2014_3view,
     'celeba_gan': preprocessing_celeba_gan,
-    'kinface': preprocessing_kinface
+    'kinface': preprocessing_kinface,
 }
 
 
