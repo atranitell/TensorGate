@@ -70,8 +70,8 @@ class avec2014_4view(database.Database):
         # 17727
         self.total_num = 17727
         self.name = self.name + '_test'
-        self.reader_thread = 4
-        self.shuffle = True
+        self.reader_thread = 1
+        self.shuffle = False
         self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
@@ -79,6 +79,6 @@ class avec2014_4view(database.Database):
         # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
         self.total_num = 23564
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 8
         self.shuffle = True
         self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
