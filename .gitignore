@@ -93,6 +93,7 @@ _deprecated
 
 # data file
 _data
+*.npy
 
 # for mac
 .DS_Store
