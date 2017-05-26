@@ -268,7 +268,7 @@ def test(data_name, chkp_path, summary_writer=None):
             # for specify dataset
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
-            if dataset.name == 'avec2014_test':
+            if dataset.name.find('avec2014') == 0:
                 from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
@@ -309,7 +309,7 @@ def heatmap(name, chkp_path):
         logits, nets = get_network(images, dataset, 'test', 'net')
 
         # get loss
-        losses, mae, rmse = get_loss(
+        losses, logits, mae, rmse = get_loss(
             logits, labels, dataset.batch_size, dataset.num_classes)
 
         # restore from checkpoint
@@ -414,7 +414,7 @@ def heatmap(name, chkp_path):
             # for specify dataset
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
-            if dataset.name == 'avec2014_test':
+            if dataset.name.find('avec2014') == 0:
                 from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')

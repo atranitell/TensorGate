@@ -44,20 +44,25 @@ def get_network(image1, image2, dataset, phase):
         #     end_points1['Mixed_7a'], 3, scope + '/AvgPool_3x3')
         data_3 = end_points1['PostPool']
 
-        data = tf.concat([data_1, data_2, data_3], axis=1)
+        # data = tf.concat([data_1, data_2, data_3], axis=1)
 
         dataset.hps.net_name = 'mlp'
-        logits, end_points2 = gate.net.factory.get_network(
-            dataset.hps, phase, data, dataset.num_classes, scope)
+        logits1, end_points2 = gate.net.factory.get_network(
+            dataset.hps, phase, data_1, dataset.num_classes, scope + '1')
+        logits2, end_points2 = gate.net.factory.get_network(
+            dataset.hps, phase, data_2, dataset.num_classes, scope + '2')
+        logits3, end_points2 = gate.net.factory.get_network(
+            dataset.hps, phase, data_3, dataset.num_classes, scope + '3')
 
-        return logits, end_points1, end_points2
+        logits = [logits1, logits2, logits3]
+        end_points = [end_points1, end_points2]
 
-    logits1, net11, net12 = _build_net(image1, dataset, phase, 'net1', False)
-    logits2, net21, net22 = _build_net(image2, dataset, phase, 'net2', True)
+        return logits, end_points2
 
-    nets = [net11, net21, net12, net22]
+    logits1, net1 = _build_net(image1, dataset, phase, 'net1', False)
+    logits2, net2 = _build_net(image2, dataset, phase, 'net2', True)
 
-    return logits1, logits2, nets
+    return logits1, logits2, net1, net2
 
 
 def get_loss(logits1, logits2, labels, batch_size, phase):
@@ -65,8 +70,15 @@ def get_loss(logits1, logits2, labels, batch_size, phase):
             and output corresponding loss
     """
     is_training = True if phase is 'train' else False
-    losses, predictions = gate.loss.cosine.get_loss(
-        logits1, logits2, labels, batch_size, is_training)
+    losses_0, predictions_0 = gate.loss.cosine.get_loss(
+        logits1[0], logits2[0], labels, batch_size, is_training)
+    losses_1, predictions_1 = gate.loss.cosine.get_loss(
+        logits1[1], logits2[1], labels, batch_size, is_training)
+    losses_2, predictions_2 = gate.loss.cosine.get_loss(
+        logits1[2], logits2[2], labels, batch_size, is_training)
+
+    losses = losses_0 + losses_1 + losses_2
+    predictions = (predictions_0 + predictions_1 + predictions_2) * 0.3333333
     return losses, predictions
 
 
@@ -92,7 +104,7 @@ def train(data_name, chkp_path=None, exclusions=None):
         tf.summary.scalar('iter', global_step)
 
         # get network
-        logits1, logits2, nets = get_network(
+        logits1, logits2, net1, net2 = get_network(
             image1, image2, dataset, 'train')
 
         # get loss
@@ -203,7 +215,7 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
         image1, image2, labels, fname1, fname2 = dataset.loads()
 
         # get network
-        logits1, logits2, nets = get_network(
+        logits1, logits2, nets1, nets2 = get_network(
             image1, image2, dataset, 'test')
 
         # get loss
@@ -299,7 +311,7 @@ def val(data_name, chkp_path, summary_writer=None):
         image1, image2, labels, fname1, fname2 = dataset.loads()
 
         # get network
-        logits1, logits2, nets = get_network(
+        logits1, logits2, nets1, nets2 = get_network(
             image1, image2, dataset, 'test')
 
         # get loss
@@ -397,7 +409,7 @@ def heatmap(name, chkp_path):
         image1, image2, labels, fname1, fname2 = dataset.loads()
 
         # get network
-        logits1, logits2, nets = get_network(
+        logits1, logits2, nets1, nets2 = get_network(
             image1, image2, dataset, 'test')
 
         # get loss
@@ -448,8 +460,8 @@ def heatmap(name, chkp_path):
             W2 = gate.utils.analyzer.find_weights('net2/MLP/fc1/weights')
 
             # heatmap data
-            X1 = nets[0]['PrePool']
-            X2 = nets[1]['PrePool']
+            X1 = nets1[0]['PrePool']
+            X2 = nets2[0]['PrePool']
 
             # Start to TEST
             for cur in range(num_iter):

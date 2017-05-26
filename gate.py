@@ -60,7 +60,7 @@ def interface_cnn(config):
     elif config.task == 'finetune' and config.model is not None:
         if config.init:
             exclusions = {'restore': ['net1', 'net2', 'global_step', 'updater'],
-                          'train': None}
+                          'train': ['InceptionResnetV1']}
         else:
             exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
         cnn.train(config.dataset, config.model, exclusions)

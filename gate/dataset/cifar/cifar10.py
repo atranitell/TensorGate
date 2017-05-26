@@ -40,16 +40,16 @@ class cifar10(database.Database):
 
         # setting hps
         self.hps = data_param.hps('cifarnet')
-        self.hps.set_weight_decay(0.002)
+        self.hps.set_weight_decay(0.004)
         self.hps.set_dropout(0.5)
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_momentum(0.9)
+        self.opt.set_sgd()
 
         # lr
-        self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr = data_param.learning_rate(0.9999)
+        self.lr.set_exponential(0.1, 350.0, 0.1)
 
         # show
         self._print()
@@ -64,7 +64,7 @@ class cifar10(database.Database):
 
     def _train(self):
         # basic param
-        self.batch_size = 16
+        self.batch_size = 128
         self.total_num = 50000
         self.name = self.name + '_train'
         self.reader_thread = 32
