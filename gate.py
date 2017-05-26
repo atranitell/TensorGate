@@ -42,6 +42,9 @@ def interface_cnn(config):
     elif config.target == 'cnn.fuse_cosine':
         import issue.cnn.fuse_cosine as cnn
 
+    elif config.target == 'cnn.fuse_cosine.mw':
+        import issue.cnn.fuse_cosine_multiway as cnn
+
     else:
         raise ValueError('Unkonwn target type.')
 
@@ -57,7 +60,7 @@ def interface_cnn(config):
     elif config.task == 'finetune' and config.model is not None:
         if config.init:
             exclusions = {'restore': ['net1', 'net2', 'global_step', 'updater'],
-                          'train': ['InceptionResnetV1']}
+                          'train': None}
         else:
             exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
         cnn.train(config.dataset, config.model, exclusions)

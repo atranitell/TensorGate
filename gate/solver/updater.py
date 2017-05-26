@@ -93,13 +93,13 @@ class Updater():
         """ init_default_updater
         """
         # choose part of weights to restore or train
-        if exclusions is not None:
-            if 'restore' in exclusions:
-                ex_restore = exclusions['restore']
-            if 'train' in exclusions:
-                ex_train = exclusions['train']
+        if exclusions is not None and 'restore' in exclusions:
+            ex_restore = exclusions['restore']
         else:
             ex_restore = None
+        if exclusions is not None and 'train' in exclusions:
+            ex_train = exclusions['train']
+        else:
             ex_train = None
 
         self.learning_rate = self.get_learning_rate(dataset, global_step)
