@@ -14,7 +14,8 @@ from gate.dataset.avec import avec2014_4view
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features
-
+# gan
+from gate.dataset.celeba import celeba
 
 dataset_map = {
     'mnist': mnist.mnist,
@@ -24,7 +25,8 @@ dataset_map = {
     'avec2014': avec2014.avec2014,
     'avec2014_4view': avec2014_4view.avec2014_4view,
     'kinface2': kinface2.kinface2,
-    'kinface2_feature': kinface2_features.kinface2_feature
+    'kinface2_feature': kinface2_features.kinface2_feature,
+    'celeba':  celeba.celeba
 }
 
 

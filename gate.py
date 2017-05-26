@@ -95,7 +95,8 @@ def interface(config):
         interface_cnn(config)
 
     elif config.target == 'cgan':
-        pass
+        import issue.gan.cgan as gan
+        gan.train(config.dataset, config.model)
 
     elif config.target == 'vae':
         pass
