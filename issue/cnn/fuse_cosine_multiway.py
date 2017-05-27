@@ -48,11 +48,11 @@ def get_network(image1, image2, dataset, phase):
 
         dataset.hps.net_name = 'mlp'
         logits1, end_points2 = gate.net.factory.get_network(
-            dataset.hps, phase, data_1, dataset.num_classes, scope + '1')
+            dataset.hps, phase, data_1, 512, scope + '1')
         logits2, end_points2 = gate.net.factory.get_network(
-            dataset.hps, phase, data_2, dataset.num_classes, scope + '2')
+            dataset.hps, phase, data_2, 512, scope + '2')
         logits3, end_points2 = gate.net.factory.get_network(
-            dataset.hps, phase, data_3, dataset.num_classes, scope + '3')
+            dataset.hps, phase, data_3, 512, scope + '3')
 
         logits = [logits1, logits2, logits3]
         end_points = [end_points1, end_points2]

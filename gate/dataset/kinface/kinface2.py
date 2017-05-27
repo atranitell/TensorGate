@@ -41,8 +41,8 @@ class kinface2(database.Database):
         self.log = data_param.log(data_type, name, chkp_path)
         self.log.set_log(print_frequency=20,
                          save_summaries_iter=20,
-                         save_model_iter=20,
-                         test_interval=20)
+                         save_model_iter=200,
+                         test_interval=200)
 
         # setting hps
         self.hps = data_param.hps(net_name='mlp')
@@ -55,8 +55,8 @@ class kinface2(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        # self.lr.set_fixed(learning_rate=0.1)
-        self.lr.set_exponential(.5, 100, 0.9)
+        self.lr.set_fixed(learning_rate=0.1)
+        # self.lr.set_exponential(.5, 100, 0.9)
 
         self._print()
 

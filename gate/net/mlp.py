@@ -38,9 +38,9 @@ def mlp(inputs, num_classes, is_training=False,
     end_points = {}
 
     with tf.variable_scope(scope, 'MLP', [inputs, num_classes]):
-        logits = slim.fully_connected(inputs, 512, scope='fc1')
-        # logits = slim.dropout(
-        #     net, dropout_keep_prob, is_training=is_training, scope='dropout1')
+        net = slim.fully_connected(inputs, num_classes, scope='fc1')
+        logits = slim.dropout(
+            net, dropout_keep_prob, is_training=is_training, scope='dropout')
         # logits = slim.fully_connected(
         #     net, 100, activation_fn=None, scope='fc2')
 

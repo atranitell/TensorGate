@@ -37,19 +37,19 @@ def get_network(x1, x2, y1, y2, dataset, phase):
     # get Deep Neural Network
     dataset.hps.net_name = 'mlp'
     logitsX1, end_pointsX1 = gate.net.factory.get_network(
-        dataset.hps, phase, X1, dataset.num_classes, 'netX1')
-    logitsX2, end_pointsX2 = gate.net.factory.get_network(
-        dataset.hps, phase, x2, dataset.num_classes, 'netX2')
+        dataset.hps, phase, X1, 512, 'netX1')
+    # logitsX2, end_pointsX2 = gate.net.factory.get_network(
+    #     dataset.hps, phase, x2, 128, 'netX2')
     logitsY1, end_pointsY1 = gate.net.factory.get_network(
-        dataset.hps, phase, Y1, dataset.num_classes, 'netY1')
-    logitsY2, end_pointsY2 = gate.net.factory.get_network(
-        dataset.hps, phase, y2, dataset.num_classes, 'netY2')
+        dataset.hps, phase, Y1, 512, 'netY1')
+    # logitsY2, end_pointsY2 = gate.net.factory.get_network(
+    #     dataset.hps, phase, y2, 128, 'netY2')
 
     nets = [end_points1, end_points2,
-            end_pointsX1, end_pointsX2,
-            end_pointsY1, end_pointsY2]
+            end_pointsX1,
+            end_pointsY1]
 
-    logits = [logitsX1, logitsX2, logitsY1, logitsY2]
+    logits = [logitsX1, x2, logitsY1, y2]
 
     return logits, nets
 
@@ -58,12 +58,29 @@ def get_loss(logits, labels, batch_size, phase):
     """ get loss should receive target variables
             and output corresponding loss
     """
-    logitsX = tf.concat([logits[0], logits[1]], axis=1)
-    logitsY = tf.concat([logits[2], logits[3]], axis=1)
+    x1, x2, y1, y2 = logits
+    # logitsX = tf.concat([logits[0], logits[1]], axis=1)
+    # logitsY = tf.concat([logits[2], logits[3]], axis=1)
     is_training = True if phase is 'train' else False
-    losses, predictions = gate.loss.cosine.get_loss(
-        logitsX, logitsY, labels, batch_size, is_training)
+    losses1, predictions1 = gate.loss.cosine.get_loss(
+        x1, y1, labels, batch_size, is_training)
+    losses2, predictions2 = gate.loss.cosine.get_loss(
+        x2, y2, labels, batch_size, is_training)
+    losses = losses1 # + losses2
+    predictions = 0.5 * (predictions1 + predictions2)
     return losses, predictions
+
+
+# def get_loss(logits, labels, batch_size, phase):
+#     """ get loss should receive target variables
+#             and output corresponding loss
+#     """
+#     logitsX = tf.concat([logits[0], logits[1]], axis=1)
+#     logitsY = tf.concat([logits[2], logits[3]], axis=1)
+#     is_training = True if phase is 'train' else False
+#     losses, predictions = gate.loss.cosine.get_loss(
+#         logitsX, logitsY, labels, batch_size, is_training)
+#     return losses, predictions
 
 
 def train(data_name, chkp_path=None, exclusions=None):
@@ -237,6 +254,7 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             test_info_path = os.path.join(
                 dataset.log.test_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
+
 
             for cur in range(num_iter):
                 # if ctrl-c

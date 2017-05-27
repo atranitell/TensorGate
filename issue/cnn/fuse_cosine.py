@@ -34,9 +34,9 @@ def get_network(image1, image2, dataset, phase):
     # get Deep Neural Network
     dataset.hps.net_name = 'mlp'
     logits1, end_points3 = gate.net.factory.get_network(
-        dataset.hps, phase, data1, dataset.num_classes, 'net1')
+        dataset.hps, phase, data1, 512, 'net1')
     logits2, end_points4 = gate.net.factory.get_network(
-        dataset.hps, phase, data2, dataset.num_classes, 'net2')
+        dataset.hps, phase, data2, 512, 'net2')
 
     nets = [end_points1, end_points2, end_points3, end_points4]
 
