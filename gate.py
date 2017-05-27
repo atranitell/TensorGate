@@ -39,6 +39,9 @@ def interface_cnn(config):
     elif config.target == 'cnn.fuse_cosine':
         import issue.cnn.fuse_cosine as cnn
 
+    elif config.target == 'cnn.fuse_cosine.2f':
+        import issue.cnn.fuse_cosine_2f as cnn
+
     else:
         raise ValueError('Unkonwn target type.')
 
@@ -53,7 +56,7 @@ def interface_cnn(config):
     # freeze all weights except extension, and train extension
     elif config.task == 'finetune' and config.model is not None:
         if config.init:
-            exclusions = {'restore': ['net1', 'net2', 'global_step', 'updater'],
+            exclusions = {'restore': ['net', 'global_step', 'updater'],
                           'train': ['InceptionResnetV1']}
         else:
             exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
