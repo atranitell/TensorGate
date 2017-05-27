@@ -9,9 +9,12 @@ from gate.data import data_loader
 class kinface2(database.Database):
 
     def loads(self):
-        return data_loader.load_pair_image_from_text(
+        return data_loader.load_pair_numeric_image_data(
             self.data_path, self.shuffle, self.data_type, self.image,
             self.min_queue_num, self.batch_size, self.reader_thread)
+        # return data_loader.load_pair_image_from_text(
+        #     self.data_path, self.shuffle, self.data_type, self.image,
+        #     self.min_queue_num, self.batch_size, self.reader_thread)
         # return data_loader.load_pair_image_from_text_with_multiview(
         #     self.data_path, self.shuffle, self.data_type, self.image,
         #     self.min_queue_num, self.batch_size, self.reader_thread)
@@ -38,8 +41,8 @@ class kinface2(database.Database):
         self.log = data_param.log(data_type, name, chkp_path)
         self.log.set_log(print_frequency=20,
                          save_summaries_iter=20,
-                         save_model_iter=200,
-                         test_interval=200)
+                         save_model_iter=20,
+                         test_interval=20)
 
         # setting hps
         self.hps = data_param.hps(net_name='mlp')
@@ -63,7 +66,8 @@ class kinface2(database.Database):
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/val_4.txt'
+        # self.data_path = '../_datasets/kinface2/val_4.txt'
+        self.data_path = '../_datasets/kinface2_feature/val_4_idx.txt'
 
     def _val(self):
         # basic param
@@ -72,13 +76,15 @@ class kinface2(database.Database):
         self.name = self.name + '_val'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/kinface2/train_4.txt'
+        # self.data_path = '../_datasets/kinface2/train_4.txt'
+        self.data_path = '../_datasets/kinface2_feature/train_4_idx.txt'
 
     def _train(self):
         # basic param
         self.batch_size = 50
         self.total_num = 1600
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 4
         self.shuffle = True
-        self.data_path = '../_datasets/kinface2/train_4.txt'
+        # self.data_path = '../_datasets/kinface2/train_4.txt'
+        self.data_path = '../_datasets/kinface2_feature/train_4_idx.txt'

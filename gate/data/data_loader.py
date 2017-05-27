@@ -84,3 +84,11 @@ def load_pair_numeric_data_from_npy(
     return data_loader_for_numeric.load_pair_numeric_data_from_npy(
         data_path, shuffle, data_type,
         min_queue_num, batch_size, reader_thread)
+
+
+def load_pair_numeric_image_data(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_numeric.load_pair_numeric_image_data(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread)
