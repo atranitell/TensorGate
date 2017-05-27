@@ -39,9 +39,9 @@ def load_pair_numeric_data_from_npy(
     labels = np.reshape(np.array(labels), (data_1.shape[0], 1))
 
     # shape
-    logger.sys('data_1 shape is ' + str(data_1.shape))
-    logger.sys('data_2 shape is ' + str(data_2.shape))
-    logger.sys('label shape is ' + str(labels.shape))
+    # logger.sys('data_1 shape is ' + str(data_1.shape))
+    # logger.sys('data_2 shape is ' + str(data_2.shape))
+    # logger.sys('label shape is ' + str(labels.shape))
 
     # construct a fifo queue
     data_1_list = tf.convert_to_tensor(data_1, dtype=tf.float32)
@@ -93,9 +93,9 @@ def load_pair_numeric_image_data(
     labels = np.reshape(np.array(labels), (data_1.shape[0], 1))
 
     # shape
-    logger.sys('data_1 shape is ' + str(data_1.shape))
-    logger.sys('data_2 shape is ' + str(data_2.shape))
-    logger.sys('label shape is ' + str(labels.shape))
+    # logger.sys('data_1 shape is ' + str(data_1.shape))
+    # logger.sys('data_2 shape is ' + str(data_2.shape))
+    # logger.sys('label shape is ' + str(labels.shape))
 
     # construct a fifo queue
     data_1_list = tf.convert_to_tensor(data_1, dtype=tf.float32)

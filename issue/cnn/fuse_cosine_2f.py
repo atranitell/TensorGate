@@ -66,7 +66,7 @@ def get_loss(logits, labels, batch_size, phase):
         x1, y1, labels, batch_size, is_training)
     losses2, predictions2 = gate.loss.cosine.get_loss(
         x2, y2, labels, batch_size, is_training)
-    losses = losses1 # + losses2
+    losses = losses1  # + losses2
     predictions = 0.5 * (predictions1 + predictions2)
     return losses, predictions
 
@@ -166,13 +166,43 @@ def train(data_name, chkp_path=None, exclusions=None):
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     # acquire best threshold
-                    trn_err, threshold = val(data_name, dataset.log.train_dir,
-                                             summary_test)
+                    trn_err, threshold, res_val = val(
+                        data_name, dataset.log.train_dir, summary_test)
+
                     # acquire test error
                     test_start_time = time.time()
-                    test_err = test(data_name, dataset.log.train_dir,
-                                    threshold, summary_test)
+                    test_err, res_test = test(
+                        data_name, dataset.log.train_dir, threshold, summary_test)
                     test_duration = time.time() - test_start_time
+
+                    # for PCA
+                    use_PCA = True
+                    if use_PCA:
+                        _error = kinface.Error()
+                        _val_err, _threshould, _test_err = _error.get_all_result(
+                            res_val[1], res_val[3], res_val[0],
+                            res_test[1], res_test[3], res_test[0], True)
+                        f_str = gate.utils.string.format_iter(cur_iter)
+                        f_str.add('val_error_pca', _val_err, float)
+                        f_str.add('test_error_pca', _test_err, float)
+                        f_str.add('val_threshold_pca', _threshould, float)
+                        logger.test(f_str.get())
+
+                    # ensemble two feature
+                    use_ensemble = True
+                    if use_ensemble:
+                        _val_err, _threshould, _test_err = kinface.Error().get_avg_ensemble(
+                            [res_val[1], res_val[2]],
+                            [res_val[3], res_val[4]], res_val[0],
+                            [res_test[1], res_test[2]],
+                            [res_test[3], res_test[4]], res_test[0],
+                            use_PCA=use_PCA)
+                        f_str = gate.utils.string.format_iter(cur_iter)
+                        f_str.add('val_error_ensemble', _val_err, float)
+                        f_str.add('test_error_ensemble', _test_err, float)
+                        f_str.add('val_threshold_ensemble', _threshould, float)
+                        logger.test(f_str.get())
+
                     # according to trn err to pinpoint test err
                     if trn_err > self.best_err:
                         self.best_err = trn_err
@@ -218,6 +248,10 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
         # get network
         logits, nets = get_network(
             x1, x2, y1, y2, dataset, 'test')
+        lx1 = logits[0]
+        lx2 = logits[1]
+        ly1 = logits[2]
+        ly2 = logits[3]
 
         # get loss
         losses, predictions = get_loss(
@@ -255,16 +289,28 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
                 dataset.log.test_dir, '%s.txt' % global_step)
             test_info_fp = open(test_info_path, 'wb')
 
-
             for cur in range(num_iter):
                 # if ctrl-c
                 if coord.should_stop():
                     break
 
                 # running session to acuqire value
-                feeds = [losses, test_batch_info]
-                _loss, _info = sess.run(feeds)
+                feeds = [losses, test_batch_info, labels, lx1, lx2, ly1, ly2]
+                _loss, _info, _label, _x1, _x2, _y1, _y2 = sess.run(feeds)
                 mean_loss += _loss
+
+                if cur == 0:
+                    test_label = _label
+                    test_x1 = _x1
+                    test_x2 = _x2
+                    test_y1 = _y1
+                    test_y2 = _y2
+                else:
+                    test_label = np.append(test_label, _label)
+                    test_x1 = np.row_stack((test_x1, _x1))
+                    test_x2 = np.row_stack((test_x2, _x2))
+                    test_y1 = np.row_stack((test_y1, _y1))
+                    test_y2 = np.row_stack((test_y2, _y2))
 
                 # save tensor info to text file
                 for _line in _info:
@@ -277,9 +323,11 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
 
             # statistic
             mean_loss = 1.0 * mean_loss / num_iter
+            result = [test_label, test_x1, test_x2, test_y1, test_y2]
 
             # acquire actual accuracy
-            mean_err = kinface.get_kinface_error(test_info_path, threshold)
+            mean_err = kinface.Error().get_result_from_file(
+                test_info_path, threshold)
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
@@ -298,7 +346,7 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
                 summary.value.add(tag='test/loss', simple_value=mean_loss)
                 summary_writer.add_summary(summary, global_step)
 
-            return mean_err
+            return mean_err, result
 
 
 def val(data_name, chkp_path, summary_writer=None):
@@ -315,6 +363,10 @@ def val(data_name, chkp_path, summary_writer=None):
         # get network
         logits, nets = get_network(
             x1, x2, y1, y2, dataset, 'val')
+        lx1 = logits[0]
+        lx2 = logits[1]
+        ly1 = logits[2]
+        ly2 = logits[3]
 
         # get loss
         losses, predictions = get_loss(
@@ -358,9 +410,22 @@ def val(data_name, chkp_path, summary_writer=None):
                     break
 
                 # running session to acuqire value
-                feeds = [losses, test_batch_info]
-                _loss, _info = sess.run(feeds)
+                feeds = [losses, test_batch_info, labels, lx1, lx2, ly1, ly2]
+                _loss, _info, _label, _x1, _x2, _y1, _y2 = sess.run(feeds)
                 mean_loss += _loss
+
+                if cur == 0:
+                    val_label = _label
+                    val_x1 = _x1
+                    val_x2 = _x2
+                    val_y1 = _y1
+                    val_y2 = _y2
+                else:
+                    val_label = np.append(val_label, _label)
+                    val_x1 = np.row_stack((val_x1, _x1))
+                    val_x2 = np.row_stack((val_x2, _x2))
+                    val_y1 = np.row_stack((val_y1, _y1))
+                    val_y2 = np.row_stack((val_y2, _y2))
 
                 # save tensor info to text file
                 for _line in _info:
@@ -373,9 +438,10 @@ def val(data_name, chkp_path, summary_writer=None):
 
             # statistic
             mean_loss = 1.0 * mean_loss / num_iter
+            result = [val_label, val_x1, val_x2, val_y1, val_y2]
 
             # acquire actual accuracy
-            mean_err, threshold = kinface.get_kinface_error(test_info_path)
+            mean_err, threshold = kinface.Error().get_result_from_file(test_info_path)
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
@@ -394,7 +460,7 @@ def val(data_name, chkp_path, summary_writer=None):
                 summary.value.add(tag='val/loss', simple_value=mean_loss)
                 summary_writer.add_summary(summary, global_step)
 
-            return mean_err, threshold
+            return mean_err, threshold, result
 
 
 # def heatmap(name, chkp_path):
