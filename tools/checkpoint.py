@@ -162,7 +162,3 @@ def merge_fuse_checkpoint(model_1, model_2, fuse_model, outfile):
     print('\n Merge Model2')
     merge_checkpoint(model_2 + '_2', fuse_model + '_tmp', outfile)
     print('\n Finished!')
-
-
-print_checkpoint_variables(
-    'C:/Users/jk/Desktop/Gate/_output/face/kinface2_train.ckpt-96400')
