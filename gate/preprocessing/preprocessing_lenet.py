@@ -19,7 +19,7 @@ def preprocess_image(image, output_height, output_width, is_training):
     with tf.name_scope('lenet'):
         image = tf.to_float(image)
         image = tf.image.resize_image_with_crop_or_pad(
-            image, output_width, output_height)
+            image, output_height, output_width)
         image = tf.subtract(image, 128.0)
         image = tf.div(image, 128.0)
 

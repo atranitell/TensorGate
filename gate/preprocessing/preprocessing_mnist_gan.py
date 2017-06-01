@@ -18,7 +18,7 @@ def preprocess_for_eval(image, output_height, output_width):
     # Transform the image to floats.
     image = tf.to_float(image) / 255.0
     resized_image = tf.image.resize_image_with_crop_or_pad(
-        image, output_width, output_height)
+        image, output_height, output_width)
     return resized_image
 
 

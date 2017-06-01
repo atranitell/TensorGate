@@ -25,7 +25,7 @@ def preprocess_for_eval(image, output_height, output_width):
 
     # Resize and crop if needed.
     resized_image = tf.image.resize_image_with_crop_or_pad(
-        image, output_width, output_height)
+        image, output_height, output_width)
 
     # Subtract off the mean and divide by the variance of the pixels.
     return tf.image.per_image_standardization(resized_image)

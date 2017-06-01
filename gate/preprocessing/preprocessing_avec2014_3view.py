@@ -35,7 +35,7 @@ def preprocess_for_eval(image, output_height, output_width):
     image = tf.image.resize_images(tf.to_float(image), (256, 256))
 
     resized_image = tf.image.resize_image_with_crop_or_pad(
-        image, output_width, output_height)
+        image, output_height, output_width)
     tf.summary.image('image_resize', tf.expand_dims(resized_image, 0))
 
     # Subtract off the mean and divide by the variance of the pixels.
