@@ -70,7 +70,10 @@ def interface_cnn(config):
 
     # test model
     elif config.task == 'test' and config.model is not None:
-        cnn.test(config.dataset, config.model)
+        if config.all:
+            cnn.pipline(config.dataset, config.model)
+        else:
+            cnn.test(config.dataset, config.model)
 
     # validation a model, for specific method.
     #   get a value through val and then test
@@ -78,7 +81,10 @@ def interface_cnn(config):
         cnn.val(config.dataset, config.model)
 
     elif config.task == 'heatmap' and config.model is not None:
-        cnn.heatmap(config.dataset, config.model)
+        if config.all:
+            cnn.pipline(config.dataset, config.model, True)
+        else:
+            cnn.heatmap(config.dataset, config.model)
 
     elif config.task == 'extract_feature' and config.model is not None:
         import issue.cnn.extract_feature as extract_feature
@@ -119,6 +125,7 @@ if __name__ == '__main__':
     PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
                         help='defined in dataset/factory.')
     PARSER.add_argument('-init', type=bool, default=True, dest='init')
+    PARSER.add_argument('-all', type=bool, default=False, dest='all')
     ARGS, _ = PARSER.parse_known_args()
 
     # at least input target, task, dataset
