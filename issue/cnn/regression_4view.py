@@ -307,7 +307,7 @@ def heatmap(name, chkp_path):
         images = [images0, images1, images2, images3]
 
         # get network
-        logits, nets = get_network(images, dataset, 'test', 'net')
+        logits, nets = get_network(images, dataset, 'test', '')
 
         # get loss
         losses, logits, mae, rmse = get_loss(
@@ -352,11 +352,11 @@ def heatmap(name, chkp_path):
 
             # for resnet_v2_50
             # heatmap data
-            X = nets['gap_conv']
+            X0 = nets[0]['gap_conv']
             # heatmap weights
-            W = gate.utils.analyzer.find_weights(
-                'net/resnet_v2_50/logits/weights')
-            W = tf.reshape(W, [-1])  # flatten
+            W0 = gate.utils.analyzer.find_weights(
+                'net1/resnet_v2_50/logits/weights')
+            W0 = tf.reshape(W0, [-1])  # flatten
 
             for cur in range(num_iter):
                 # if ctrl-c
@@ -364,15 +364,18 @@ def heatmap(name, chkp_path):
                     break
 
                 # running session to acuqire value
-                feeds = [losses, mae, rmse, test_batch_info, X, W]
-                _loss, _mae, _rmse, _info, x, w = sess.run(feeds)
+                feeds = [losses, mae, rmse, test_batch_info, X0, W0]
+                _loss, _mae, _rmse, _info, x0, w0 = sess.run(feeds)
+
                 mean_loss += _loss
                 mean_mae += _mae
                 mean_rmse += _rmse
 
                 # generate heatmap
-                x = np.transpose(x, (0, 3, 1, 2))
+                x0 = np.transpose(x0, (0, 3, 1, 2))
+
                 for _n in range(dataset.batch_size):
+
                     img_path = str(_info[_n], encoding='utf-8').split(' ')[0]
                     f_bn = os.path.basename(img_path)
                     p_name = re.findall('frames\\\(.*)\\\\', img_path)[0]
@@ -380,8 +383,9 @@ def heatmap(name, chkp_path):
                     if not os.path.exists(p_fold_path):
                         os.mkdir(p_fold_path)
                     fname = f_bn.split('.')[0] + '_' + global_step + '.jpg'
+
                     gate.utils.heatmap.single_map(
-                        path=img_path, data=x[_n], weight=w,
+                        path=img_path, data=x0[_n], weight=w0,
                         raw_h=dataset.image.raw_height,
                         raw_w=dataset.image.raw_width,
                         save_path=os.path.join(p_fold_path, fname))
@@ -427,74 +431,26 @@ def heatmap(name, chkp_path):
 
             return mean_mae, mean_rmse
 
-            # Start to TEST
-            for cur in range(num_iter):
-                if coord.should_stop():
-                    break
 
-                # running session to acuqire value
-                feeds = [losses, test_batch_info,
-                         X1, W1, X2, W2, logits1, logits2]
-                _loss, _info, x1, w1, x2, w2, l1, l2 = sess.run(feeds)
+def pipline(name, chkp_path, gen_heatmap=False):
+    """ test all model in checkpoint file
+    """
+    import tools
 
-                # generate heatmap
-                # transpose dim for index
-                x1 = np.transpose(x1, (0, 3, 1, 2))
-                w1 = np.transpose(w1, (1, 0))
-                x2 = np.transpose(x2, (0, 3, 1, 2))
-                w2 = np.transpose(w2, (1, 0))
-
-                for _n in range(dataset.batch_size):
-
-                    _, pos = gate.utils.math.find_max(l1[_n], l2[_n])
-                    _w1 = w1[pos]
-                    _w2 = w2[pos]
-
-                    img1 = str(_info[_n], encoding='utf-8').split(' ')[0]
-                    img2 = str(_info[_n], encoding='utf-8').split(' ')[1]
-
-                    f1_bn = os.path.basename(img1)
-                    f2_bn = os.path.basename(img2)
-                    fname1 = f1_bn.split('.')[0] + '_' + global_step + '.jpg'
-                    fname2 = f2_bn.split('.')[0] + '_' + global_step + '.jpg'
-
-                    gate.utils.heatmap.single_map(
-                        path=img1, data=x1[_n], weight=_w1,
-                        raw_h=dataset.image.raw_height,
-                        raw_w=dataset.image.raw_width,
-                        save_path=os.path.join(heatmap_path, fname1))
-
-                    gate.utils.heatmap.single_map(
-                        path=img2, data=x2[_n], weight=_w2,
-                        raw_h=dataset.image.raw_height,
-                        raw_w=dataset.image.raw_width,
-                        save_path=os.path.join(heatmap_path, fname2))
-
-                logger.info('Has Processed %d of %d.' %
-                            (cur * dataset.batch_size, dataset.total_num))
-
-                # save tensor info to text file
-                for _line in _info:
-                    test_info_fp.write(_line + b'\r\n')
-
-            test_info_fp.close()
-            mean_loss = 1.0 * mean_loss / num_iter
-
-            # output - acquire actual accuracy
-            mean_err, _ = kinface.get_kinface_error(test_info_path)
-
-            # output result
-            f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
-            f_str.add('loss', mean_loss, float)
-            f_str.add('error', mean_err, float)
-            logger.test(f_str.get())
-
-            # -------------------------------------------
-            # terminate all threads
-            # -------------------------------------------
-            coord.request_stop()
-            coord.join(threads, stop_grace_period_secs=10)
-
-            return mean_err
+    chkp_file_path = os.path.join(chkp_path, 'checkpoint')
+    # make a backup
+    gate.utils.filesystem.copy_file(chkp_file_path, chkp_file_path+'.bk')
+    # acquire model list
+    chkp_model_list = tools.checkpoint.get_checkpoint_model_items(chkp_file_path)
+    # loop over the model list
+    for idx in range(1, len(chkp_model_list)):
+        # write list to new checkpoint file
+        new_model_list = chkp_model_list.copy()
+        new_model_list[0] = new_model_list[idx]
+        tools.checkpoint.write_checkpoint_model_items(chkp_file_path, new_model_list)
+        logger.info('Process model %s' % new_model_list[0])
+        # run test_all
+        if gen_heatmap:
+            heatmap(name, chkp_path)
+        else:
+            test(name, chkp_path)
