@@ -11,6 +11,7 @@ from gate.dataset.mnist import mnist
 # depression
 from gate.dataset.avec import avec2014
 from gate.dataset.avec import avec2014_4view
+from gate.dataset.avec import avec2013
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features
@@ -23,6 +24,7 @@ dataset_map = {
     'cifar100': cifar100.cifar100,
     'imagenet': imagenet.imagenet,
     'avec2014': avec2014.avec2014,
+    'avec2013': avec2013.avec2013,
     'avec2014_4view': avec2014_4view.avec2014_4view,
     'kinface2': kinface2.kinface2,
     'kinface2_feature': kinface2_features.kinface2_feature,
