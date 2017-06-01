@@ -47,7 +47,7 @@ class kinface2(database.Database):
         # setting hps
         self.hps = data_param.hps(net_name='mlp')
         self.hps.set_weight_decay(0.002)
-        self.hps.set_dropout(0.9)
+        self.hps.set_dropout(0.8)
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -56,7 +56,7 @@ class kinface2(database.Database):
         # lr
         self.lr = data_param.learning_rate()
         self.lr.set_fixed(learning_rate=0.1)
-        # self.lr.set_exponential(.5, 100, 0.9)
+        # self.lr.set_exponential(.5, 200, 0.5)
 
         self._print()
 
@@ -67,7 +67,7 @@ class kinface2(database.Database):
         self.reader_thread = 1
         self.shuffle = False
         # self.data_path = '../_datasets/kinface2/val_4.txt'
-        self.data_path = '../_datasets/kinface2_feature/val_4_idx.txt'
+        self.data_path = '../_datasets/kinface2_feature/val_5_idx.txt'
 
     def _val(self):
         # basic param
@@ -77,7 +77,7 @@ class kinface2(database.Database):
         self.reader_thread = 1
         self.shuffle = False
         # self.data_path = '../_datasets/kinface2/train_4.txt'
-        self.data_path = '../_datasets/kinface2_feature/train_4_idx.txt'
+        self.data_path = '../_datasets/kinface2_feature/train_5_idx.txt'
 
     def _train(self):
         # basic param
@@ -87,4 +87,4 @@ class kinface2(database.Database):
         self.reader_thread = 4
         self.shuffle = True
         # self.data_path = '../_datasets/kinface2/train_4.txt'
-        self.data_path = '../_datasets/kinface2_feature/train_4_idx.txt'
+        self.data_path = '../_datasets/kinface2_feature/train_5_idx.txt'
