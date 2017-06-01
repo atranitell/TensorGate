@@ -16,7 +16,7 @@ def preprocess_for_train(image, output_height,
     image = tf.image.resize_image_with_crop_or_pad(image, 184, 184)
 
     image = tf.random_crop(
-        image, [output_width, output_height, channels])
+        image, [output_height, output_width, channels])
     tf.summary.image('image_crop', tf.expand_dims(image, 0))
 
     image = tf.image.random_flip_left_right(image)
