@@ -18,7 +18,7 @@ from gate.utils.logger import logger
 def get_network(images, dataset, phase, scope=''):
     # get Deep Neural Network
     logits, end_points = gate.net.factory.get_network(
-        dataset.hps, phase, images, 1, scope)
+        dataset.hps, phase, images, 0, scope)
     return logits, end_points
 
 

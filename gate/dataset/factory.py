@@ -12,11 +12,14 @@ from gate.dataset.mnist import mnist
 from gate.dataset.avec import avec2014
 from gate.dataset.avec import avec2014_4view
 from gate.dataset.avec import avec2013
+from gate.dataset.avec import cnu2017
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features
 # gan
 from gate.dataset.celeba import celeba
+# msceleb
+from gate.dataset.msceleb import msceleb_align
 
 dataset_map = {
     'mnist': mnist.mnist,
@@ -25,10 +28,12 @@ dataset_map = {
     'imagenet': imagenet.imagenet,
     'avec2014': avec2014.avec2014,
     'avec2013': avec2013.avec2013,
+    'cnu2017': cnu2017.cnu2017,
     'avec2014_4view': avec2014_4view.avec2014_4view,
     'kinface2': kinface2.kinface2,
     'kinface2_feature': kinface2_features.kinface2_feature,
-    'celeba':  celeba.celeba
+    'celeba':  celeba.celeba,
+    'msceleb_align': msceleb_align.msceleb_align
 }
 
 
