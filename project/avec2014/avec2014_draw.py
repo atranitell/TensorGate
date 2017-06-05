@@ -55,7 +55,7 @@ def smooth(data_tup, num):
     return data_tup
 
 
-def parse_log_test(path, is_save=False, save_path=None):
+def parse_log_test(path, is_save=False, save_path=None, old=True):
     fp = open(path, 'r')
     tst_info = {}
     _iter = []
@@ -65,22 +65,36 @@ def parse_log_test(path, is_save=False, save_path=None):
     phase = False
     for line in fp:
         tst_line = re.findall('\[TST\] Iter:(.*?),', line)
-        if len(tst_line):
-            phase = True
-            tst_iter = int(tst_line[0])
-            _iter.append(tst_iter)
+        if old:
+            if len(tst_line):
+                phase = True
+                tst_iter = int(tst_line[0])
+                _iter.append(tst_iter)
 
-        if phase and len(re.findall('video_mae:(.*?),', line)):
-            _mae.append(float(re.findall('video_mae:(.*?),', line)[0]))
-            _rmse.append(float(re.findall('video_rmse:(.*)', line)[0]))
-            _loss.append(float(re.findall('Loss:(.*?),', line)[0]))
-            phase = False
+            if phase and len(re.findall('video_mae:(.*?),', line)):
+                _mae.append(float(re.findall('video_mae:(.*?),', line)[0]))
+                _rmse.append(float(re.findall('video_rmse:(.*)', line)[0]))
+                _loss.append(float(re.findall('Loss:(.*?),', line)[0]))
+                phase = False
+        else:
+            if len(tst_line):
+                phase = True
+
+            if phase and len(re.findall('video_mae:(.*?),', line)):
+                tst_iter = int(tst_line[0])
+                _iter.append(tst_iter)
+                _mae.append(float(re.findall('video_mae:(.*?),', line)[0]))
+                _rmse.append(float(re.findall('video_rmse:(.*).', line)[0]))
+                _loss.append(float(re.findall('loss:(.*?),', line)[0]))
+                phase = False
 
     tst_info['path'] = path
     tst_info['iter'] = _iter
     tst_info['loss'] = _loss
     tst_info['mae'] = _mae
     tst_info['rmse'] = _rmse
+
+    print(len(tst_info['iter']))
 
     if is_save and save_path is not None:
         with open(save_path, 'w') as fw:
@@ -91,7 +105,7 @@ def parse_log_test(path, is_save=False, save_path=None):
     return tst_info
 
 
-def parse_log_train(path, is_save=False, save_path=None):
+def parse_log_train(path, is_save=False, save_path=None, old=True):
     fp = open(path, 'r')
     trn_info = {}
     _iter = []
@@ -103,14 +117,26 @@ def parse_log_train(path, is_save=False, save_path=None):
         if idx % invl != 0:
             continue
         trn_line = re.findall('\[TRN\] Iter:(.*?),', line)
-        if len(trn_line):
-            trn_iter = int(trn_line[0])
-            if trn_iter < 10:
-                continue
-            _iter.append(trn_iter)
-            _loss.append(float(re.findall('loss:(.*?),', line)[0]))
-            _mae.append(float(re.findall('mae:(.*?),', line)[0]))
-            _rmse.append(float(re.findall('rmse:(.*?),', line)[0]))
+
+        if old:
+            if len(trn_line):
+                trn_iter = int(trn_line[0])
+                if trn_iter < 10:
+                    continue
+                _iter.append(trn_iter)
+                _loss.append(float(re.findall('loss:(.*?),', line)[0]))
+                _mae.append(float(re.findall('mae:(.*?),', line)[0]))
+                _rmse.append(float(re.findall('rmse:(.*?),', line)[0]))
+        else:
+            if len(trn_line):
+                trn_iter = int(trn_line[0])
+                if trn_iter < 10:
+                    continue
+                if len(re.findall('loss:(.*?),', line)) > 0:
+                    _iter.append(trn_iter)
+                    _loss.append(float(re.findall('loss:(.*?),', line)[0]))
+                    _mae.append(float(re.findall('mae:(.*?),', line)[0]))
+                    _rmse.append(float(re.findall('rmse:(.*?),', line)[0]))
 
     trn_info['path'] = path
     trn_info['iter'] = _iter
@@ -119,7 +145,7 @@ def parse_log_train(path, is_save=False, save_path=None):
     trn_info['rmse'] = _rmse
 
     if is_save and save_path is not None:
-        with open('new.txt', 'w') as fw:
+        with open(save_path, 'w') as fw:
             for i, v in enumerate(trn_info['iter']):
                 fw.write(str(trn_info['iter'][i]) + ' ' + str(trn_info['loss'][i]) + ' ' +
                          str(trn_info['mae'][i]) + ' ' + str(trn_info['rmse'][i]) + '\n')

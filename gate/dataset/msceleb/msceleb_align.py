@@ -27,21 +27,26 @@ class msceleb_align(database.Database):
         # image
         self.image = data_param.image()
         self.image.set_format(channels=3)
-        self.image.set_raw_size(256, 256)
+        self.image.set_raw_size(-1, -1)
         self.image.set_output_size(224, 224)
-        self.image.set_preprocessing('vgg')
+        self.image.set_preprocessing('msceleb')
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
-        self.log.set_log(print_frequency=200,
-                         save_summaries_iter=200,
+        self.log.set_log(print_frequency=20,
+                         save_summaries_iter=20,
                          save_model_iter=5000,
                          test_interval=5000)
 
         # setting hps
-        self.hps = data_param.hps('resnet_50')
+        self.hps = data_param.hps('resnet_v2_50')
         self.hps.set_weight_decay(0.0001)
-        self.hps.set_dropout(0.5)
+        self.hps.set_dropout(1.0)
+
+        # batch norm
+        self.hps.set_batch_norm(
+            batch_norm_decay=0.997,
+            batch_norm_epsilon=1e-5)
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -65,7 +70,7 @@ class msceleb_align(database.Database):
     def _train(self):
         # basic param
         self.batch_size = 32
-        self.total_num = 1272104
+        self.total_num = 400
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True

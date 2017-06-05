@@ -26,7 +26,7 @@ from gate.preprocessing import preprocessing_avec2014
 from gate.preprocessing import preprocessing_avec2014_3view
 from gate.preprocessing import preprocessing_celeba_gan
 from gate.preprocessing import preprocessing_kinface
-
+from gate.preprocessing import preprocessing_msceleb
 
 preprocessing_map = {
     'cifarnet': preprocessing_cifarnet,
@@ -40,6 +40,7 @@ preprocessing_map = {
     'avec2014_3view': preprocessing_avec2014_3view,
     'celeba_gan': preprocessing_celeba_gan,
     'kinface': preprocessing_kinface,
+    'msceleb': preprocessing_msceleb
 }
 
 
