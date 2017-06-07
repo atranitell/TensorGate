@@ -36,8 +36,9 @@ def load_image_from_text(
     # preprocessing
     image_raw = tf.read_file(imgpath)
     image_content = tf.image.decode_image(image_raw, channels=image.channels)
-    # image_content = tf.reshape(
-    #     image_content, [image.raw_height, image.raw_width, image.channels])
+    if image.raw_height <= 0:
+        image_content = tf.reshape(
+            image_content, [image.raw_height, image.raw_width, image.channels])
 
     # image, label, filename
     image_content = preprocessing.factory.get_preprocessing(

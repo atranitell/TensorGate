@@ -44,11 +44,11 @@ class cnu2017(database.Database):
             test_interval=1000)
 
         # setting hps
-        self.hps = data_param.hps('resnet_50')
-        self.hps.set_dropout(0.5)
+        self.hps = data_param.hps('resnet_v2_50')
+        self.hps.set_dropout(1.0)
         self.hps.set_weight_decay(0.0005)
         self.hps.set_batch_norm(
-            batch_norm_decay=0.9,
+            batch_norm_decay=0.997,
             batch_norm_epsilon=1e-5)
 
         # optimizer
@@ -60,25 +60,24 @@ class cnu2017(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.1)
 
         self._print()
 
     def _test(self):
         self.batch_size = 50
-        # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
-        # 17727
-        self.total_num = 49376
+        # 49376; 16292-test_new; 162506-test
+        self.total_num = 3300
         self.name = self.name + '_test'
         self.reader_thread = 16
         self.shuffle = False
-        self.data_path = '../_datasets/cnu2017/test.txt'
+        self.data_path = '../_datasets/cnu2017_new/test_new.txt'
 
     def _train(self):
         self.batch_size = 32
-        # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 114193
+        # 114193
+        self.total_num = 12992
         self.name = self.name + '_train'
         self.reader_thread = 16
         self.shuffle = True
-        self.data_path = '../_datasets/cnu2017/train.txt'
+        self.data_path = '../_datasets/cnu2017_new/train_new.txt'
