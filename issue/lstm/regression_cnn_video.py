@@ -30,25 +30,11 @@ def get_network(images, dataset, phase, scope=''):
                                  dataset.image.channels])
     images = tf.transpose(images, [2, 0, 1, 3])
 
-    # images = tf.slice(images, [0, 0, 0, 0], [1, 256, 256, 3])
-
-    # with tf.Session() as sess:
-    #     sess.run(tf.global_variables_initializer())
-    #     tf.train.start_queue_runners(sess=sess)
-    #     img = sess.run(images)
-    #     print(img.shape)
-    #     print(img[0].shape)
-    #     import matplotlib.pyplot as plt
-    #     plt.imshow(img[0])
-    #     plt.show()
-    #     exit(0)
-
     # get Deep Neural Network
     _, end_points = gate.net.factory.get_network(
         dataset.hps, phase, images, 0, scope)
 
     X = end_points['Flatten']
-    print(X)
 
     n_steps = dataset.image.frames
     n_hidden = 128
