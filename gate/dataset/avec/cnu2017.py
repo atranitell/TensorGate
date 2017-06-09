@@ -38,10 +38,10 @@ class cnu2017(database.Database):
         # log
         self.log = data_param.log(data_type, name, chkp_path)
         self.log.set_log(
-            print_frequency=50,
-            save_summaries_iter=50,
-            save_model_iter=1000,
-            test_interval=1000)
+            print_frequency=10,
+            save_summaries_iter=10,
+            save_model_iter=100,
+            test_interval=100)
 
         # setting hps
         self.hps = data_param.hps('resnet_v2_50')
@@ -53,23 +53,24 @@ class cnu2017(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_sgd()
+        # self.opt.set_adam(
+        #     adam_beta1=0.9,
+        #     adam_beta2=0.999,
+        #     adam_epsilon=1e-8)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.0005)
 
         self._print()
 
     def _test(self):
-        self.batch_size = 50
+        self.batch_size = 100
         # 49376; 16292-test_new; 162506-test
         self.total_num = 3300
         self.name = self.name + '_test'
-        self.reader_thread = 16
+        self.reader_thread = 1
         self.shuffle = False
         self.data_path = '../_datasets/cnu2017_new/test_new.txt'
 
