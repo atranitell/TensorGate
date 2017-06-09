@@ -28,7 +28,7 @@ class avec2014_video(database.Database):
         self.image = data_param.image()
         self.image.set_format(channels=3, frames=16)
         self.image.set_raw_size(256, 256)
-        self.image.set_output_size(28, 28)
+        self.image.set_output_size(224, 224)
         self.image.set_preprocessing('avec2014')
 
         # specify information
@@ -40,11 +40,11 @@ class avec2014_video(database.Database):
         self.log.set_log(
             print_frequency=50,
             save_summaries_iter=50,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=1000,
+            test_interval=1000)
 
         # setting hps
-        self.hps = data_param.hps('cifarnet')
+        self.hps = data_param.hps('resnet_v2_50')
         self.hps.set_dropout(1.0)
         self.hps.set_weight_decay(0.0005)
         self.hps.set_batch_norm(
@@ -60,25 +60,23 @@ class avec2014_video(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.0001)
 
         self._print()
 
     def _test(self):
         self.batch_size = 1
-        # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
-        # 17727
-        self.total_num = 16127
+        # 16127
+        self.total_num = 1055
         self.name = self.name + '_test'
-        self.reader_thread = 4
+        self.reader_thread = 8
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014/pp_tst_succ_small.txt'
 
     def _train(self):
         self.batch_size = 1
-        # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
         self.total_num = 21019
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 8
         self.shuffle = True
         self.data_path = '../_datasets/AVEC2014/pp_trn_0_succ.txt'

@@ -19,6 +19,7 @@ from tensorflow.contrib import rnn
 
 import gate
 from gate.utils.logger import logger
+from project.avec2014 import avec2014_error
 
 
 def get_network(images, dataset, phase, scope=''):
@@ -34,12 +35,14 @@ def get_network(images, dataset, phase, scope=''):
     _, end_points = gate.net.factory.get_network(
         dataset.hps, phase, images, 0, scope)
 
-    X = end_points['Flatten']
+    X = end_points['gap_pool']
+    X_dim = int(X.get_shape()[-1])
+    X = tf.reshape(X, [dataset.image.frames, X_dim])
 
     n_steps = dataset.image.frames
-    n_hidden = 128
+    n_hidden = 512
 
-    X = tf.reshape(X, [-1, n_steps, 3136])
+    X = tf.reshape(X, [-1, n_steps, X_dim])
 
     # transform to list
     X = tf.unstack(X, n_steps, axis=1)
@@ -290,8 +293,7 @@ def test(data_name, chkp_path, summary_writer=None):
             # for specify dataset
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
-            if dataset.name == 'avec2014_test':
-                from project.avec2014 import avec2014_error
+            if dataset.name == 'avec2014_video_test':
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
                 f_str = gate.utils.string.format_iter(global_step)
@@ -436,9 +438,8 @@ def heatmap(name, chkp_path):
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
             if dataset.name == 'avec2014_video_test':
-                from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
-                    test_info_path, 'succ')
+                    test_info_path, 'img')
                 f_str = gate.utils.string.format_iter(global_step)
                 f_str.add('loss', mean_loss, float)
                 f_str.add('video_mae', mean_mae, float)

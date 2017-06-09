@@ -13,6 +13,7 @@ from tensorflow.contrib import framework
 
 import gate
 from gate.utils.logger import logger
+from project.avec2014 import avec2014_error
 
 
 def get_network(images, dataset, phase, scope='net'):
@@ -249,7 +250,6 @@ def test(data_name, chkp_path, summary_writer=None):
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
             if dataset.name == 'avec2014_test':
-                from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
                 f_str = gate.utils.string.format_iter(global_step)
@@ -394,7 +394,6 @@ def heatmap(name, chkp_path):
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
             if dataset.name == 'avec2014_test':
-                from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
                 f_str = gate.utils.string.format_iter(global_step)

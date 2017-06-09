@@ -40,8 +40,8 @@ class avec2014(database.Database):
         self.log.set_log(
             print_frequency=50,
             save_summaries_iter=50,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=1000,
+            test_interval=1000)
 
         # setting hps
         self.hps = data_param.hps('resnet_v2_50')
@@ -71,7 +71,7 @@ class avec2014(database.Database):
         self.total_num = 17727
         self.name = self.name + '_test'
         self.reader_thread = 4
-        self.shuffle = True
+        self.shuffle = False
         self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
 
     def _train(self):
