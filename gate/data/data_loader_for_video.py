@@ -89,7 +89,7 @@ def load_block_random_video_from_text(
 
     # preprocess
     image_content = preprocessing.factory.get_preprocessing(
-        image.preprocessing_method1, data_type, image,
+        image.preprocessing_method1, data_type, image_content,
         image.output_height, image.output_width,
         channels=image.frames * image.channels)
 
@@ -162,8 +162,8 @@ def load_block_continuous_video_from_text(
         image_content, shape=[image.raw_height, image.raw_width,
                               image.channels * image.frames])
 
-    image = preprocessing.factory.get_preprocessing(
-        image.preprocessing_method1, data_type, image,
+    image_content = preprocessing.factory.get_preprocessing(
+        image.preprocessing_method1, data_type, image_content,
         image.output_height, image.output_width,
         channels=image.channels * image.frames)
 

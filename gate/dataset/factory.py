@@ -13,6 +13,8 @@ from gate.dataset.avec import avec2014
 from gate.dataset.avec import avec2014_4view
 from gate.dataset.avec import avec2013
 from gate.dataset.avec import cnu2017
+# depression-video
+from gate.dataset.avec import avec2014_video
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features
@@ -28,6 +30,7 @@ dataset_map = {
     'imagenet': imagenet.imagenet,
     'avec2014': avec2014.avec2014,
     'avec2013': avec2013.avec2013,
+    'avec2014_video': avec2014_video.avec2014_video,
     'cnu2017': cnu2017.cnu2017,
     'avec2014_4view': avec2014_4view.avec2014_4view,
     'kinface2': kinface2.kinface2,

@@ -9,6 +9,9 @@ def preprocess_for_train(image, output_height, output_width):
     # Transform the image to floats.
     image = tf.to_float(image)
 
+    # grey scale
+    image = tf.image.rgb_to_grayscale(image)
+
     # Randomly crop a [height, width] section of the image.
     resized_image = tf.image.resize_images(
         image, (output_height, output_width))
@@ -22,6 +25,9 @@ def preprocess_for_eval(image, output_height, output_width):
     """ Preprocesses the given image for evaluation. """
     # Transform the image to floats.
     image = tf.to_float(image)
+
+    # grey scale
+    image = tf.image.rgb_to_grayscale(image)
 
     # Resize and crop if needed.
     resized_image = tf.image.resize_image_with_crop_or_pad(

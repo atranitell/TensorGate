@@ -95,12 +95,30 @@ def interface_cnn(config):
         logger.error('Wrong task setting %s' % str(config.task))
 
 
+def interface_lstm(config):
+    """ interface related to LSTM/RNN/GRU
+    """
+    if config.target == 'lstm.basic':
+        import issue.lstm.classification as lstm
+    elif config.target == 'lstm.classification.cnn':
+        import issue.lstm.classification_cnn as lstm
+    elif config.target == 'lstm.regression.cnn.video':
+        import issue.lstm.regression_cnn_video as lstm
+    else:
+        raise ValueError('Unkonwn target type.')
+
+    if config.task == 'train':
+        lstm.train(config.dataset, config.model)
+    else:
+        raise ValueError('Unkonwn target type.')
+
+
 def interface(config):
     """ interface related to command
     """
     logger.info(str(config))
 
-    if config.target.find('cnn') == 0:
+    if config.target.find('cnn.') == 0:
         interface_cnn(config)
 
     elif config.target == 'cgan':
@@ -109,6 +127,9 @@ def interface(config):
 
     elif config.target == 'vae':
         pass
+
+    elif config.target.find('lstm.') == 0:
+        interface_lstm(config)
 
     else:
         logger.error('Wrong target setting %s' % str(config.target))
