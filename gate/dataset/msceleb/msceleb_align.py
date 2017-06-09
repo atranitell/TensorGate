@@ -20,8 +20,8 @@ class msceleb_align(database.Database):
         # basic info
         self.data_type = data_type
         self.name = name
-        self.num_classes = 1000
-        self.min_queue_num = 128
+        self.num_classes = 79077
+        self.min_queue_num = 256
         self._set_phase(data_type)
 
         # image
@@ -33,10 +33,10 @@ class msceleb_align(database.Database):
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
-        self.log.set_log(print_frequency=20,
-                         save_summaries_iter=20,
-                         save_model_iter=5000,
-                         test_interval=5000)
+        self.log.set_log(print_frequency=50,
+                         save_summaries_iter=50,
+                         save_model_iter=12631,
+                         test_interval=126310)
 
         # setting hps
         self.hps = data_param.hps('resnet_v2_50')
@@ -54,14 +54,14 @@ class msceleb_align(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.1)
+        self.lr.set_fixed(learning_rate=0.05)
 
         # show
         self._print()
 
     def _test(self):
         self.batch_size = 100
-        self.total_num = 50000
+        self.total_num = 1007903
         self.name = self.name + '_test'
         self.reader_thread = 32
         self.shuffle = False
@@ -70,7 +70,7 @@ class msceleb_align(database.Database):
     def _train(self):
         # basic param
         self.batch_size = 32
-        self.total_num = 400
+        self.total_num = 4041921
         self.name = self.name + '_train'
         self.reader_thread = 32
         self.shuffle = True

@@ -15,10 +15,10 @@ import gate
 from gate.utils.logger import logger
 
 
-def get_network(images, dataset, phase, scope=''):
+def get_network(images, dataset, phase, scope='net'):
     # get Deep Neural Network
     logits, end_points = gate.net.factory.get_network(
-        dataset.hps, phase, images, 0, scope)
+        dataset.hps, phase, images, 1, scope)
     return logits, end_points
 
 

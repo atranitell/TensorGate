@@ -62,8 +62,13 @@ def interface_cnn(config):
     # freeze all weights except extension, and train extension
     elif config.task == 'finetune' and config.model is not None:
         if config.init:
-            exclusions = {'restore': ['net', 'global_step', 'updater'],
-                          'train': ['InceptionResnetV1']}
+            # exclusions = {'restore': ['net', 'global_step', 'updater'],
+            #               'train': ['InceptionResnetV1']}
+            exclusions = {'restore': ['updater'],
+                          'train': ['net/resnet_v2_50/conv', 'net/resnet_v2_50/block']}
+            # exclusions = {'restore': ['updater'],
+            #               'train': ['net/resnet_v2_50/conv', 'net/resnet_v2_50/block1',
+            #                         'net/resnet_v2_50/block2', 'net/resnet_v2_50/block3']}
         else:
             exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
         cnn.train(config.dataset, config.model, exclusions)
@@ -153,9 +158,15 @@ if __name__ == '__main__':
     raise_invalid_input(ARGS.target, ARGS.task, ARGS.dataset)
 
     # initalize logger
-    LOG_PATH = '../_output/' + ARGS.dataset + \
-        '_' + ARGS.target + '_' + ARGS.task + \
-        datetime.strftime(datetime.now(), '_%y%m%d%H%M%S') + '.txt'
+    if ARGS.model is None:
+        LOG_PATH = '../_output/' + ARGS.dataset + \
+            '_' + ARGS.target + '_' + ARGS.task + \
+            datetime.strftime(datetime.now(), '_%y%m%d%H%M%S') + '.txt'
+    else:
+        LOG_PATH = os.path.join(
+            ARGS.model, ARGS.dataset + '_' +
+            ARGS.target + '_' + ARGS.task +
+            datetime.strftime(datetime.now(), '_%y%m%d%H%M%S') + '.txt')
 
     # LOG = logger.LOG
     logger.set_filestream(LOG_PATH)
