@@ -31,12 +31,11 @@ class CGAN():
         self.is_training = is_training
 
         # batch normalization param
-        self.batch_norm_decay = 0.9
+        self.batch_norm_decay = 0.997
         self.batch_norm_epsilon = 1e-5
 
         # lr - adam
         self.lr = dataset.lr.learning_rate
-        self.adam_beta1 = 0.5
 
         # data related
         self.batch_size = dataset.batch_size
@@ -56,7 +55,7 @@ class CGAN():
             self.discriminator = self.discriminator_128x128
             self.generator = self.generator_128x128
 
-        self.one_hot = False
+        self.one_hot = dataset.one_hot
 
     # Component area
     def linear(self, x, output_dim, name='fc'):
@@ -113,6 +112,7 @@ class CGAN():
             self.y = tf.to_float(tf.one_hot(
                 labels, depth=self.y_dim, on_value=1))
 
+        print(self.y)
         self.inputs = inputs
         self.z = tf.random_uniform(
             [self.batch_size, self.z_dim], minval=-1, maxval=1)
@@ -154,12 +154,10 @@ class CGAN():
 
         # pay attention
         # there global_step just running once
-        d_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(
-                loss=self.d_loss, global_step=global_step, var_list=self.d_vars)
-        g_optim = tf.train.AdamOptimizer(
-            self.lr, beta1=self.adam_beta1).minimize(
-                loss=self.g_loss, var_list=self.g_vars)
+        d_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            loss=self.d_loss, global_step=global_step, var_list=self.d_vars)
+        g_optim = tf.train.RMSPropOptimizer(self.lr).minimize(
+            loss=self.g_loss, var_list=self.g_vars)
 
         return [d_optim, g_optim]
 
@@ -452,3 +450,41 @@ def train(data_name, chkp_path=None):
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
+
+
+def test(data_name, chkp_path):
+    """ output generated image
+        if sample_dict is None, it will generate sample by itself.
+    """
+    with tf.Graph().as_default():
+        # Initail Data related
+        dataset = gate.dataset.factory.get_dataset(
+            data_name, 'test', chkp_path)
+
+        # generate test data
+        sample_z, sample_y = utils.generate_sample(
+            dataset.batch_size, 8, dataset.num_classes, 100)
+
+        utils.generate_all_class(dataset.num_classes, dataset.num_classes, 100)
+        print(sample_z, sample_y)
+
+        # GAN
+        global_step = framework.create_global_step()
+        gan = CGAN(dataset, 'test')
+        sampler = gan.generator(sample_z, sample_y, False, False)
+
+        # start
+        saver = tf.train.Saver(name='restore_all_test')
+        with tf.Session() as sess:
+
+            utils.save_sampler(sess, sample_z, sample_y)
+
+            # restore from checkpoint
+            snapshot = gate.solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
+
+            imgs = sess.run(sampler)
+            img_path = os.path.join(
+                dataset.log.test_dir,
+                data_name + '_{:08d}.png'.format(int(global_step)))
+            utils.save_images(imgs, [8, 8], img_path)
