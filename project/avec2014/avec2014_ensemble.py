@@ -49,12 +49,7 @@ def get_ensemble_value(json_file_path):
     res_list = []
     for idx, val in enumerate(models['list']):
         # print(val['path'])
-        if val['type'] == 'seq':
-            res_dict = avec2014_error.get_seq_list(val['path'])
-        elif val['type'] == 'img':
-            res_dict = avec2014_error.get_img_list(val['path'])
-        elif val['type'] == 'succ':
-            res_dict = avec2014_error.get_succ_list(val['path'])
+        res_dict = avec2014_error.get_img_list(val['path'])
 
         mae, rmse, count = avec2014_error.get_mae_rmse(res_dict)
         res[val['model']] = [val['ensemble'], mae, rmse, str(count)]
