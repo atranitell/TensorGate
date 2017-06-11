@@ -51,12 +51,8 @@ def interface_cnn(config):
     else:
         raise ValueError('Unkonwn target type.')
 
-    # differnt method to finish task
-    if config.task == 'train' and config.model is None:
-        cnn.train(config.dataset)
-
-    # continue to train
-    elif config.task == 'train' and config.model is not None:
+    # if model has value, continue to train, verse vice.
+    if config.task == 'train':
         cnn.train(config.dataset, config.model)
 
     # freeze all weights except extension, and train extension
@@ -65,10 +61,8 @@ def interface_cnn(config):
             # exclusions = {'restore': ['net', 'global_step', 'updater'],
             #               'train': ['InceptionResnetV1']}
             exclusions = {'restore': ['updater'],
-                          'train': ['net/resnet_v2_50/conv', 'net/resnet_v2_50/block']}
-            # exclusions = {'restore': ['updater'],
-            #               'train': ['net/resnet_v2_50/conv', 'net/resnet_v2_50/block1',
-            #                         'net/resnet_v2_50/block2', 'net/resnet_v2_50/block3']}
+                          'train': ['net/resnet_v2_50/conv',
+                                    'net/resnet_v2_50/block']}
         else:
             exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
         cnn.train(config.dataset, config.model, exclusions)
@@ -118,6 +112,36 @@ def interface_lstm(config):
         raise ValueError('Unkonwn target type.')
 
 
+def interface_gan(config):
+    """ interface related to GAN
+    """
+    if config.target == 'gan.conditional':
+        import issue.gan.cgan as gan
+    elif config.target == 'gan.wasserstein':
+        import issue.gan.wgan as gan
+    else:
+        raise ValueError('Unkonwn target type.')
+
+    if config.task == 'train':
+        gan.train(config.dataset, config.model)
+    elif config.task == 'test':
+        gan.test(config.dataset, config.model)
+    else:
+        raise ValueError('Unkonwn target type.')
+
+
+def interface_vae(config):
+    """ interface related to VAE
+    """
+    if config.target == 'vae.conditional':
+        import issue.vae.conditional_vae as vae
+    else:
+        raise ValueError('Unkonwn target type.')
+
+    if config.task == 'train':
+        vae.train()
+
+
 def interface(config):
     """ interface related to command
     """
@@ -126,12 +150,11 @@ def interface(config):
     if config.target.find('cnn.') == 0:
         interface_cnn(config)
 
-    elif config.target == 'cgan':
-        import issue.gan.cgan as gan
-        gan.train(config.dataset, config.model)
+    elif config.target.find('gan.') == 0:
+        interface_gan(config)
 
-    elif config.target == 'vae':
-        pass
+    elif config.target.find('vae.') == 0:
+        interface_vae(config)
 
     elif config.target.find('lstm.') == 0:
         interface_lstm(config)
