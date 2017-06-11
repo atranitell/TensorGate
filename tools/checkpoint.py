@@ -162,3 +162,28 @@ def merge_fuse_checkpoint(model_1, model_2, fuse_model, outfile):
     print('\n Merge Model2')
     merge_checkpoint(model_2 + '_2', fuse_model + '_tmp', outfile)
     print('\n Finished!')
+
+
+def compute_parameter_num(filepath):
+    """ compute sum weights in DNN model
+    e.g.
+        compute_parameter_num('train.ckpt-100001')
+    """
+    def _inner_product(arr):
+        _val = 1
+        for _i in arr:
+            _val *= _i
+        return _val
+
+    reader = pywrap_tensorflow.NewCheckpointReader(filepath)
+    var_to_shape_map = reader.get_variable_to_shape_map()
+    val_list = []
+    for key in var_to_shape_map:
+        if key.find('Adam') > 0:
+            continue
+        print("tensor_name: ", key)
+        val = _inner_product(var_to_shape_map[key])
+        print("tensor_size: ", var_to_shape_map[key], val)
+        val_list.append(val)
+    print('Total params number: ', sum(val_list))
+    return sum(val_list)
