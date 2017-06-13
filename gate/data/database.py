@@ -10,6 +10,7 @@ class Database():
     def __init__(self):
         """ basic info"""
         self.image = None
+        self.audio = None
         self.lr = None
         self.opt = None
         self.hps = None
@@ -48,6 +49,8 @@ class Database():
                         (self.total_num, self.batch_size))
             if self.image is not None:
                 logger.info(string.class_members(self.image))
+            if self.audio is not None:
+                logger.info(string.class_members(self.audio))
             if self.opt is not None:
                 logger.info(string.class_members(self.opt))
             if self.lr is not None:

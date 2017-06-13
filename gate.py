@@ -103,6 +103,8 @@ def interface_lstm(config):
         import issue.lstm.classification_cnn as lstm
     elif config.target == 'lstm.regression.cnn.video':
         import issue.lstm.regression_cnn_video as lstm
+    elif config.target == 'lstm.regression.audio':
+        import issue.lstm.regression_audio as lstm
     else:
         raise ValueError('Unkonwn target type.')
 

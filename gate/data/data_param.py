@@ -206,3 +206,9 @@ class image():
         """
         self.preprocessing_method1 = method1
         self.preprocessing_method2 = method2
+
+
+class audio():
+
+    def __init__(self):
+        pass
