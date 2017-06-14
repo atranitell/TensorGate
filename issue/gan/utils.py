@@ -7,6 +7,36 @@ import scipy.misc
 import numpy as np
 
 
+def save_sampler(sess, sample_z, sample_y):
+    """ Generate same sampler for various gan-family.
+        in order to compare their performance.
+    """
+    with tf.Session() as sess:
+        _z = sess.run(sample_z)
+        _y = sess.run(sample_y)
+        print(_z.shape)
+        print(_z)
+        print(_y.shape)
+        for line in _y:
+            print(line)
+    # np.save(sample_z, sample_y)
+
+
+def generate_all_class(num_class, y_dim, z_dim):
+    """ generate one person with all label
+    """
+    # generate label
+    y = [i for i in range(num_class)]
+    sample_y = tf.convert_to_tensor(y, dtype=tf.int32)
+    sample_y = tf.to_float(tf.one_hot(sample_y, depth=y_dim, on_value=1))
+
+    # generate coder
+    z = np.random.uniform(-1, 1, size=(1, z_dim))
+    for i in range(num_class):
+        z = np.stack((z, z), axis=0)
+    print(z.shape)
+
+
 def generate_sample(batchsize, n_kind, y_dim, z_dim):
     """ n_kind should less and equal to y_dim
     """
