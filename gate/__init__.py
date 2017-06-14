@@ -6,3 +6,4 @@ from gate import loss
 from gate import preprocessing
 from gate import solver
 from gate import utils
+from gate import rnn

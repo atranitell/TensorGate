@@ -32,12 +32,21 @@ class Updater():
         return solver.updater_optimizer.configure(
             dataset, self.learning_rate)
 
-    def get_gradients(self, losses=None):
+    def get_gradients(self, losses=None, opt=None):
         if self.grads is not None:
             return self.grads
         utils.check.raise_none_param(losses, self.optimizer)
-        return self.optimizer.compute_gradients(
+        self.grads = self.optimizer.compute_gradients(
             losses, var_list=self.variables_to_train)
+
+        # clip
+        if opt.clip_method is 'clip_by_value':
+            cmin = opt.clip_value_min
+            cmax = opt.clip_value_max
+            self.grads = [(tf.clip_by_value(grad, cmin, cmax), var)
+                          for grad, var in self.grads]
+
+        return self.grads
 
     def get_train_op(self):
         if self.train_op is not None:
@@ -109,7 +118,7 @@ class Updater():
         self.variables_to_train = self.get_trainable_list(ex_train)
 
         # normal compute gradients
-        self.grads = self.get_gradients(losses)
+        self.grads = self.get_gradients(losses, dataset.opt)
         grad_op = self.optimizer.apply_gradients(
             self.grads, global_step=global_step, name='train_step')
 
@@ -135,7 +144,7 @@ class Updater():
 
         # summary related
         self._summary_lr()
-        # self._summary_grad()
+        self._summary_grad()
         # self._summary_weight()
 
     # def init_layerwise_updater(self, dataset, global_step,

@@ -11,9 +11,14 @@ class Database():
         """ basic info"""
         self.image = None
         self.audio = None
+        self.rnn = None
         self.lr = None
         self.opt = None
         self.hps = None
+        self.data_type = None
+        self.log = None
+        self.total_num = None
+        self.batch_size =None
 
     def loads(self):
         """ data loader
@@ -51,6 +56,8 @@ class Database():
                 logger.info(string.class_members(self.image))
             if self.audio is not None:
                 logger.info(string.class_members(self.audio))
+            if self.rnn is not None:
+                logger.info(string.class_members(self.rnn))
             if self.opt is not None:
                 logger.info(string.class_members(self.opt))
             if self.lr is not None:

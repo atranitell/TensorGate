@@ -29,7 +29,7 @@ class optimizer():
         """ The method is only called once.
             Calling again will raise error.
         """
-        pass
+        self.clip_method = None
         # self.init = False
 
     def set_adam(self, adam_beta1=0.9, adam_beta2=0.999, adam_epsilon=1e-8):
@@ -70,6 +70,11 @@ class optimizer():
         self.rmsprop_decay = rmsprop_decay
         self.rmsprop_momentum = rmsprop_momentum
         self.rmsprop_epsilon = rmsprop_epsilon
+
+    def set_clip_by_value(self, cmin, cmax):
+        self.clip_method = 'clip_by_value'
+        self.clip_value_min = cmin
+        self.clip_value_max = cmax
 
 
 class learning_rate():
@@ -209,6 +214,12 @@ class image():
 
 
 class audio():
+
+    def __init__(self):
+        pass
+
+
+class rnn():
 
     def __init__(self):
         pass

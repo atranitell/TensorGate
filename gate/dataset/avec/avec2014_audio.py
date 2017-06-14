@@ -21,7 +21,7 @@ class avec2014_audio(database.Database):
         self.data_type = data_type
         self.name = name
         self.num_classes = 63
-        self.min_queue_num = 128
+        self.min_queue_num = 32
         self._set_phase(data_type)
 
         # audio
@@ -32,21 +32,22 @@ class avec2014_audio(database.Database):
         self.audio.frame_length = 200
         self.audio.frame_invl = 100
 
+        # config rnn network
+        self.rnn = data_param.rnn()
+        self.rnn.net_name = 'brnn'
+        self.rnn.activation = 'tanh'
+        self.rnn.cell = 'basic_lstm'
+        self.rnn.initializer = 'orthogonal'
+        self.rnn.num_units = 128
+        self.rnn.num_layers = 3
+
         # log
         self.log = data_param.log(data_type, name, chkp_path)
         self.log.set_log(
-            print_frequency=50,
-            save_summaries_iter=50,
+            print_frequency=10,
+            save_summaries_iter=10,
             save_model_iter=1000,
             test_interval=1000)
-
-        # setting hps
-        self.hps = data_param.hps('resnet_v2_50')
-        self.hps.set_dropout(1.0)
-        self.hps.set_weight_decay(0.0005)
-        self.hps.set_batch_norm(
-            batch_norm_decay=0.997,
-            batch_norm_epsilon=1e-5)
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -54,26 +55,27 @@ class avec2014_audio(database.Database):
             adam_beta1=0.9,
             adam_beta2=0.999,
             adam_epsilon=1e-8)
+        self.opt.set_clip_by_value(-1.0, 1.0)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.0001)
+        self.lr.set_fixed(learning_rate=0.001)
 
         self._print()
-  
+
     def _test(self):
         self.batch_size = 32
         # 16127
-        self.total_num = 6252
+        self.total_num = 6327
         self.name = self.name + '_test'
-        self.reader_thread = 1
+        self.reader_thread = 16
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/test_small.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
 
     def _train(self):
-        self.batch_size = 2
-        self.total_num = 4
+        self.batch_size = 32
+        self.total_num = 160
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 16
         self.shuffle = True
         self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_0_succ.txt'
