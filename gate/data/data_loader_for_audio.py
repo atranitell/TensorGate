@@ -2,7 +2,7 @@
 """ updated: 2017/06/13
 """
 
-import os
+import random
 import numpy as np
 import tensorflow as tf
 
@@ -10,30 +10,29 @@ from gate.data import data_entry
 from gate.data import data_prefetch
 
 
-def _combine_block_continuous(foldpath, start_idx, frames):
+def _combine_block_continuous(filepath, start_idx, frames, length, invl):
     """
         channels: how many pictures will be compressed.
     """
-    fold_path_abs = str(foldpath, encoding='utf-8')
-    _list = [fs for fs in os.listdir(
-        fold_path_abs) if len(fs.split('.npy')) > 1]
+    file_path_abs = str(filepath, encoding='utf-8')
+    data = np.load(file_path_abs)
 
-    # generate
-    _selected_list = []
-    for idx in range(frames):
-        _path = os.path.join(fold_path_abs, _list[start_idx + idx])
-        _selected_list.append(_path)
-    _selected_list.sort()
+    valid_length = data.shape[0] - (invl * frames + length)
+    if start_idx < 0:
+        start = random.randint(0, valid_length)
+    else:
+        start = start_idx
 
-    # compression to (frames, length)
-    combine = np.load(_selected_list[0])
-    for idx, file in enumerate(_selected_list):
-        if idx == 0:
-            continue
-        combine = np.column_stack((combine, np.load(file)))
-    combine = np.float32(np.transpose(combine, (1, 0)))
+    audio_data = []
+    for i in range(frames):
+        _data = []
+        start_idx = start + i * invl
+        for j in range(start_idx, start_idx + length):
+            _data.append(data[j])
+        audio_data.append(_data)
 
-    return combine
+    audio_data = np.float32(np.reshape(audio_data, [frames, length]))
+    return audio_data
 
 
 def load_continuous_audio_from_npy(
@@ -46,21 +45,22 @@ def load_continuous_audio_from_npy(
     """
     res = data_entry.parse_from_text(
         data_path, (str, int, int), (True, False, False))
-    folds, starts, labels = res[0], res[1], res[2]
+    files, starts, labels = res[0], res[1], res[2]
 
     # construct a fifo queue
-    folds = tf.convert_to_tensor(folds, dtype=tf.string)
+    files = tf.convert_to_tensor(files, dtype=tf.string)
     starts = tf.convert_to_tensor(starts, dtype=tf.int32)
     labels = tf.convert_to_tensor(labels, dtype=tf.int32)
-    foldname, start, label = tf.train.slice_input_producer(
-        [folds, starts, labels], shuffle=shuffle)
+    filename, start, label = tf.train.slice_input_producer(
+        [files, starts, labels], shuffle=shuffle)
 
     # combine
-    content = tf.py_func(_combine_block_audio_continuous,
-                         [foldname, start, audio.frames], tf.float32)
+    content = tf.py_func(_combine_block_continuous,
+                         [filename, start, audio.frames,
+                          audio.frame_length, audio.frame_invl], tf.float32)
 
     content = tf.reshape(content, [audio.frames, audio.frame_length])
 
     return data_prefetch.generate_batch(
-        content, label, foldname, shuffle,
+        content, label, filename, shuffle,
         batch_size, min_queue_num, reader_thread)
