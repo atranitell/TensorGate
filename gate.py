@@ -94,22 +94,22 @@ def interface_cnn(config):
         logger.error('Wrong task setting %s' % str(config.task))
 
 
-def interface_lstm(config):
+def interface_rnn(config):
     """ interface related to LSTM/RNN/GRU
     """
     if config.target == 'lstm.basic':
-        import issue.lstm.classification as lstm
-    elif config.target == 'lstm.classification.cnn':
-        import issue.lstm.classification_cnn as lstm
-    elif config.target == 'lstm.regression.cnn.video':
-        import issue.lstm.regression_cnn_video as lstm
-    elif config.target == 'lstm.regression.audio':
-        import issue.lstm.regression_audio as lstm
+        import issue.rnn.classification as rnn
+    elif config.target == 'rnn.classification.cnn':
+        import issue.rnn.classification_cnn as rnn
+    elif config.target == 'rnn.regression.cnn.video':
+        import issue.rnn.regression_cnn_video as rnn
+    elif config.target == 'rnn.regression.audio':
+        import issue.rnn.regression_audio as rnn
     else:
         raise ValueError('Unkonwn target type.')
 
     if config.task == 'train':
-        lstm.train(config.dataset, config.model)
+        rnn.train(config.dataset, config.model)
     else:
         raise ValueError('Unkonwn target type.')
 
@@ -158,8 +158,8 @@ def interface(config):
     elif config.target.find('vae.') == 0:
         interface_vae(config)
 
-    elif config.target.find('lstm.') == 0:
-        interface_lstm(config)
+    elif config.target.find('rnn.') == 0:
+        interface_rnn(config)
 
     else:
         logger.error('Wrong target setting %s' % str(config.target))

@@ -36,10 +36,10 @@ class avec2014_audio(database.Database):
         self.rnn = data_param.rnn()
         self.rnn.net_name = 'brnn'
         self.rnn.activation = 'tanh'
-        self.rnn.cell = 'basic_lstm'
+        self.rnn.cell = 'gru'
         self.rnn.initializer = 'orthogonal'
         self.rnn.num_units = 128
-        self.rnn.num_layers = 3
+        self.rnn.num_layers = 2
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
