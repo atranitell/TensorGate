@@ -137,9 +137,9 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_iter_rmse = cur_iter
 
                     f_str = gate.utils.string.format_iter(cur_iter)
-                    f_str.add('best mae', self.best_mae, float)
+                    f_str.add('best_mae', self.best_mae, float)
                     f_str.add('in', self.best_iter_mae, int)
-                    f_str.add('best rmse', self.best_rmse, float)
+                    f_str.add('best_rmse', self.best_rmse, float)
                     f_str.add('in', self.best_iter_rmse, int)
                     f_str.add('time', test_duration, float)
                     logger.train(f_str.get())

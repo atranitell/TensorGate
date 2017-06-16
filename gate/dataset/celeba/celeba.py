@@ -68,7 +68,7 @@ class celeba(database.Database):
 
     def _train(self):
         # basic param
-        self.batch_size = 64
+        self.batch_size = 128 # 64 for normal
         self.total_num = 202599
         self.name = self.name + '_train'
         self.reader_thread = 16

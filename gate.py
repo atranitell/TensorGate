@@ -121,6 +121,8 @@ def interface_gan(config):
         import issue.gan.cgan as gan
     elif config.target == 'gan.wasserstein':
         import issue.gan.wgan as gan
+    elif config.target == 'gan.encoder':
+        import issue.gan.egan as gan
     else:
         raise ValueError('Unkonwn target type.')
 
@@ -169,7 +171,7 @@ if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument('-target', type=str, default=None, dest='target',
                         help='cnn/cgan/vae.')
-    PARSER.add_argument('-task', type=str, default=None, dest='task',
+    PARSER.add_argument('-task', type=str, default='train', dest='task',
                         help='train/val/heatmap/extract_feature.')
     PARSER.add_argument('-model', type=str, default=None, dest='model',
                         help='path to model folder.')

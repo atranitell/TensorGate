@@ -34,12 +34,12 @@ class avec2014_audio(database.Database):
 
         # config rnn network
         self.rnn = data_param.rnn()
-        self.rnn.net_name = 'brnn'
+        self.rnn.net_name = 'basic_rnn'
         self.rnn.activation = 'tanh'
         self.rnn.cell = 'gru'
         self.rnn.initializer = 'orthogonal'
-        self.rnn.num_units = 128
-        self.rnn.num_layers = 2
+        self.rnn.num_units = 300
+        self.rnn.num_layers = 1
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
@@ -51,10 +51,11 @@ class avec2014_audio(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_adam(
-            adam_beta1=0.9,
-            adam_beta2=0.999,
-            adam_epsilon=1e-8)
+        self.opt.set_momentum(0.9)
+        # self.opt.set_adam(
+        #     adam_beta1=0.9,
+        #     adam_beta2=0.999,
+        #     adam_epsilon=1e-8)
         self.opt.set_clip_by_value(-1.0, 1.0)
 
         # lr
