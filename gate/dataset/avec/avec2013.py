@@ -36,8 +36,8 @@ class avec2013(database.Database):
         self.log.set_log(
             print_frequency=50,
             save_summaries_iter=50,
-            save_model_iter=200,
-            test_interval=200)
+            save_model_iter=1000,
+            test_interval=1000)
 
         # setting hps
         self.hps = data_param.hps('resnet_v2_50')
@@ -62,19 +62,17 @@ class avec2013(database.Database):
 
     def _test(self):
         self.batch_size = 50
-        # 0-5503, 1-6195, 2-5740, 3-5394, 4-6235
-        # 17727
-        self.total_num = 29501
+        self.total_num = 49583
         self.name = self.name + '_test'
         self.reader_thread = 16
-        self.shuffle = True
-        self.data_path = '../_datasets/AVEC2013/tst_list_new.txt'
+        self.shuffle = False
+        self.data_path = '../_datasets/AVEC2013/pp_tst_img.txt'
 
     def _train(self):
-        self.batch_size = 4
-        # 0-23564, 1-22872, 2-23327, 3-23673, 4-22832
-        self.total_num = 23564
+        self.batch_size = 32
+        # 1-39841, 2-39824, 3-39983, 4-39824, 5-39824
+        self.total_num = 39841
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 16
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
+        self.data_path = '../_datasets/AVEC2013/pp_trn_1_img.txt'

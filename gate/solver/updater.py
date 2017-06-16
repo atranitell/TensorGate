@@ -144,7 +144,7 @@ class Updater():
 
         # summary related
         self._summary_lr()
-        self._summary_grad()
+        # self._summary_grad(True, True)
         # self._summary_weight()
 
     # def init_layerwise_updater(self, dataset, global_step,
