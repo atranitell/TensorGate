@@ -28,7 +28,7 @@ class avec2014_audio(database.Database):
         self.audio = data_param.audio()
         # number of steps
         # all frame will be loaded in lstm at once.
-        self.audio.frames = 256
+        self.audio.frames = 512
         self.audio.frame_length = 200
         self.audio.frame_invl = 100
 
@@ -38,8 +38,9 @@ class avec2014_audio(database.Database):
         self.rnn.activation = 'tanh'
         self.rnn.cell = 'gru'
         self.rnn.initializer = 'orthogonal'
-        self.rnn.num_units = 300
-        self.rnn.num_layers = 1
+        self.rnn.num_units = 256
+        self.rnn.num_layers = 2
+        self.rnn.dropout = 0.8
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
