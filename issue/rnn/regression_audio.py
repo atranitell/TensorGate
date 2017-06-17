@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-""" regression lstm audio task for image
+""" regression lstm audio task for rnn
     updated: 2017/06/13
-
-    Images: load_block_continuous_video_from_text()
-        (1, H, W, C*frames)->(frames, H, W, C)->CNN->(frames, features)->LSTM
-
 """
 import os
 import math
