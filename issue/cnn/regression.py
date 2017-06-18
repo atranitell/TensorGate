@@ -16,7 +16,7 @@ from gate.utils.logger import logger
 from project.avec2014 import avec2014_error
 
 
-def get_network(images, dataset, phase, scope='net'):
+def get_network(images, dataset, phase, scope=''):
     # get Deep Neural Network
     logits, end_points = gate.net.factory.get_network(
         dataset.hps, phase, images, 1, scope)
@@ -285,7 +285,7 @@ def heatmap(name, chkp_path):
         images, labels, filenames = dataset.loads()
 
         # get network
-        logits, nets = get_network(images, dataset, 'test', 'net')
+        logits, nets = get_network(images, dataset, 'test')
 
         # get loss
         losses, mae, rmse = get_loss(
