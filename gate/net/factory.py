@@ -31,9 +31,11 @@ slim = tf.contrib.slim
 
 networks_map = {
     'alexnet_v2': alexnet.Alexnet_v2,
+    'alexnet_v2_gap': alexnet.Alexnet_v2_gap,
     'cifarnet': cifarnet.Cifarnet,
     'overfeat': overfeat.Overfeat,
     'vgg_a': vgg.Vgg_a,
+    'vgg_a_gap': vgg.Vgg_a_gap,
     'vgg_16': vgg.Vgg_16,
     'vgg_19': vgg.Vgg_19,
     'inception_v1': inception.Inception_v1,

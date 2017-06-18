@@ -58,6 +58,12 @@ class Vgg_a(Vgg):
         return vgg_a(images, num_classes, is_training, self.dropout)
 
 
+class Vgg_a_gap(Vgg):
+
+    def model(self, images, num_classes, is_training):
+        return vgg_a_gap(images, num_classes, is_training, self.dropout)
+
+
 class Vgg_16(Vgg):
 
     def model(self, images, num_classes, is_training):
@@ -282,6 +288,56 @@ def vgg_19(inputs,
             # Convert end_points_collection into a end_point dict.
             end_points = slim.utils.convert_collection_to_dict(
                 end_points_collection)
+            if spatial_squeeze:
+                net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
+                end_points[sc.name + '/fc8'] = net
+            return net, end_points
+
+
+def vgg_a_gap(images, num_classes, is_training,
+              dropout_keep_prob, spatial_squeeze=True):
+    """Oxford Net VGG 11-Layers version A Example.
+    """
+    end_points = {}
+    with tf.variable_scope('vgg_a', 'vgg_a', [images]) as sc:
+        end_points_collection = sc.name + '_end_points'
+        # Collect outputs for conv2d, fully_connected and max_pool2d.
+        with slim.arg_scope([slim.conv2d, slim.max_pool2d],
+                            outputs_collections=end_points_collection):
+            net = slim.repeat(images, 1, slim.conv2d,
+                              64, [3, 3], scope='conv1')
+            net = slim.max_pool2d(net, [2, 2], scope='pool1')
+            net = slim.repeat(net, 1, slim.conv2d,
+                              128, [3, 3], scope='conv2')
+            net = slim.max_pool2d(net, [2, 2], scope='pool2')
+            net = slim.repeat(net, 2, slim.conv2d,
+                              256, [3, 3], scope='conv3')
+            net = slim.max_pool2d(net, [2, 2], scope='pool3')
+            net = slim.repeat(net, 2, slim.conv2d,
+                              512, [3, 3], scope='conv4')
+            net = slim.max_pool2d(net, [2, 2], scope='pool4')
+            net = slim.repeat(net, 2, slim.conv2d,
+                              512, [3, 3], scope='conv5')
+            net = slim.max_pool2d(net, [2, 2], scope='pool5')
+            # Use conv2d instead of fully_connected slim.
+            # net = slim.conv2d(net, 4096, [7, 7], padding='VALID', scope='fc6')
+            end_points['end_conv'] = net
+            net = slim.avg_pool2d(
+                net, [7, 7], 1, padding='VALID', scope='avgf_pool')
+            end_points['end_avg_pool'] = net
+
+            net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
+                               scope='dropout6')
+            net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
+            net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
+                               scope='dropout7')
+            net = slim.conv2d(net, num_classes, [1, 1],
+                              activation_fn=None,
+                              normalizer_fn=None,
+                              scope='fc8')
+            # Convert end_points_collection into a end_point dict.
+            # end_points = utils.convert_collection_to_dict(
+            #     end_points_collection)
             if spatial_squeeze:
                 net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
                 end_points[sc.name + '/fc8'] = net
