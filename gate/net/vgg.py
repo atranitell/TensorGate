@@ -299,7 +299,7 @@ def vgg_a_gap(images, num_classes, is_training,
     """Oxford Net VGG 11-Layers version A Example.
     """
     end_points = {}
-    with tf.variable_scope('vgg_a', 'vgg_a', [images]) as sc:
+    with tf.variable_scope('vgg_a_gap', 'vgg_a_gap', [images]) as sc:
         end_points_collection = sc.name + '_end_points'
         # Collect outputs for conv2d, fully_connected and max_pool2d.
         with slim.arg_scope([slim.conv2d, slim.max_pool2d],
@@ -321,16 +321,17 @@ def vgg_a_gap(images, num_classes, is_training,
             net = slim.max_pool2d(net, [2, 2], scope='pool5')
             # Use conv2d instead of fully_connected slim.
             # net = slim.conv2d(net, 4096, [7, 7], padding='VALID', scope='fc6')
+            # net = slim.conv2d(net, 4096, [1, 1], padding='SAME')
             end_points['end_conv'] = net
             net = slim.avg_pool2d(
                 net, [7, 7], 1, padding='VALID', scope='avgf_pool')
             end_points['end_avg_pool'] = net
 
-            net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
-                               scope='dropout6')
-            net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
-            net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
-                               scope='dropout7')
+            # net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
+            #                    scope='dropout6')
+            # net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
+            # net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
+                            #    scope='dropout7')
             net = slim.conv2d(net, num_classes, [1, 1],
                               activation_fn=None,
                               normalizer_fn=None,
