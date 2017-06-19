@@ -11,36 +11,88 @@ import time
 import tensorflow as tf
 from tensorflow.contrib import framework
 from tensorflow.contrib import layers
+from tensorflow.contrib import slim
 
 import gate
 from gate.utils.logger import logger
 from project.avec2014 import avec2014_error
 
 
-def conv1d(inputs, num_kernel, size_kernel, stride):
-    # input's shape [batchsize, features, channels]
-    shape = inputs.get_shape().as_list()
-    w = tf.Variable(tf.truncated_normal([size_kernel, 1, num_kernel], stddev=0.1))
-    b = tf.Variable(tf.constant(0.1, shape=[10]))
-    outputs = tf.nn.conv1d(x_input, w, stride, 'SAME') + b
-
-
-def pool1d():
-    pass
-
-
-def bn():
-    pass
-
-
 class resnet_1d():
 
     def __init__(self):
-        pass
+        self.weight_decay = 0.0005
+        self.batch_norm_decay = 0.997
+        self.batch_norm_epsilon = 1e-5
+        self.batch_norm_scale = True
 
-    def model(self):
+    def conv1d(self, inputs, filters, kernel_size, strides):
+        # input's shape [batchsize, features, channels]
+        # shape = inputs.get_shape().as_list()
+        # W = tf.Variable(tf.truncated_normal(
+        #     [size_kernel, shape[2], num_kernel], stddev=0.1))
+        # B = tf.Variable(tf.constant(0.1, shape=[num_kernel]))
+        return tf.layers.conv1d(
+            inputs=inputs,
+            filters=filters,
+            kernel_size=kernel_size,
+            strides=strides,
+            padding='SAME',
+            kernel_initializer=tf.truncated_normal_initializer(stddev=0.02),
+            kernel_regularizer=layers.l2_regularizer(self.weight_decay),
+            bias_initializer=tf.constant_initializer(0.1))
+        # return tf.nn.conv1d(inputs, W, stride, 'SAME') + B
 
-        # residual_uint
+    def pool1d(self, inputs, kernel_size, strides,
+               pooling_type='MAX', padding_type='SAME'):
+        return tf.nn.pool(inputs, [kernel_size], pooling_type,
+                          padding_type, strides=[strides])
+
+    def bn(self, inputs, decay=0.997, epsilon=1e-5, is_training=True):
+        return inputs
+        # return layers.batch_norm(
+        #     inputs, decay=self.batch_norm_decay,
+        #     updates_collections=None,
+        #     is_training=is_training,
+        #     epsilon=self.batch_norm_epsilon, scale=self.batch_norm_scale)
+
+    def model(self, inputs, is_training):
+        """
+        """
+        with tf.variable_scope('audionet_v1'):
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 20, 4)
+                net = tf.nn.relu(self.bn(net))
+                net = self.conv1d(net, 64, 20, 4)
+                net = tf.nn.relu(self.bn(net))
+            net = self.pool1d(net, 5, 2)
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(net, 128, 10, 2)
+                net = tf.nn.relu(self.bn(net))
+                net = self.conv1d(net, 128, 10, 2)
+                net = tf.nn.relu(self.bn(net))
+            net = self.pool1d(net, 5, 2)
+
+            with tf.variable_scope('block3'):
+                net = self.conv1d(net, 256, 5, 1)
+                net = tf.nn.relu(self.bn(net))
+                net = self.conv1d(net, 256, 5, 1)
+                net = tf.nn.relu(self.bn(net))
+
+            net = tf.reduce_sum(net, [2])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
 
 
 def get_network(X, dataset, phase, scope=''):
@@ -51,17 +103,10 @@ def get_network(X, dataset, phase, scope=''):
     # ps: to nonoverlap among frames,
     #   you should define rnn.frame_invl = rnn.frame_length
     X = tf.reshape(X, [dataset.batch_size,
-                       dataset.audio.frame_length * dataset.rnn.frames, 1])
+                       dataset.audio.frame_length * dataset.audio.frames, 1])
 
-    # full-connected
-    logits = layers.fully_connected(
-        output[-1], 1,
-        biases_initializer=tf.zeros_initializer(),
-        weights_initializer=tf.truncated_normal_initializer(
-            stddev=1.0 / dataset.rnn.num_units),
-        weights_regularizer=None,
-        activation_fn=None,
-        scope='logits')
+    net = resnet_1d()
+    logits = net.model(X, True)
 
     return logits, None
 
