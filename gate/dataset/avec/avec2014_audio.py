@@ -28,19 +28,19 @@ class avec2014_audio(database.Database):
         self.audio = data_param.audio()
         # number of steps
         # all frame will be loaded in lstm at once.
-        self.audio.frames = 512
+        self.audio.frames = 256
         self.audio.frame_length = 200
-        self.audio.frame_invl = 100
+        self.audio.frame_invl = 200
 
         # config rnn network
-        self.rnn = data_param.rnn()
-        self.rnn.net_name = 'basic_rnn'
-        self.rnn.activation = 'tanh'
-        self.rnn.cell = 'gru'
-        self.rnn.initializer = 'orthogonal'
-        self.rnn.num_units = 256
-        self.rnn.num_layers = 2
-        self.rnn.dropout = 0.8
+        # self.rnn = data_param.rnn()
+        # self.rnn.net_name = 'basic_rnn'
+        # self.rnn.activation = 'tanh'
+        # self.rnn.cell = 'gru'
+        # self.rnn.initializer = 'orthogonal'
+        # self.rnn.num_units = 256
+        # self.rnn.num_layers = 2
+        # self.rnn.dropout = 0.8
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
@@ -52,12 +52,12 @@ class avec2014_audio(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_momentum(0.9)
-        # self.opt.set_adam(
-        #     adam_beta1=0.9,
-        #     adam_beta2=0.999,
-        #     adam_epsilon=1e-8)
-        self.opt.set_clip_by_value(-1.0, 1.0)
+        # self.opt.set_momentum(0.9)
+        self.opt.set_adam(
+            adam_beta1=0.9,
+            adam_beta2=0.999,
+            adam_epsilon=1e-8)
+        # self.opt.set_clip_by_value(-1.0, 1.0)
 
         # lr
         self.lr = data_param.learning_rate()
@@ -67,8 +67,8 @@ class avec2014_audio(database.Database):
 
     def _test(self):
         self.batch_size = 32
-        # 16127
-        self.total_num = 6327
+        # 6327
+        self.total_num = 3148
         self.name = self.name + '_test'
         self.reader_thread = 16
         self.shuffle = False
