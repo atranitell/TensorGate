@@ -36,6 +36,9 @@ def interface_cnn(config):
     elif config.target == 'cnn.regression.4view':
         import issue.cnn.regression_4view as cnn
 
+    elif config.target == 'cnn.regression.audio':
+        import issue.cnn.regression_audio as cnn
+
     elif config.target == 'cnn.classification':
         import issue.cnn.classification as cnn
 
