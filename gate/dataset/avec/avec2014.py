@@ -27,8 +27,10 @@ class avec2014(database.Database):
         # image
         self.image = data_param.image()
         self.image.set_format(channels=3)
+        # 3 view_size is (156, 156)
         self.image.set_raw_size(256, 256)
         self.image.set_output_size(224, 224)
+        # 3 view is 'avec2014_3view'
         self.image.set_preprocessing('avec2014')
 
         # specify information
