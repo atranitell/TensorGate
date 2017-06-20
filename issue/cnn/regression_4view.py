@@ -157,9 +157,9 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_iter_rmse = cur_iter
 
                     f_str = gate.utils.string.format_iter(cur_iter)
-                    f_str.add('best mae', self.best_mae, float)
+                    f_str.add('best_mae', self.best_mae, float)
                     f_str.add('in', self.best_iter_mae, int)
-                    f_str.add('best rmse', self.best_rmse, float)
+                    f_str.add('best_rmse', self.best_rmse, float)
                     f_str.add('in', self.best_iter_rmse, int)
                     f_str.add('time', test_duration, float)
                     logger.train(f_str.get())
@@ -260,8 +260,8 @@ def test(data_name, chkp_path, summary_writer=None):
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('mae', mean_mae, float)
             f_str.add('rmse', mean_rmse, float)
@@ -270,7 +270,7 @@ def test(data_name, chkp_path, summary_writer=None):
             # for specify dataset
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
-            if dataset.name.find('avec2014') == 0:
+            if dataset.name.find('avec') == 0:
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
                 f_str = gate.utils.string.format_iter(global_step)
@@ -409,8 +409,8 @@ def heatmap(name, chkp_path):
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('mae', mean_mae, float)
             f_str.add('rmse', mean_rmse, float)
@@ -419,7 +419,7 @@ def heatmap(name, chkp_path):
             # for specify dataset
             # it use different compute method for mae/rmse
             # rewrite the mean_x value
-            if dataset.name.find('avec2014') == 0:
+            if dataset.name.find('avec') == 0:
                 from project.avec2014 import avec2014_error
                 mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
                     test_info_path, 'img')
