@@ -6,10 +6,10 @@ from gate.data import data_param
 from gate.data import data_loader
 
 
-class avec2013(database.Database):
+class avec2013_4view(database.Database):
 
     def loads(self):
-        return data_loader.load_image_from_text(
+        return data_loader.load_image_4view_from_text(
             self.data_path, self.shuffle, self.data_type, self.image,
             self.min_queue_num, self.batch_size, self.reader_thread)
 
@@ -27,11 +27,13 @@ class avec2013(database.Database):
         # image
         self.image = data_param.image()
         self.image.set_format(channels=3)
-        # 3 view_size is (156, 156)
-        # raw view_size is (256, 256)
-        self.image.set_raw_size(156, 156)
+        self.image.set_raw_size(256, 256)
         self.image.set_output_size(224, 224)
-        self.image.set_preprocessing('avec2014_3view')
+        self.image.set_preprocessing('avec2014', 'avec2014_3view')
+
+        # specify information
+        # img / seq / succ
+        # self.avec2014_error_type = 'img'
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
@@ -44,7 +46,7 @@ class avec2013(database.Database):
         # setting hps
         self.hps = data_param.hps('resnet_v2_50')
         self.hps.set_dropout(1.0)
-        self.hps.set_weight_decay(0.001)
+        self.hps.set_weight_decay(0.0005)
         self.hps.set_batch_norm(
             batch_norm_decay=0.997,
             batch_norm_epsilon=1e-5)
@@ -66,14 +68,14 @@ class avec2013(database.Database):
         self.batch_size = 50
         self.total_num = 29550
         self.name = self.name + '_test'
-        self.reader_thread = 16
+        self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2013/tst_list_middle.txt'
+        self.data_path = '../_datasets/AVEC2013/tst_list.txt'
 
     def _train(self):
         self.batch_size = 32
-        self.total_num = 202623
+        self.total_num = 23564
         self.name = self.name + '_train'
-        self.reader_thread = 16
+        self.reader_thread = 8
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2013/pp_trn_1_img.txt'
+        self.data_path = '../_datasets/AVEC2013/pp_trn_0_img.txt'
