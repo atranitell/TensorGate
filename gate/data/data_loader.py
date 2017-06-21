@@ -24,6 +24,14 @@ def load_image_4view_from_text(
         min_queue_num, batch_size, reader_thread)
 
 
+def load_image_5view_gc_from_text(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_image.load_image_5view_gc_from_text(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread)
+
+
 def load_image_from_text_multi_label(
         data_path, shuffle, data_type, num_classes, image,
         min_queue_num, batch_size, reader_thread):

@@ -12,6 +12,7 @@ from gate.dataset.mnist import mnist
 from gate.dataset.avec import avec2014
 from gate.dataset.avec import avec2014_4view
 from gate.dataset.avec import avec2013
+from gate.dataset.avec import avec2013_4view
 from gate.dataset.avec import cnu2017
 # depression-aduio
 from gate.dataset.avec import avec2014_audio
@@ -20,6 +21,7 @@ from gate.dataset.avec import avec2014_video
 # kinship
 from gate.dataset.kinface import kinface2
 from gate.dataset.kinface import kinface2_features
+from gate.dataset.kinface import kinface2_5view_gc
 # gan
 from gate.dataset.celeba import celeba
 # msceleb
@@ -30,14 +32,16 @@ dataset_map = {
     'cifar10': cifar10.cifar10,
     'cifar100': cifar100.cifar100,
     'imagenet': imagenet.imagenet,
-    'avec2014': avec2014.avec2014,
     'avec2013': avec2013.avec2013,
+    'avec2013_4view': avec2013_4view.avec2013_4view,
+    'avec2014': avec2014.avec2014,
     'avec2014_video': avec2014_video.avec2014_video,
     'avec2014_audio': avec2014_audio.avec2014_audio,
+    'avec2014_5view': avec2014_4view.avec2014_4view,
     'cnu2017': cnu2017.cnu2017,
-    'avec2014_4view': avec2014_4view.avec2014_4view,
     'kinface2': kinface2.kinface2,
     'kinface2_feature': kinface2_features.kinface2_feature,
+    'kinface2_5view_gc': kinface2_5view_gc.kinface2_5view_gc,
     'celeba':  celeba.celeba,
     'msceleb_align': msceleb_align.msceleb_align
 }

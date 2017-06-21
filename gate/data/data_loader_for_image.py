@@ -2,6 +2,7 @@
 """ updated: 2017/3/28
 """
 
+import os
 import numpy as np
 import tensorflow as tf
 
@@ -47,6 +48,109 @@ def load_image_from_text(
 
     return data_prefetch.generate_batch(
         image_content, label, imgpath, shuffle,
+        batch_size, min_queue_num, reader_thread)
+
+
+def load_image_5view_gc_from_text(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread):
+    """ for kinship 5view + geometry contrain
+    """
+    res = data_entry.parse_from_text(
+        data_path, (str, str, int), (False, False, False))
+    image_list1 = res[0]
+    image_list2 = res[1]
+    label_list = res[2]
+
+    def path_to_tensor(image_list, prefix):
+        data = []
+        for i in range(len(image_list)):
+            path = prefix + image_list[i]
+            filesystem.raise_path_not_exists(path)
+            data.append(path)
+        result = tf.convert_to_tensor(data, dtype=tf.string)
+        return result
+
+    _dir = os.path.dirname(data_path)
+
+    img_list_full1 = path_to_tensor(image_list1, _dir + '\\full\\')
+    img_list_full2 = path_to_tensor(image_list2, _dir + '\\full\\')
+    img_list_leye1 = path_to_tensor(image_list1, _dir + '\\left_eye\\')
+    img_list_leye2 = path_to_tensor(image_list2, _dir + '\\left_eye\\')
+    img_list_reye1 = path_to_tensor(image_list1, _dir + '\\right_eye\\')
+    img_list_reye2 = path_to_tensor(image_list2, _dir + '\\right_eye\\')
+    img_list_nose1 = path_to_tensor(image_list1, _dir + '\\nose\\')
+    img_list_nose2 = path_to_tensor(image_list2, _dir + '\\nose\\')
+    img_list_mouth1 = path_to_tensor(image_list1, _dir + '\\mouth\\')
+    img_list_mouth2 = path_to_tensor(image_list2, _dir + '\\mouth\\')
+
+    # ------------------------------------
+
+    res = data_entry.parse_from_text(
+        _dir + '\\distances.txt',
+        (str, float, float, float, float, float, float, float, float),
+        (False, False, False, False, False, False, False, False, False))
+
+    img_gc1 = []
+    img_gc2 = []
+    for i in range(len(image_list1)):
+        for j, value in enumerate(res[0]):
+            if os.path.basename(image_list1[i]) == os.path.basename(value):
+                dist = []
+                for k in range(1, 9):
+                    dist.append(float(res[k][j]))
+                img_gc1.append(dist)
+            if os.path.basename(image_list2[i]) == os.path.basename(value):
+                dist = []
+                for k in range(1, 9):
+                    dist.append(float(res[k][j]))
+                img_gc2.append(dist)
+
+    img_list_gc1 = tf.convert_to_tensor(img_gc1, dtype=tf.float32)
+    img_list_gc2 = tf.convert_to_tensor(img_gc2, dtype=tf.float32)
+    label_list = tf.convert_to_tensor(label_list, dtype=tf.int32)
+
+    # ------------------------------------
+
+    res_slice = tf.train.slice_input_producer(
+        [img_list_full1, img_list_full2, img_list_leye1, img_list_leye2,
+         img_list_reye1, img_list_reye2, img_list_nose1, img_list_nose2,
+         img_list_mouth1, img_list_mouth2,
+         img_list_gc1, img_list_gc2, label_list], shuffle=shuffle)
+
+    imgpath_f1, imgpath_f2 = res_slice[0], res_slice[1]
+    imgpath_le1, imgpath_le2 = res_slice[2], res_slice[3]
+    imgpath_re1, imgpath_re2 = res_slice[4], res_slice[5]
+    imgpath_n1, imgpath_n2 = res_slice[6], res_slice[7]
+    imgpath_m1, imgpath_m2 = res_slice[8], res_slice[9]
+    img_gc1, img_gc2, label = res_slice[10], res_slice[11], res_slice[12]
+
+    # preprocessing
+    def preprocessing_img(imgpath):
+        _image = tf.read_file(imgpath)
+        _image = tf.image.decode_image(_image, channels=image.channels)
+        _image = tf.reshape(
+            _image, [image.raw_height, image.raw_width, image.channels])
+        return preprocessing.factory.get_preprocessing(
+            image.preprocessing_method1, data_type, _image,
+            image.output_height, image.output_width)
+
+    img_full1 = preprocessing_img(imgpath_f1)
+    img_full2 = preprocessing_img(imgpath_f2)
+    img_leye1 = preprocessing_img(imgpath_le1)
+    img_leye2 = preprocessing_img(imgpath_le2)
+    img_reye1 = preprocessing_img(imgpath_re1)
+    img_reye2 = preprocessing_img(imgpath_re2)
+    img_nose1 = preprocessing_img(imgpath_n1)
+    img_nose2 = preprocessing_img(imgpath_n2)
+    img_mouth1 = preprocessing_img(imgpath_m1)
+    img_mouth2 = preprocessing_img(imgpath_m2)
+
+    return data_prefetch.generate_5view_gc_batch(
+        img_full1, img_full2, img_leye1, img_leye2,
+        img_reye1, img_reye2, img_nose1, img_nose2,
+        img_mouth1, img_mouth2, img_gc1, img_gc2,
+        label, imgpath_f1, imgpath_f2, shuffle,
         batch_size, min_queue_num, reader_thread)
 
 
@@ -114,7 +218,7 @@ def load_image_4view_from_text(
         image.output_height, image.output_width)
 
     return data_prefetch.generate_4view_batch(
-        image_content, image_content1, image_content2, image_content3, 
+        image_content, image_content1, image_content2, image_content3,
         label, imgpath, shuffle,
         batch_size, min_queue_num, reader_thread)
 

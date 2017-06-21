@@ -25,6 +25,7 @@ from gate.net import resnet_v1
 from gate.net import resnet_v2
 from gate.net import vgg
 from gate.net import lightnet
+from gate.net import lightnet32
 from gate.net import mlp
 
 slim = tf.contrib.slim
@@ -54,6 +55,7 @@ networks_map = {
     'resnet_v2_152': resnet_v2.Resnet_v2_152,
     'resnet_v2_200': resnet_v2.Resnet_v2_200,
     'lightnet': lightnet.Lightnet_bn,
+    'lightnet32': lightnet32.Lightnet32,
     'mlp': mlp.MLP,
 }
 

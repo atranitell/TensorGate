@@ -17,8 +17,6 @@ def preprocess_for_train(image, output_height,
     # image = tf.image.resize_image_with_crop_or_pad(image, 184, 184)
     # ---------------------------------------------------
     image = tf.to_float(image)
-    image = tf.image.resize_images(
-        image, [36, 36], method=tf.image.ResizeMethod.AREA)
     image = tf.random_crop(
         image, [output_height, output_width, channels])
     image = tf.image.random_flip_left_right(image)
@@ -32,8 +30,6 @@ def preprocess_for_eval(image, output_height, output_width):
     # image = tf.image.resize_images(
     #     image, [output_height, output_width],
     #     method=tf.image.ResizeMethod.AREA)
-    image = tf.image.resize_images(
-        image, [36, 36], method=tf.image.ResizeMethod.AREA)
     image = tf.image.resize_image_with_crop_or_pad(
         image, output_width, output_height)
 
