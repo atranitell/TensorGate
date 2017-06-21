@@ -222,8 +222,8 @@ def test(data_name, chkp_path, summary_writer=None):
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('err', mean_err, float)
             logger.test(f_str.get())
