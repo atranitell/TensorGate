@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """ fuse cosine task for image
-    updated: 2017/05/19
-
-    X->[Inception_Resnet_V1(face)-freeze]->X1(N, 1792)->[mlp-train]->X2(N, 512)
-    Y->[Inception_Resnet_V1(face)-freeze]->Y1(N, 1792)->[mlp-train]->Y2(N, 512)
-    [X2, Y2](N, 512*2) -> [cosine loss]
-
+    updated: 2017/06/20
 """
 import os
 import math
@@ -21,26 +16,18 @@ import project.kinface.kinface_distance as kinface
 
 
 def get_network(image1, image2, dataset, phase):
-    # use Inception-Resnet-V1
-    dataset.hps.net_name = 'inception_resnet_v1'
+    # get network
     _, end_points1 = gate.net.factory.get_network(
-        dataset.hps, 'test', image1, 128, '')
+        dataset.hps, phase, image1, 128, 'net1P')
     _, end_points2 = gate.net.factory.get_network(
-        dataset.hps, 'test', image2, 128, '', reuse=True)
+        dataset.hps, phase, image2, 128, 'net1C')
 
-    data1 = end_points1['PostPool']
-    data2 = end_points2['PostPool']
+    data1 = end_points1['gap_pool']
+    data2 = end_points2['gap_pool']
 
-    # get Deep Neural Network
-    dataset.hps.net_name = 'mlp'
-    logits1, end_points3 = gate.net.factory.get_network(
-        dataset.hps, phase, data1, 512, 'net1')
-    logits2, end_points4 = gate.net.factory.get_network(
-        dataset.hps, phase, data2, 512, 'net2')
+    nets = [end_points1, end_points2]
 
-    nets = [end_points1, end_points2, end_points3, end_points4]
-
-    return logits1, logits2, nets
+    return data1, data2, nets
 
 
 def get_loss(logits1, logits2, labels, batch_size, phase):
@@ -150,9 +137,9 @@ def train(data_name, chkp_path=None, exclusions=None):
                         self.best_iter = cur_iter
 
                     f_str = gate.utils.string.format_iter(cur_iter)
-                    f_str.add('test time', test_duration, float)
-                    f_str.add('best train error', self.best_err, float)
-                    f_str.add('test error', self.best_err_t, float)
+                    f_str.add('test_time', test_duration, float)
+                    f_str.add('best_train_error', self.best_err, float)
+                    f_str.add('test_error', self.best_err_t, float)
                     f_str.add('in', self.best_iter, int)
                     logger.test(f_str.get())
 
@@ -248,12 +235,13 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             mean_loss = 1.0 * mean_loss / num_iter
 
             # acquire actual accuracy
-            mean_err = kinface.get_kinface_error(test_info_path, threshold)
+            mean_err = kinface.Error().get_result_from_file(
+                test_info_path, threshold)
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('error', mean_err, float)
             logger.test(f_str.get())
@@ -344,12 +332,12 @@ def val(data_name, chkp_path, summary_writer=None):
             mean_loss = 1.0 * mean_loss / num_iter
 
             # acquire actual accuracy
-            mean_err, threshold = kinface.get_kinface_error(test_info_path)
+            mean_err, threshold = kinface.Error().get_result_from_file(test_info_path)
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('error', mean_err, float)
             logger.val(f_str.get())
@@ -488,12 +476,12 @@ def heatmap(name, chkp_path):
             mean_loss = 1.0 * mean_loss / num_iter
 
             # output - acquire actual accuracy
-            mean_err, _ = kinface.get_kinface_error(test_info_path)
+            mean_err, _ = kinface.Error().get_result_from_file(test_info_path)
 
             # output result
             f_str = gate.utils.string.format_iter(global_step)
-            f_str.add('total sample', dataset.total_num, int)
-            f_str.add('num batch', num_iter, int)
+            f_str.add('total_sample', dataset.total_num, int)
+            f_str.add('num_batch', num_iter, int)
             f_str.add('loss', mean_loss, float)
             f_str.add('error', mean_err, float)
             logger.test(f_str.get())
