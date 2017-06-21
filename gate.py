@@ -42,14 +42,11 @@ def interface_cnn(config):
     elif config.target == 'cnn.classification':
         import issue.cnn.classification as cnn
 
-    elif config.target == 'cnn.fuse_cosine':
+    elif config.target == 'cnn.fuse.cosine':
         import issue.cnn.fuse_cosine as cnn
 
-    elif config.target == 'cnn.fuse_cosine.mw':
-        import issue.cnn.fuse_cosine_multiway as cnn
-
-    elif config.target == 'cnn.fuse_cosine.2f':
-        import issue.cnn.fuse_cosine_2f as cnn
+    elif config.target == 'cnn.fuse.cosine.5view.gc':
+        import issue.cnn.fuse_cosine_5view_gc as cnn
 
     else:
         raise ValueError('Unkonwn target type.')

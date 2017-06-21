@@ -48,6 +48,33 @@ def generate_4view_batch(image, image1, image2, image3,
     return img, img1, img2, img3, tf.reshape(labels, [batch_size]), filenames
 
 
+def generate_5view_gc_batch(
+        f1, f2, le1, le2, re1, re2, n1, n2, m1, m2, gc1, gc2,
+        label, fname1, fname2, shuffle,
+        batch_size, min_queue_num, reader_thread):
+    """ for 5view: full + 4part + geometry constrain """
+    if shuffle:
+        f1, f2, le1, le2, re1, re2, n1, n2, m1, m2, gc1, gc2, \
+            label, fname1, fname2 = tf.train.shuffle_batch(
+                tensors=[f1, f2, le1, le2, re1, re2, n1,
+                         n2, m1, m2, gc1, gc2, label, fname1, fname2],
+                batch_size=batch_size,
+                capacity=min_queue_num + 3 * batch_size,
+                min_after_dequeue=min_queue_num,
+                num_threads=reader_thread)
+    else:
+        f1, f2, le1, le2, re1, re2, n1, n2, m1, m2, gc1, gc2, \
+            label, fname1, fname2 = tf.train.batch(
+                tensors=[f1, f2, le1, le2, re1, re2, n1,
+                         n2, m1, m2, gc1, gc2, label, fname1, fname2],
+                batch_size=batch_size,
+                capacity=min_queue_num + 3 * batch_size,
+                num_threads=reader_thread)
+
+    return f1, f2, le1, le2, re1, re2, n1, n2, m1, m2, gc1, gc2, \
+        tf.reshape(label, [batch_size]), fname1, fname2
+
+
 def generate_batch_multi_label(image, label, filename, shuffle, num_classes,
                                batch_size, min_queue_num, reader_thread):
     """ for single image and label
