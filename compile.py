@@ -28,7 +28,8 @@ def compile():
     # remove old
     if os.path.exists(DIR_BIN):
         removeDir(DIR_BIN)
-    os.mkdir(DIR_BIN)
+    if not os.path.exists(DIR_BIN):
+        os.mkdir(DIR_BIN)
 
     for _i in os.walk('./'):
         fold = _i[0]
