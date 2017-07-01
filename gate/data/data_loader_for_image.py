@@ -12,7 +12,6 @@ from gate import preprocessing
 from gate.data import data_entry
 from gate.data import data_prefetch
 from gate.utils import filesystem
-from tools import handcrafted
 
 
 def load_image_from_text(
@@ -323,7 +322,8 @@ def _handcrafted_feature_extract(image, feature_type=None):
     else:
         _type = str(feature_type, encoding="utf-8")
         if _type in ['LBP', 'lbp']:
-            img = handcrafted.LBP(image)
+            img = image
+            # img = handcrafted.LBP(image)
             img = np.float32(np.reshape(img, (img.shape[0], img.shape[1], 1)))
             return img
         else:
