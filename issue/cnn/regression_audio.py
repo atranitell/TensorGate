@@ -21,40 +21,37 @@ from project.avec2014 import avec2014_error
 class resnet_1d():
 
     def __init__(self):
-        self.weight_decay = 0.0005
+        self.weight_decay = 0.0001
         self.batch_norm_decay = 0.997
         self.batch_norm_epsilon = 1e-5
         self.batch_norm_scale = True
 
     def conv1d(self, inputs, filters, kernel_size, strides):
         # input's shape [batchsize, features, channels]
-        # shape = inputs.get_shape().as_list()
-        # W = tf.Variable(tf.truncated_normal(
-        #     [size_kernel, shape[2], num_kernel], stddev=0.1))
-        # B = tf.Variable(tf.constant(0.1, shape=[num_kernel]))
         return tf.layers.conv1d(
             inputs=inputs,
             filters=filters,
             kernel_size=kernel_size,
             strides=strides,
             padding='SAME',
+            activation=self.activation_fn,
             kernel_initializer=tf.truncated_normal_initializer(stddev=0.02),
             kernel_regularizer=layers.l2_regularizer(self.weight_decay),
-            bias_initializer=tf.constant_initializer(0.1))
-        # return tf.nn.conv1d(inputs, W, stride, 'SAME') + B
+            bias_initializer=tf.constant_initializer(0.0))
 
     def pool1d(self, inputs, kernel_size, strides,
                pooling_type='MAX', padding_type='SAME'):
         return tf.nn.pool(inputs, [kernel_size], pooling_type,
                           padding_type, strides=[strides])
 
-    def bn(self, inputs, decay=0.997, epsilon=1e-5, is_training=True):
-        return inputs
-        # return layers.batch_norm(
-        #     inputs, decay=self.batch_norm_decay,
-        #     updates_collections=None,
-        #     is_training=is_training,
-        #     epsilon=self.batch_norm_epsilon, scale=self.batch_norm_scale)
+    def bn(self, inputs, decay=0.997, epsilon=1e-5):
+        # return inputs
+        return layers.batch_norm(
+            inputs, decay=self.batch_norm_decay,
+            updates_collections=None,
+            is_training=self.is_training,
+            epsilon=self.batch_norm_epsilon,
+            scale=self.batch_norm_scale)
 
     def model(self, inputs, is_training):
         """
@@ -94,19 +91,475 @@ class resnet_1d():
 
             return logits
 
+    def model3(self, inputs, is_training):
+        """
+        """
+        self.is_training = is_training
+        with tf.variable_scope('audionet_v1_residual_relu3'):
+
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 1, 1)
+                block_in = tf.nn.relu(self.bn(net))
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 64, 20, 4)
+                    net = tf.nn.relu(self.bn(net))
+                    net = self.conv1d(net, 64, 20, 4)
+                    out1 = tf.nn.relu(self.bn(net))
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 20, 16)
+                out = out1 + out2
+
+            # block_in = self.pool1d(net, 5, 2)
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(self.bn(net))
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(self.bn(net))
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(self.bn(net))
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model4(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        self.is_training = is_training
+        with tf.variable_scope('audionet_v1_residual_relu4'):
+
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 64, 20, 4)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 20, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 64, 20, 4)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 20, 16)
+                out = out1 + out2
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 256, 10, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model8(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        def resblock_1(block_in, num_, size_, name='', activation=False):
+            with tf.variable_scope(name + '_resblock_1'):
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, num_, size_, 1)
+                    net = self.conv1d(net, num_, size_ * 2, 1)
+                    net = self.conv1d(net, num_, size_, 1)
+                if activation:
+                    return self.activation_fn(block_in + net)
+                else:
+                    return block_in + net
+
+        def resblock_2(block_in, num_, size_, name='', activation=False):
+            with tf.variable_scope(name + '_resblock_2'):
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, num_, size_, 2)
+                    net = self.conv1d(net, num_, size_ * 2, 1)
+                    net = self.conv1d(net, num_, size_, 2)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, size_, 4)
+                if activation:
+                    return self.activation_fn(out2 + net)
+                else:
+                    return out2 + net
+
+        self.is_training = is_training
+        self.activation_fn = tf.nn.relu
+
+        with tf.variable_scope('audionet_8'):
+
+            net = self.conv1d(inputs, 64, 40, 1)
+            net = resblock_1(net, 64, 40, 'block1', True)
+            net = resblock_2(net, 64, 40, 'block2', True)
+
+            net = self.conv1d(net, 128, 20, 1)
+            net = resblock_1(net, 128, 20, 'block3', True)
+            net = resblock_2(net, 128, 20, 'block4', True)
+
+            net = self.conv1d(net, 256, 10, 1)
+            net = resblock_1(net, 256, 10, 'block5', True)
+            net = resblock_2(net, 256, 10, 'block6', True)
+
+            net = self.conv1d(net, 512, 5, 1)
+            net = resblock_1(net, 512, 5, 'block7', True)
+            out = resblock_2(net, 512, 5, 'block8', False)
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model9(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        def resblock_1(block_in, num_, size_, name='', activation=False):
+            with tf.variable_scope(name + '_resblock_1'):
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, num_, size_, 1)
+                    net = self.conv1d(net, num_, size_ * 2, 1)
+                    net = self.conv1d(net, num_, size_, 1)
+                if activation:
+                    return self.activation_fn(block_in + net)
+                else:
+                    return block_in + net
+
+        def resblock_2(block_in, num_, size_, name='', activation=False):
+            with tf.variable_scope(name + '_resblock_2'):
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, num_, size_, 2)
+                    net = self.conv1d(net, num_, size_ * 2, 1)
+                    net = self.conv1d(net, num_, size_, 2)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, size_, 4)
+                if activation:
+                    return self.activation_fn(out2 + net)
+                else:
+                    return out2 + net
+
+        self.is_training = is_training
+        self.activation_fn = tf.nn.relu
+
+        with tf.variable_scope('audionet_9'):
+
+            net = self.conv1d(inputs, 64, 40, 1)
+            net = resblock_1(net, 64, 40, 'block1', False)
+            net = resblock_2(net, 64, 40, 'block2', False)
+
+            net = self.conv1d(net, 128, 20, 1)
+            net = resblock_1(net, 128, 20, 'block3', False)
+            net = resblock_2(net, 128, 20, 'block4', False)
+
+            net = self.conv1d(net, 256, 10, 1)
+            net = resblock_1(net, 256, 10, 'block5', False)
+            net = resblock_2(net, 256, 10, 'block6', False)
+
+            net = self.conv1d(net, 512, 5, 1)
+            net = resblock_1(net, 512, 5, 'block7', False)
+            out = resblock_2(net, 512, 5, 'block8', False)
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model5(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        self.is_training = is_training
+        with tf.variable_scope('audionet_v1_residual_relu5'):
+
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 64, 20, 4)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 1, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 64, 20, 4)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 20, 16)
+                out = out1 + out2
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 256, 1, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model6(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        self.is_training = is_training
+        with tf.variable_scope('audionet_v1_residual_relu6'):
+
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 64, 20, 4)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 20, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 64, 20, 4)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 20, 16)
+                out = out1 + out2
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 256, 10, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            out = tf.nn.relu(out)
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model7(self, inputs, is_training):
+        """ add a same conv in the middle of branch1
+        """
+        self.is_training = is_training
+        with tf.variable_scope('audionet_v1_residual_relu7'):
+
+            with tf.variable_scope('block1'):
+                net = self.conv1d(inputs, 64, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 64, 20, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 20, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 64, 20, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 20, 4)
+                out = out1 + out2
+
+            # block_in = self.pool1d(net, 5, 2)
+
+            with tf.variable_scope('block2'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 256, 20, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            with tf.variable_scope('block3'):
+                net = self.conv1d(out, 128, 1, 1)
+                block_in = tf.nn.relu(net)
+                with tf.variable_scope('branch1'):
+                    net = self.conv1d(block_in, 128, 10, 2)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 256, 20, 1)
+                    net = tf.nn.relu(net)
+                    net = self.conv1d(net, 128, 10, 2)
+                    out1 = tf.nn.relu(net)
+                with tf.variable_scope('branch2'):
+                    out2 = self.pool1d(block_in, 10, 4)
+                out = out1 + out2
+
+            net = tf.reduce_sum(out, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model1(self, inputs, is_training):
+        """ the most basic form
+        """
+        with tf.variable_scope('audionet_basic_11_relu1'):
+            net = self.conv1d(inputs, 64, 5, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 128, 3, 2)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 256, 1, 1)
+            net = tf.nn.relu(net)
+
+            net = tf.reduce_mean(net, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
+    def model2(self, inputs, is_training):
+        """ non-overlap
+        """
+        with tf.variable_scope('audionet_nonoverlap_7_relu2'):
+            net = self.conv1d(inputs, 64, 5, 5)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 64, 3, 3)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 64, 3, 3)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 64, 3, 3)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 64, 3, 3)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 64, 3, 3)
+            net = tf.nn.relu(net)
+            net = self.conv1d(net, 256, 1, 1)
+            net = tf.nn.relu(net)
+
+            net = tf.reduce_mean(net, [1])
+            shape = net.get_shape().as_list()
+
+            logits = layers.fully_connected(
+                net, 1,
+                biases_initializer=tf.zeros_initializer(),
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=1.0 / shape[1]),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits
+
 
 def get_network(X, dataset, phase, scope=''):
-    # get network
-    # X shape transforms->
-    #   from [batchsize, time_step, feature]
-    #   to   [batchsize, time_step*feature]
-    # ps: to nonoverlap among frames,
-    #   you should define rnn.frame_invl = rnn.frame_length
+    """
+    X shape transforms->
+      from [batchsize, time_step, feature]
+      to   [batchsize, time_step*feature]
+    ps: to nonoverlap among frames,
+      you should define rnn.frame_invl = rnn.frame_length
+    """
     X = tf.reshape(X, [dataset.batch_size,
                        dataset.audio.frame_length * dataset.audio.frames, 1])
 
     net = resnet_1d()
-    logits = net.model(X, True)
+    is_training = True if phase is 'train' else False
+    logits = net.model9(X, is_training)
 
     return logits, None
 
