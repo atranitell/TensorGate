@@ -28,7 +28,7 @@ class avec2014_audio(database.Database):
         self.audio = data_param.audio()
         # number of steps
         # all frame will be loaded in lstm at once.
-        self.audio.frames = 256
+        self.audio.frames = 64
         self.audio.frame_length = 200
         self.audio.frame_invl = 200
 
@@ -52,7 +52,7 @@ class avec2014_audio(database.Database):
 
         # optimizer
         self.opt = data_param.optimizer()
-        # self.opt.set_momentum(0.9)
+        # self.opt.set_sgd()
         self.opt.set_adam(
             adam_beta1=0.9,
             adam_beta2=0.999,
@@ -68,14 +68,14 @@ class avec2014_audio(database.Database):
     def _test(self):
         self.batch_size = 32
         # 6327
-        self.total_num = 3148
+        self.total_num = 25561
         self.name = self.name + '_test'
         self.reader_thread = 16
         self.shuffle = False
         self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
 
     def _train(self):
-        self.batch_size = 32
+        self.batch_size = 16
         self.total_num = 160
         self.name = self.name + '_train'
         self.reader_thread = 16
