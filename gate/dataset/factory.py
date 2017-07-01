@@ -37,7 +37,7 @@ dataset_map = {
     'avec2014': avec2014.avec2014,
     'avec2014_video': avec2014_video.avec2014_video,
     'avec2014_audio': avec2014_audio.avec2014_audio,
-    'avec2014_5view': avec2014_4view.avec2014_4view,
+    'avec2014_4view': avec2014_4view.avec2014_4view,
     'cnu2017': cnu2017.cnu2017,
     'kinface2': kinface2.kinface2,
     'kinface2_feature': kinface2_features.kinface2_feature,
