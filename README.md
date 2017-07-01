@@ -1,5 +1,5 @@
 # TensorGate [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]() [![tg](https://img.shields.io/badge/TensorGate-v2.3-brightgreen.svg)]()
-**TensorGate** is an framework based on [Tensorflow](https://github.com/tensorflow/tensorflow) deep learning open source library. It offers a set of upper layer demo for a variety of deep learning, such as image classification, recognition, GAN network, etc.
+**TensorGate** is an framework based on [Tensorflow v1.2](https://github.com/tensorflow/tensorflow) deep learning open source library. It offers a set of upper layer demo for a variety of deep learning, such as image classification, recognition, GAN network, etc.
 
 ### Gate Library
 | Group | Component                | Status                                                                  | Details |
