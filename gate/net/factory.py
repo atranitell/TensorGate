@@ -23,6 +23,7 @@ from gate.net import lenet
 from gate.net import overfeat
 from gate.net import resnet_v1
 from gate.net import resnet_v2
+from gate.net import resnet_cifar
 from gate.net import vgg
 from gate.net import lightnet
 from gate.net import lightnet32
@@ -54,6 +55,7 @@ networks_map = {
     'resnet_v2_101': resnet_v2.Resnet_v2_101,
     'resnet_v2_152': resnet_v2.Resnet_v2_152,
     'resnet_v2_200': resnet_v2.Resnet_v2_200,
+    'resnet_164': resnet_cifar.Resnet_cifar,
     'lightnet': lightnet.Lightnet_bn,
     'lightnet32': lightnet32.Lightnet32,
     'mlp': mlp.MLP,
