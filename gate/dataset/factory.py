@@ -26,6 +26,7 @@ from gate.dataset.kinface import kinface2_5view_gc
 from gate.dataset.celeba import celeba
 # msceleb
 from gate.dataset.msceleb import msceleb_align
+from gate.dataset.lfw import lfw
 
 dataset_map = {
     'mnist': mnist.mnist,
@@ -43,7 +44,8 @@ dataset_map = {
     'kinface2_feature': kinface2_features.kinface2_feature,
     'kinface2_5view_gc': kinface2_5view_gc.kinface2_5view_gc,
     'celeba':  celeba.celeba,
-    'msceleb_align': msceleb_align.msceleb_align
+    'msceleb_align': msceleb_align.msceleb_align,
+    'lfw': lfw.lfw
 }
 
 
