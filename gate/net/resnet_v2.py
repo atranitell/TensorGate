@@ -258,6 +258,7 @@ def resnet_v2(inputs,
                     net = tf.reduce_mean(
                         net, [1, 2], name='pool5', keep_dims=True)
                     end_points['gap_pool'] = net
+                    end_points['PostPool'] = net # just for feature extract
                 if num_classes is not None:
                     net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
                                       normalizer_fn=None, scope='logits')
