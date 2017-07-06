@@ -13,6 +13,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
 from gate.utils.logger import logger
+from issue.pipline import pipline
+from issue.extract_feature import extract_feature
 
 # allocate GPU to sepcify device
 gpu_cluster = ['0', '1', '2', '3']
@@ -28,155 +30,152 @@ def raise_invalid_input(*config):
             raise ValueError('Input is None type, Please check again.')
 
 
-def interface_cnn(config):
-    # choose different task
-    if config.target == 'cnn.regression':
-        import issue.cnn.regression as cnn
+def task_train(config, target):
+    """ if model is not None, it will continue to train from this model.
+    """
+    target.train(config.dataset, config.model)
 
-    elif config.target == 'cnn.regression.4view':
-        import issue.cnn.regression_4view as cnn
 
-    elif config.target == 'cnn.regression.audio':
-        import issue.cnn.regression_audio as cnn
-
-    elif config.target == 'cnn.classification':
-        import issue.cnn.classification as cnn
-
-    elif config.target == 'cnn.fuse.cosine':
-        import issue.cnn.fuse_cosine as cnn
-
-    elif config.target == 'cnn.fuse.cosine.5view.gc':
-        import issue.cnn.fuse_cosine_5view_gc as cnn
-
+def task_finetune(config, target):
+    """ 
+    Params exclusions['restore'] will be excluded to load in model
+    Params exclusions['train] will be excluded to train,
+        it means that the params will be freezed.
+        and the rest of params will be trained.
+    """
+    raise_invalid_input(config.model)
+    if config.init:
+        # exclusions = {'restore': ['net', 'global_step', 'updater'],
+        #               'train': ['InceptionResnetV1']}
+        exclusions = {'restore': ['updater'],
+                      'train': ['net/resnet_v2_50/conv',
+                                'net/resnet_v2_50/block']}
     else:
-        raise ValueError('Unkonwn target type.')
+        exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
+    target.train(config.dataset, config.model, exclusions)
 
-    # if model has value, continue to train, verse vice.
+
+def task_test(config, target):
+    raise_invalid_input(config.model)
+    if config.all:
+        # NOTE: has not been tested.
+        pipline(config.dataset, config.model, fn=target.test)
+        # cnn.pipline(config.dataset, config.model)
+    else:
+        target.test(config.dataset, config.model)
+
+
+def task_heatmap(config, target):
+    raise_invalid_input(config.model)
+    if config.all:
+        # NOTE: has not been tested.
+        pipline(config.dataset, config.model, fn=target.heatmap)
+        # cnn.pipline(config.dataset, config.model, True)
+    else:
+        target.heatmap(config.dataset, config.model)
+
+
+def task_val(config, target):
+    raise_invalid_input(config.model)
+    target.val(config.dataset, config.model)
+
+
+def task_extract_feature(config, target):
+    raise_invalid_input(config.model)
+    if config.all:
+        pipline(config.dataset, config.model,
+                fn=extract_feature, layer_name='PostPool')
+    else:
+        extract_feature(config.dataset, config.model, 'PostPool')
+
+
+def interface_task(config, target):
+    """ A set of standard interface.
+        If target has been not realized, it will raise a error.
+    """
     if config.task == 'train':
-        cnn.train(config.dataset, config.model)
+        task_train(config, target)
 
-    # freeze all weights except extension, and train extension
-    elif config.task == 'finetune' and config.model is not None:
-        if config.init:
-            # exclusions = {'restore': ['net', 'global_step', 'updater'],
-            #               'train': ['InceptionResnetV1']}
-            exclusions = {'restore': ['updater'],
-                          'train': ['net/resnet_v2_50/conv',
-                                    'net/resnet_v2_50/block']}
-        else:
-            exclusions = {'restore': None, 'train': ['InceptionResnetV1']}
-        cnn.train(config.dataset, config.model, exclusions)
+    elif config.task == 'finetune':
+        task_finetune(config, target)
 
-    # test model
-    elif config.task == 'test' and config.model is not None:
-        if config.all:
-            cnn.pipline(config.dataset, config.model)
-        else:
-            cnn.test(config.dataset, config.model)
+    elif config.task == 'test':
+        task_test(config, target)
 
-    # validation a model, for specific method.
-    #   get a value through val and then test
-    elif config.task == 'val' and config.model is not None:
-        cnn.val(config.dataset, config.model)
+    elif config.task == 'val':
+        task_val(config, target)
 
-    elif config.task == 'heatmap' and config.model is not None:
-        if config.all:
-            cnn.pipline(config.dataset, config.model, True)
-        else:
-            cnn.heatmap(config.dataset, config.model)
+    elif config.task == 'heatmap':
+        task_heatmap(config, target)
 
-    elif config.task == 'extract_feature' and config.model is not None:
-        import issue.cnn.extract_feature as extract_feature
-        extract_feature.extract_feature(
-            config.dataset, config.model, 'PostPool')
+    elif config.task == 'extract_feature':
+        task_extract_feature(config, target)
 
     else:
         logger.error('Wrong task setting %s' % str(config.task))
 
 
-def interface_rnn(config):
-    """ interface related to LSTM/RNN/GRU
+def interface_target(config):
+    """ choose different issue.
     """
+    target = None
+
+    """ CNN """
+    if config.target == 'cnn.regression':
+        import issue.cnn.regression as target
+    elif config.target == 'cnn.regression.4view':
+        import issue.cnn.regression_4view as target
+    elif config.target == 'cnn.regression.audio':
+        import issue.cnn.regression_audio as target
+    elif config.target == 'cnn.classification':
+        import issue.cnn.classification as target
+    elif config.target == 'cnn.fuse.cosine':
+        import issue.cnn.fuse_cosine as target
+    elif config.target == 'cnn.fuse.cosine.5view.gc':
+        import issue.cnn.fuse_cosine_5view_gc as target
+
+    """ RNN """
     if config.target == 'lstm.basic':
-        import issue.rnn.classification as rnn
+        import issue.rnn.classification as target
     elif config.target == 'rnn.classification.cnn':
-        import issue.rnn.classification_cnn as rnn
+        import issue.rnn.classification_cnn as target
     elif config.target == 'rnn.regression.cnn.video':
-        import issue.rnn.regression_cnn_video as rnn
+        import issue.rnn.regression_cnn_video as target
     elif config.target == 'rnn.regression.audio':
-        import issue.rnn.regression_audio as rnn
-    else:
-        raise ValueError('Unkonwn target type.')
+        import issue.rnn.regression_audio as target
 
-    if config.task == 'train':
-        rnn.train(config.dataset, config.model)
-    else:
-        raise ValueError('Unkonwn target type.')
-
-
-def interface_gan(config):
-    """ interface related to GAN
-    """
+    """ GAN """
     if config.target == 'gan.conditional':
-        import issue.gan.cgan as gan
+        import issue.gan.cgan as target
     elif config.target == 'gan.wasserstein':
-        import issue.gan.wgan as gan
+        import issue.gan.wgan as target
     elif config.target == 'gan.encoder':
-        import issue.gan.egan as gan
-    else:
-        raise ValueError('Unkonwn target type.')
+        import issue.gan.egan as target
 
-    if config.task == 'train':
-        gan.train(config.dataset, config.model)
-    elif config.task == 'test':
-        gan.test(config.dataset, config.model)
-    else:
-        raise ValueError('Unkonwn target type.')
-
-
-def interface_vae(config):
-    """ interface related to VAE
-    """
+    """ VAE """
     if config.target == 'vae.conditional':
-        import issue.vae.conditional_vae as vae
-    else:
+        import issue.vae.conditional_vae as target
+
+    if target is None:
         raise ValueError('Unkonwn target type.')
 
-    if config.task == 'train':
-        vae.train()
+    return target
 
 
 def interface(config):
     """ interface related to command
     """
     logger.info(str(config))
-
-    if config.target.find('cnn.') == 0:
-        interface_cnn(config)
-
-    elif config.target.find('gan.') == 0:
-        interface_gan(config)
-
-    elif config.target.find('vae.') == 0:
-        interface_vae(config)
-
-    elif config.target.find('rnn.') == 0:
-        interface_rnn(config)
-
-    else:
-        logger.error('Wrong target setting %s' % str(config.target))
+    target = interface_target(config)
+    interface_task(config, target)
 
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('-target', type=str, default=None, dest='target',
-                        help='cnn/cgan/vae.')
-    PARSER.add_argument('-task', type=str, default='train', dest='task',
-                        help='train/val/heatmap/extract_feature.')
-    PARSER.add_argument('-model', type=str, default=None, dest='model',
-                        help='path to model folder.')
-    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset',
-                        help='defined in dataset/factory.')
+    PARSER.add_argument('-target', type=str, default=None, dest='target')
+    PARSER.add_argument('-task', type=str, default='train', dest='task')
+    PARSER.add_argument('-model', type=str, default=None, dest='model')
+    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset')
     PARSER.add_argument('-init', type=bool, default=True, dest='init')
     PARSER.add_argument('-all', type=bool, default=False, dest='all')
     ARGS, _ = PARSER.parse_known_args()
