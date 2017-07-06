@@ -14,7 +14,7 @@ from tensorflow.contrib import framework
 import gate
 from gate.utils.logger import logger
 
-from project.avec2014 import avec2014_error
+import gate.dataset.avec.utils as avec2014_error
 
 
 def get_network(images, dataset, phase, scope=''):

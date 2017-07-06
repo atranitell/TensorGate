@@ -12,7 +12,7 @@ from tensorflow.contrib import framework
 
 import gate
 from gate.utils.logger import logger
-import project.kinface.kinface_distance as kinface
+import gate.dataset.kinface.utils as kinface
 
 
 def get_network(image1, image2, dataset, phase):
