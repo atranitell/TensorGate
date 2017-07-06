@@ -39,8 +39,8 @@ class Resnet_cifar(net.Net):
         # num of layer = 2*3*num_residual_units+2
         # bottleneck: 3*3*num_residual_units+2
         # 5-32, 9-54, 18-110, 27-164
-        self.hps.num_residual_units = 27
-        self.hps.use_bottleneck = True
+        self.hps.num_residual_units = 5
+        self.hps.use_bottleneck = False
         self.hps.weight_decay_rate = self.weight_decay
         self.hps.relu_leakiness = 0.1
         self._images = inputs
@@ -71,6 +71,7 @@ class Resnet_cifar(net.Net):
             # https://arxiv.org/pdf/1605.07146v1.pdf
             # filters = [16, 160, 320, 640]
             # Update hps.num_residual_units to 4
+        end_points = {}
 
         with tf.variable_scope('unit_1_0'):
             x = res_func(x, filters[0], filters[1], self._stride_arr(strides[0]),
@@ -100,11 +101,12 @@ class Resnet_cifar(net.Net):
             x = self._batch_norm('final_bn', x)
             x = self._relu(x, self.hps.relu_leakiness)
             x = self._global_avg_pool(x)
+            end_points['gap_pool'] = x
 
         with tf.variable_scope('logit'):
             logits = self._fully_connected(x, self.hps.num_classes)
 
-            return logits, None
+            return logits, end_points
 
     def _batch_norm(self, name, x):
         """Batch normalization."""
