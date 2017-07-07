@@ -94,9 +94,12 @@ def get_loss(feats, img_gc, labels, batch_size, phase):
         img_gc[0], img_gc[1], labels, batch_size, is_training)
 
     losses = loss1 + loss2 + loss3 + loss4 + loss5 + 0.01 * loss_gc
-    pred = 0.2 * (pred1 + pred2 + pred3 + pred4 + pred5)
+    preds = 0.2 * (pred1 + pred2 + pred3 + pred4 + pred5)
 
-    return losses, pred
+    loss = [loss1, loss2, loss3, loss4, loss5, loss_gc]
+    pred = [pred1, pred2, pred3, pred4, pred5]
+
+    return losses, preds, loss, pred
 
 
 def train(data_name, chkp_path=None, exclusions=None):
@@ -132,7 +135,7 @@ def train(data_name, chkp_path=None, exclusions=None):
             image1, image2, dataset, 'train')
 
         # get loss
-        losses, _ = get_loss(
+        losses, _, _, _ = get_loss(
             feats, img_gc, labels, dataset.batch_size, 'train')
 
         # get updater
@@ -250,7 +253,7 @@ def test(data_name, chkp_path, threshold, summary_writer=None):
             image1, image2, dataset, 'test')
 
         # get loss
-        losses, predictions = get_loss(
+        losses, predictions, _, _ = get_loss(
             feats, img_gc, labels, dataset.batch_size, 'test')
 
         # get saver
@@ -350,7 +353,7 @@ def val(data_name, chkp_path, summary_writer=None):
         img_gc = [img_gc1, img_gc2]
 
         # get network
-        feats, _ = get_network(
+        feats, _, _, _ = get_network(
             image1, image2, dataset, 'test')
 
         # get loss
@@ -448,15 +451,22 @@ def heatmap(name, chkp_path):
             os.mkdir(dataset.log.test_dir)
 
         # build data model
-        image1, image2, labels, fname1, fname2 = dataset.loads()
+        img_F1, img_F2, img_LE1, img_LE2, \
+            img_RE1, img_RE2, img_N1, img_N2, \
+            img_M1, img_M2, img_gc1, img_gc2, \
+            labels, fname1, fname2 = dataset.loads()
+
+        image1 = img_F1, img_LE1, img_RE1, img_N1, img_M1
+        image2 = img_F2, img_LE2, img_RE2, img_N2, img_M2
+        img_gc = [img_gc1, img_gc2]
 
         # get network
-        logits1, logits2, nets = get_network(
+        feats, nets = get_network(
             image1, image2, dataset, 'test')
 
         # get loss
-        losses, predictions = get_loss(
-            logits1, logits2, labels, dataset.batch_size, 'test')
+        losses, predictions, loss_set, pred_set = get_loss(
+            feats, img_gc, labels, dataset.batch_size, 'test')
 
         # restore from checkpoint
         saver = tf.train.Saver(name='restore_all')
@@ -497,13 +507,12 @@ def heatmap(name, chkp_path):
             if not os.path.exists(heatmap_path):
                 os.mkdir(heatmap_path)
 
-            # heatmap weights
-            W1 = gate.utils.analyzer.find_weights('net1/MLP/fc1/weights')
-            W2 = gate.utils.analyzer.find_weights('net2/MLP/fc1/weights')
-
-            # heatmap data
-            X1 = nets[0]['PrePool']
-            X2 = nets[1]['PrePool']
+            # full-view cosine similarity
+            S = loss_set[0]
+            X1 = nets[0]['gap_conv']
+            X2 = nets[1]['gap_conv']
+            X1_feat = nets[0]['gap_pool']
+            X2_feat = nets[1]['gap_pool']
 
             # Start to TEST
             for cur in range(num_iter):
@@ -511,22 +520,35 @@ def heatmap(name, chkp_path):
                     break
 
                 # running session to acuqire value
-                feeds = [losses, test_batch_info,
-                         X1, W1, X2, W2, logits1, logits2]
-                _loss, _info, x1, w1, x2, w2, l1, l2 = sess.run(feeds)
+                feeds = [losses, test_batch_info, X1, X2, X1_feat, X2_feat, S]
+                _loss, _info, x1, x2, x1_feat, x2_feat, score = sess.run(feeds)
 
                 # generate heatmap
                 # transpose dim for index
                 x1 = np.transpose(x1, (0, 3, 1, 2))
                 x2 = np.transpose(x2, (0, 3, 1, 2))
-                w1 = np.transpose(w1, (1, 0))
-                w2 = np.transpose(w2, (1, 0))
+
+                # u/s , v/s
+                w1 = x2_feat/score
+                w2 = x1_feat/score
 
                 for _n in range(dataset.batch_size):
+                    _w1 = w1[_n]
+                    _w2 = w2[_n]
 
-                    _, pos = gate.utils.math.find_max(l1[_n], l2[_n])
-                    _w1 = w1[pos]
-                    _w2 = w2[pos]
+                    # _w1, _w2 = [], []
+                    # print(score.shape)
+                    # print(x1_feat.shape)
+                    # for _i in range(score.shape[1]):
+                    #     if x2_feat[_n][_i] == 0:
+                    #         _w1.append(0)
+                    #     else:
+                    #         _w1.append(score[_n][_i] / x2_feat[_n][_i])
+
+                    #     if x1_feat[_n][_i] == 0:
+                    #         _w2.append(0)
+                    #     else:
+                    #         _w2.append(score[_n][_i] / x1_feat[_n][_i])
 
                     img1 = str(_info[_n], encoding='utf-8').split(' ')[0]
                     img2 = str(_info[_n], encoding='utf-8').split(' ')[1]
