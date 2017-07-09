@@ -528,27 +528,21 @@ def heatmap(name, chkp_path):
                 x1 = np.transpose(x1, (0, 3, 1, 2))
                 x2 = np.transpose(x2, (0, 3, 1, 2))
 
+
                 # u/s , v/s
-                w1 = x2_feat/score
-                w2 = x1_feat/score
+                # w1 = x2_feat/score
+                # w2 = x1_feat/score
 
                 for _n in range(dataset.batch_size):
-                    _w1 = w1[_n]
-                    _w2 = w2[_n]
+                    _w1 = x1_feat[_n]
+                    _w2 = x2_feat[_n]
 
-                    # _w1, _w2 = [], []
-                    # print(score.shape)
-                    # print(x1_feat.shape)
-                    # for _i in range(score.shape[1]):
-                    #     if x2_feat[_n][_i] == 0:
-                    #         _w1.append(0)
-                    #     else:
-                    #         _w1.append(score[_n][_i] / x2_feat[_n][_i])
+                    norm_w1 = np.linalg.norm(_w1)
+                    norm_w2 = np.linalg.norm(_w2)
+                    norm_dot = norm_w1 * norm_w2
 
-                    #     if x1_feat[_n][_i] == 0:
-                    #         _w2.append(0)
-                    #     else:
-                    #         _w2.append(score[_n][_i] / x1_feat[_n][_i])
+                    _w1 = _w2 / norm_dot
+                    _w2 = _w1 / norm_dot
 
                     img1 = str(_info[_n], encoding='utf-8').split(' ')[0]
                     img2 = str(_info[_n], encoding='utf-8').split(' ')[1]
