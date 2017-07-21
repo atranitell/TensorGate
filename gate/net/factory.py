@@ -28,6 +28,7 @@ from gate.net import vgg
 from gate.net import lightnet
 from gate.net import lightnet32
 from gate.net import mlp
+from gate.net import audionet
 
 slim = tf.contrib.slim
 
@@ -59,6 +60,7 @@ networks_map = {
     'lightnet': lightnet.Lightnet_bn,
     'lightnet32': lightnet32.Lightnet32,
     'mlp': mlp.MLP,
+    'audionet': audionet.AudioNet
 }
 
 
