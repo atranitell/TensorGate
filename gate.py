@@ -12,22 +12,15 @@ from datetime import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-from gate.utils.logger import logger
-from issue.pipline import pipline
-from issue.extract_feature import extract_feature
-
 # allocate GPU to sepcify device
 gpu_cluster = ['0', '1', '2', '3']
 gpu_id = '0' if sys.argv[1] not in gpu_cluster else sys.argv[1]
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
-
-def raise_invalid_input(*config):
-    """ Check input if none
-    """
-    for arg in config:
-        if arg is None:
-            raise ValueError('Input is None type, Please check again.')
+from gate.utils.logger import logger
+from gate.utils import check
+from issue.pipline import pipline
+from issue.extract_feature import extract_feature
 
 
 def task_train(config, target):
@@ -43,7 +36,7 @@ def task_finetune(config, target):
         it means that the params will be freezed.
         and the rest of params will be trained.
     """
-    raise_invalid_input(config.model)
+    check.raise_none_param(config.model)
     if config.init:
         # exclusions = {'restore': ['net', 'global_step', 'updater'],
         #               'train': ['InceptionResnetV1']}
@@ -56,7 +49,7 @@ def task_finetune(config, target):
 
 
 def task_test(config, target):
-    raise_invalid_input(config.model)
+    check.raise_none_param(config.model)
     if config.all:
         # NOTE: has not been tested.
         pipline(config.dataset, config.model, fn=target.test)
@@ -66,7 +59,7 @@ def task_test(config, target):
 
 
 def task_heatmap(config, target):
-    raise_invalid_input(config.model)
+    check.raise_none_param(config.model)
     if config.all:
         # NOTE: has not been tested.
         pipline(config.dataset, config.model, fn=target.heatmap)
@@ -76,12 +69,12 @@ def task_heatmap(config, target):
 
 
 def task_val(config, target):
-    raise_invalid_input(config.model)
+    check.raise_none_param(config.model)
     target.val(config.dataset, config.model)
 
 
 def task_extract_feature(config, target):
-    raise_invalid_input(config.model)
+    check.raise_none_param(config.model)
     if config.all:
         pipline(config.dataset, config.model,
                 fn=extract_feature, layer_name='PostPool')
@@ -181,7 +174,7 @@ if __name__ == '__main__':
     ARGS, _ = PARSER.parse_known_args()
 
     # at least input target, task, dataset
-    raise_invalid_input(ARGS.target, ARGS.task, ARGS.dataset)
+    check.raise_none_param(ARGS.target, ARGS.task, ARGS.dataset)
 
     # initalize logger
     if ARGS.model is None:
