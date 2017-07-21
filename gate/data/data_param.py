@@ -2,7 +2,6 @@
 """ updated: 2017/04/05
     more clearly to setting param
 """
-
 from gate.utils import filesystem
 
 
@@ -82,28 +81,28 @@ class learning_rate():
         "exponential", or "polynomial"
     """
 
-    def __init__(self, moving_average_decay=None):
-        # Whether or not to synchronize the replicas during training.
-        self.sync_replicas = False
-        # The amount of label smoothing.
-        # self.label_smoothing = 0.0
-        # The Number of gradients to collect before updating params.
-        # self.replicas_to_aggregate = 1
+    def __init__(self, moving_average_decay=None, total_num=None, batchsize=None):
         # The decay to use for the moving average.
         # If left as None, then moving averages are not used.
+        self.total_num = total_num
+        self.batchsize = batchsize
         self.moving_average_decay = moving_average_decay
+
+    def _decay_step(self, num_epochs_per_decay):
+        if self.total_num is None or self.batchsize is None:
+            raise ValueError('Please setting full value.')
+        return int(self.total_num / self.batchsize * num_epochs_per_decay)
 
     def set_fixed(self, learning_rate=0.1):
         self.learning_rate_decay_type = 'fixed'
         self.learning_rate = learning_rate
-        self.num_epochs_per_decay = 999999
 
     def set_exponential(self, learning_rate=0.1,
                         num_epochs_per_decay=30,
                         learning_rate_decay_factor=0.1):
         self.learning_rate_decay_type = 'exponential'
         self.learning_rate = learning_rate
-        self.num_epochs_per_decay = num_epochs_per_decay
+        self.decay_step = self._decay_step(num_epochs_per_decay)
         self.learning_rate_decay_factor = learning_rate_decay_factor
 
     def set_polynomial(self, learning_rate=0.1,
@@ -111,8 +110,25 @@ class learning_rate():
                        end_learning_rate=0.00001):
         self.learning_rate_decay_type = 'polynomial'
         self.learning_rate = learning_rate
-        self.num_epochs_per_decay = num_epochs_per_decay
+        self.decay_step = self._decay_step(num_epochs_per_decay)
         self.end_learning_rate = end_learning_rate
+
+    def set_vstep(self, values, boundaries):
+        """ boundaries: [iter1, iter2]
+            values: [lr1, lr2, lr3]
+        """
+        self.learning_rate = values[0]
+        self.learning_rate_decay_type = 'vstep'
+        self.boundaries = boundaries
+        self.values = values
+
+    def set_natural_exp(self, learning_rate=0.1,
+                        decay_rate=0.1,
+                        num_epochs_per_decay=30):
+        self.learning_rate_decay_type = 'natural_exp'
+        self.learning_rate = learning_rate
+        self.decay_rate = decay_rate
+        self.decay_step = self._decay_step(num_epochs_per_decay)
 
 
 class log():

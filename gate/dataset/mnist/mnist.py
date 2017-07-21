@@ -49,7 +49,7 @@ class mnist(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.01)
+        self.lr.set_vstep([0.1, 0.01, 0.001], [1000, 10000])
 
         # show
         self._print()
@@ -67,6 +67,6 @@ class mnist(database.Database):
         self.batch_size = 64
         self.total_num = 55000
         self.name = self.name + '_train'
-        self.reader_thread = 1
+        self.reader_thread = 16
         self.shuffle = True
         self.data_path = '../_datasets/mnist/train.txt'
