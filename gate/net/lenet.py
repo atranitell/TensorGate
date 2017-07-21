@@ -22,7 +22,7 @@ slim = tf.contrib.slim
 
 class Lenet(net.Net):
 
-    default_image_size = 224
+    default_image_size = 28
 
     def arguments_scope(self):
         return lenet_arg_scope(self.weight_decay)
