@@ -14,6 +14,7 @@ class Net(metaclass=ABCMeta):
         self.batch_norm_epsilon = hps.batch_norm_epsilon
         self.batch_norm_scale = hps.batch_norm_scale
         self.reuse = reuse
+        self.hps = hps
 
     @abstractmethod
     def model(self, images, num_classes, is_training):

@@ -32,7 +32,7 @@ class Updater():
             return self.optimizer
         utils.check.raise_none_param(dataset, self.learning_rate)
         return solver.updater_optimizer.configure(
-            dataset, self.learning_rate)
+            dataset.opt, self.learning_rate)
 
     def get_gradients(self, losses=None, opt=None):
         if self.grads is not None:
@@ -150,9 +150,6 @@ class Updater():
         # self._summary_weight()
 
     def _summary_grad(self, grad_summary=True, grad_hist=False):
-        """ input:
-                self.grad
-        """
         with tf.name_scope('grads'):
             for grad, var in self.grads:
                 prefix = var.op.name
