@@ -1,4 +1,6 @@
-
+# -*- coding: utf-8 -*-
+""" updater
+"""
 import tensorflow as tf
 from gate import solver
 from gate import utils
@@ -23,7 +25,7 @@ class Updater():
             return self.learning_rate
         utils.check.raise_none_param(dataset, global_step)
         return solver.updater_learning_rate.configure(
-            dataset, dataset.total_num, global_step)
+            dataset.lr, global_step)
 
     def get_optimizer(self, dataset=None):
         if self.optimizer is not None:
@@ -146,49 +148,6 @@ class Updater():
         self._summary_lr()
         # self._summary_grad(True, True)
         # self._summary_weight()
-
-    # def init_layerwise_updater(self, dataset, global_step,
-    #                            losses, prefix, coeff, exclusions=None):
-    #     """ The updater method will adjust learning rate
-    #             for every variables in according to different lr.
-    #     """
-    #     # acquire trainable list
-    #     self.variables_to_train, self.variables_to_restore = self.get_trainable_list(exclusions)
-    #     self.saver = self.get_variables_saver()
-
-    #     # setting layerwise coff
-    #     lr_coeff = {}
-    #     for weight in self.variables_to_train:
-    #         if weight.op.name.find(prefix) >= 0:
-    #             lr_coeff[weight.op.name] = coeff
-
-    #     self.learning_rate = self.get_learning_rate(dataset, global_step)
-    #     self.optimizer = self.get_optimizer(dataset)
-
-    #     gradients = self.optimizer.compute_gradients(losses)
-    #     # adjust grads according to layerwise
-    #     self.grads = []
-    #     for grad, var in gradients:
-    #         if grad is None:
-    #             continue
-    #         if var.op.name in lr_coeff:
-    #             logger.net(str(lr_coeff[var.op.name]) + ' ' + var.op.name)
-    #             grad *= lr_coeff[var.op.name]
-    #         self.grads.append((grad, var))
-
-    #     # start to train
-    #     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    #     with tf.control_dependencies(update_ops):
-    #         self.train_op = self.get_train_op(global_step)
-
-    #     # print info
-    #     self.print_trainable_list()
-    #     # self.print_grads_list()
-
-    #     # add to summary
-    #     self._summary_lr()
-    #     # self._summary_grad()
-    #     # self._summary_weight()
 
     def _summary_grad(self, grad_summary=True, grad_hist=False):
         """ input:
