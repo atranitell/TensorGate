@@ -58,6 +58,6 @@ class basic_rnn():
         # get lstm cell output
         outputs, _ = rnn.static_rnn(rnn_cell, X, dtype=tf.float32)
 
-        print(outputs[-1])
+        # print(outputs[-1])
 
         return outputs
