@@ -35,21 +35,22 @@ class cifar10(database.Database):
         self.log = data_param.log(data_type, name, chkp_path)
         self.log.set_log(print_frequency=20,
                          save_summaries_iter=20,
-                         save_model_iter=391,
-                         test_interval=391)
+                         save_model_iter=400,
+                         test_interval=400)
 
         # setting hps
-        self.hps = data_param.hps('resnet_164')
-        self.hps.set_weight_decay(0.0002)
-        self.hps.set_dropout()
+        self.hps = data_param.hps('resnet_cifar')
+        self.hps.set_weight_decay(0.002)
+        # self.hps.set_dropout(0.5)
 
         # optimizer
         self.opt = data_param.optimizer()
-        self.opt.set_sgd()
+        self.opt.set_momentum(0.9)
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_exponential(0.1, 350.0, 0.1)
+        # self.lr.set_exponential(0.1, 350.0, 0.1)
+        self.lr.set_vstep([0.01, 0.1, 0.01, 0.001], [400, 32000, 48000])
 
         # show
         self._print()
