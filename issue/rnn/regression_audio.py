@@ -11,8 +11,8 @@ from tensorflow.contrib import framework
 from tensorflow.contrib import layers
 
 import gate
+import gate.dataset.avec.utils as avec2014_error
 from gate.utils.logger import logger
-from project.avec2014 import avec2014_error
 
 
 def get_network(X, dataset, phase, scope=''):
