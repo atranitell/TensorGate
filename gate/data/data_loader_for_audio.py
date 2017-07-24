@@ -28,12 +28,15 @@ def _combine_block_continuous(filepath, start_idx, frames, length, invl):
     audio_data = np.array([])
     for i in range(frames):
         start_idx = start + i * invl
-        """ really data distribution mean: 0.002, std: 0.0014 """
+        _data = data[start_idx: start_idx + length]
+        """ there, preprocessing sample
+          1) standarize-to-P(0, 1)
+          2) for training: add gaussian noise
+        """
+        _data -= np.mean(_data)
+        # _data = (_data - np.mean(_data)) / np.std(_data)
         if is_training:
-            _noise = np.random.normal(0.0, 0.0002, (length, 1))
-            _data = data[start_idx: start_idx + length] + _noise
-        else:
-            _data = data[start_idx: start_idx + length]
+            _data += np.random.normal(0, 0.0001)
         audio_data = np.append(audio_data, _data)
 
     audio_data = np.float32(np.reshape(audio_data, [frames, length]))
