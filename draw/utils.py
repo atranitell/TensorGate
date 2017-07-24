@@ -3,7 +3,9 @@
     like smooth, downsample.
     Updated: 2017/06/11
 """
+import os
 import math
+import json
 
 
 def downsampling(data, interval):
@@ -66,3 +68,13 @@ def write_to_text(data, keys, filepath):
         line += '\n'
         fw.write(line)
     fw.close()
+
+
+def json_parser(filepath):
+    """ parse json file to dict
+    """
+    if not os.path.isfile(filepath):
+        raise ValueError('File could not find in %s' % filepath)
+    with open(filepath, 'r') as fp:
+        config = json.load(fp)
+    return config
