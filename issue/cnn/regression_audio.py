@@ -134,12 +134,15 @@ def train(data_name, chkp_path=None, exclusions=None):
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     test_start_time = time.time()
-                    test_mae, test_rmse = test(
-                        data_name, dataset.log.train_dir, summary_test)
-                    test_duration = time.time() - test_start_time
 
-                    val_mae, val_rmse = val(
+                    vtn_mae, vtn_rmse, margin = val_train(
                         data_name, dataset.log.train_dir, summary_test)
+                    test_mae, test_rmse = test(
+                        data_name, dataset.log.train_dir, summary_test, margin)
+                    val_mae, val_rmse = val(
+                        data_name, dataset.log.train_dir, summary_test, margin)
+
+                    test_duration = time.time() - test_start_time
 
                     if val_mae < self.best_mae:
                         self.best_mae = val_mae
@@ -174,7 +177,125 @@ def train(data_name, chkp_path=None, exclusions=None):
                 mon_sess.run(train_op)
 
 
-def val(data_name, chkp_path, summary_writer=None):
+def val_train(data_name, chkp_path, summary_writer=None):
+    """ test for regression net
+    """
+    with tf.Graph().as_default():
+        # get dataset
+        dataset = gate.dataset.factory.get_dataset(
+            data_name, 'val_train', chkp_path)
+
+        # load data
+        images, labels, filenames = dataset.loads()
+
+        # get network
+        logits, nets = get_network(images, dataset, 'val_train')
+
+        # get loss
+        losses, mae, rmse = get_loss(
+            logits, labels, dataset.batch_size, dataset.num_classes)
+
+        # get saver
+        saver = tf.train.Saver(name='restore_all_val_train')
+
+        with tf.Session() as sess:
+            # get latest checkpoint
+            snapshot = gate.solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
+
+            # start queue from runner
+            coord = tf.train.Coordinator()
+            threads = []
+            for queuerunner in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+                threads.extend(queuerunner.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
+
+            # Initial some variables
+            num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
+            mean_mae, mean_rmse, mean_loss = 0, 0, 0
+
+            # output to file
+            tab = tf.constant(' ', shape=[dataset.batch_size])
+            labels_str = tf.as_string(tf.reshape(
+                labels, shape=[dataset.batch_size]))
+            logits_str = tf.as_string(tf.reshape(
+                logits * dataset.num_classes, shape=[dataset.batch_size]))
+            test_batch_info = filenames + tab + labels_str + tab + logits_str
+
+            test_info_path = os.path.join(
+                dataset.log.val_dir, '%s.txt' % global_step)
+            test_info_fp = open(test_info_path, 'wb')
+
+            for _ in range(num_iter):
+                # if ctrl-c
+                if coord.should_stop():
+                    break
+
+                # running session to acuqire value
+                feeds = [losses, mae, rmse, test_batch_info]
+                _loss, _mae, _rmse, _info = sess.run(feeds)
+                mean_loss += _loss
+                mean_mae += _mae
+                mean_rmse += _rmse
+
+                # save tensor info to text file
+                for _line in _info:
+                    test_info_fp.write(_line + b'\r\n')
+
+            # stop
+            coord.request_stop()
+            coord.join(threads, stop_grace_period_secs=10)
+            test_info_fp.close()
+
+            # statistic
+            mean_loss = 1.0 * mean_loss / num_iter
+            mean_rmse = 1.0 * mean_rmse / num_iter
+            mean_mae = 1.0 * mean_mae / num_iter
+
+            # output result
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('mae', mean_mae, float)
+            f_str.add('rmse', mean_rmse, float)
+            logger.vtn(f_str.get())
+
+            # for specify dataset
+            mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
+                test_info_path, 'img')
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('video_mae', mean_mae, float)
+            f_str.add('video_rmse', mean_rmse, float)
+            logger.vtn(f_str.get())
+
+            min_m1, min_m2, mean_mae, mean_rmse = avec2014_error.find_best_margin(
+                test_info_path)
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('m1', min_m1, float)
+            f_str.add('m2', min_m2, float)
+            f_str.add('video_mae_m', mean_mae, float)
+            f_str.add('video_rmse_m', mean_rmse, float)
+            logger.vtn(f_str.get())
+
+            # write to summary
+            if summary_writer is not None:
+                summary = tf.Summary()
+                summary.value.add(
+                    tag='val_train/iter', simple_value=int(global_step))
+                summary.value.add(tag='val_train/mae',
+                                  simple_value=mean_mae)
+                summary.value.add(tag='val_train/rmse',
+                                  simple_value=mean_rmse)
+                summary.value.add(tag='val_train/loss',
+                                  simple_value=mean_loss)
+                summary_writer.add_summary(summary, global_step)
+
+            return mean_mae, mean_rmse, [min_m1, min_m2]
+
+
+def val(data_name, chkp_path, summary_writer=None, margin=None):
     """ test for regression net
     """
     with tf.Graph().as_default():
@@ -256,7 +377,7 @@ def val(data_name, chkp_path, summary_writer=None):
             f_str.add('loss', mean_loss, float)
             f_str.add('mae', mean_mae, float)
             f_str.add('rmse', mean_rmse, float)
-            logger.test(f_str.get())
+            logger.val(f_str.get())
 
             # for specify dataset
             mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
@@ -266,6 +387,14 @@ def val(data_name, chkp_path, summary_writer=None):
             f_str.add('video_mae', mean_mae, float)
             f_str.add('video_rmse', mean_rmse, float)
             logger.val(f_str.get())
+
+            if margin is not None:
+                mean_mae, mean_rmse = avec2014_error.get_accurate_with_margin(
+                    test_info_path, margin[0], margin[1])
+                f_str = gate.utils.string.format_iter(global_step)
+                f_str.add('video_mae_m', mean_mae, float)
+                f_str.add('video_rmse_m', mean_rmse, float)
+                logger.val(f_str.get())
 
             # write to summary
             if summary_writer is not None:
@@ -280,7 +409,7 @@ def val(data_name, chkp_path, summary_writer=None):
             return mean_mae, mean_rmse
 
 
-def test(data_name, chkp_path, summary_writer=None):
+def test(data_name, chkp_path, summary_writer=None, margin=None):
     """ test for regression net
     """
     with tf.Graph().as_default():
@@ -374,6 +503,14 @@ def test(data_name, chkp_path, summary_writer=None):
             f_str.add('video_mae', mean_mae, float)
             f_str.add('video_rmse', mean_rmse, float)
             logger.test(f_str.get())
+
+            if margin is not None:
+                mean_mae, mean_rmse = avec2014_error.get_accurate_with_margin(
+                    test_info_path, margin[0], margin[1])
+                f_str = gate.utils.string.format_iter(global_step)
+                f_str.add('video_mae_m', mean_mae, float)
+                f_str.add('video_rmse_m', mean_rmse, float)
+                logger.test(f_str.get())
 
             # write to summary
             if summary_writer is not None:

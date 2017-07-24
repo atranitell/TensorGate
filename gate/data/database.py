@@ -35,10 +35,15 @@ class Database():
             self._val()
         elif data_type == 'test':
             self._test()
+        elif data_type == 'val_train':
+            self._val_train()
         else:
             raise ValueError('Unknown command %s' % data_type)
 
     def _train(self):
+        raise ValueError('Function Should defined in inherited class.')
+
+    def _val_train(self):
         raise ValueError('Function Should defined in inherited class.')
 
     def _val(self):

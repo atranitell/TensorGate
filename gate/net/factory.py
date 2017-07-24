@@ -70,9 +70,7 @@ def check_network(name, data_type):
         raise ValueError('Unknown network name %s' % name)
     if data_type == 'train':
         return True
-    elif data_type == 'val':
-        return False
-    elif data_type == 'test':
+    else:
         return False
 
 

@@ -115,3 +115,58 @@ def get_all_res_in_fold(path):
 
     print('min_mae: %.4f in %s' % (min_mae, min_mae_iter))
     print('min_rmse: %.4f in %s' % (min_rmse, min_rmse_iter))
+
+
+""" FIND BEST MARGIN
+"""
+
+
+def get_result_entry(filepath):
+    """ ps: the result file should according to time order.
+    """
+    data = {}
+    with open(filepath) as fp:
+        for line in fp:
+            res = line.split(' ')
+            if res[0] not in data:
+                data[res[0]] = []
+            data[res[0]].append(line)
+    return data
+
+
+def get_accurate_with_margin(filepath, s1, s2):
+    """ return sub-entries result.
+    """
+    entries = get_result_entry(filepath)
+    tmp_file = '_tmp_margin_file_' + str(np.random.uniform(0, 10000000)) + '.txt'
+    fw = open(tmp_file, 'w')
+    for i in entries:
+        size = len(entries[i])
+        clip1 = int(size * s1)
+        clip2 = int(size * s2)
+        # print(k1, k2)
+        for j in range(clip1, size - clip2):
+            fw.write(entries[i][j])
+    fw.close()
+    mae, rmse = get_accurate_from_file(tmp_file)
+    os.remove(tmp_file)
+    return mae, rmse
+
+
+def find_best_margin(filepath, um=0.05):
+    """ acquire a best margin on training set.
+        PS: only used in training set.
+    """
+    min_mae, min_rmse = 100, 100
+    min_s1, min_s2 = 0, 0
+    upper = int(0.5 / um)
+    for k1 in range(0, upper):
+        s1 = um * k1
+        for k2 in range(0, upper):
+            s2 = um * k2
+            mae, rmse = get_accurate_with_margin(filepath, s1, s2)
+            if mae < min_mae:
+                min_mae, min_rmse = mae, rmse
+                min_s1, min_s2 = s1, s2
+    # print('Best result: ', min_s1, min_s2, min_data)
+    return min_s1, min_s2, min_mae, min_rmse

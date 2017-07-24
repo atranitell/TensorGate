@@ -147,6 +147,9 @@ class log():
             elif data_type == 'val':
                 self.val_dir = chkp_path + '/val/'
                 filesystem.create_folder(self.val_dir)
+            elif data_type == 'val_train':
+                self.val_dir = chkp_path + '/val_train/'
+                filesystem.create_folder(self.val_dir)
             else:
                 raise ValueError('Unkonwn data type.')
 
