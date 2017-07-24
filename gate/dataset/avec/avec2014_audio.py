@@ -21,7 +21,7 @@ class avec2014_audio(database.Database):
         self.data_type = data_type
         self.name = name
         self.num_classes = 63
-        self.min_queue_num = 32
+        self.min_queue_num = 16
         self._set_phase(data_type)
 
         # audio
@@ -43,7 +43,7 @@ class avec2014_audio(database.Database):
             print_frequency=50,
             save_summaries_iter=50,
             save_model_iter=1000,
-            test_interval=1000)
+            test_interval=5000)
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -58,26 +58,34 @@ class avec2014_audio(database.Database):
 
         self._print()
 
-    def _test(self):
-        self.batch_size = 32
-        self.total_num = 51074  # 25465 #12759
-        self.name = self.name + '_test'
-        self.reader_thread = 16
-        self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
-
     def _train(self):
         self.batch_size = 32
         self.total_num = 100
         self.name = self.name + '_train'
         self.reader_thread = 16
         self.shuffle = True
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_raw.txt'
+
+    def _val_train(self):
+        self.batch_size = 50
+        self.total_num = 30718
+        self.name = self.name + '_val_train'
+        self.reader_thread = 1
+        self.shuffle = False
         self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_succ.txt'
 
     def _val(self):
-        self.batch_size = 32
+        self.batch_size = 50
         self.total_num = 28542  # 14199 # 7127
         self.name = self.name + '_val'
-        self.reader_thread = 16
+        self.reader_thread = 1
         self.shuffle = False
         self.data_path = '../_datasets/AVEC2014_Audio/pp_val_succ.txt'
+
+    def _test(self):
+        self.batch_size = 50
+        self.total_num = 51074  # 25465 #12759
+        self.name = self.name + '_test'
+        self.reader_thread = 1
+        self.shuffle = False
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
