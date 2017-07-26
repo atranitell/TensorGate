@@ -28,14 +28,17 @@ class avec2014_audio(database.Database):
         self.audio = data_param.audio()
         # number of steps
         # all frame will be loaded in lstm at once.
-        self.audio.frames = 16
+        self.audio.frames = 64
         self.audio.frame_length = 200
         self.audio.frame_invl = 200
 
         # setting hps
         self.hps = data_param.hps('audionet')
-        self.hps.set_dropout(0.5)
-        self.hps.set_weight_decay(0.0005)
+        # self.hps.set_dropout(0.5)
+        self.hps.set_weight_decay(0.0001)
+        # self.hps.set_batch_norm(
+        #     batch_norm_decay=0.99,
+        #     batch_norm_epsilon=1e-5)
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
@@ -43,7 +46,7 @@ class avec2014_audio(database.Database):
             print_frequency=50,
             save_summaries_iter=50,
             save_model_iter=1000,
-            test_interval=5000)
+            test_interval=10000)
 
         # optimizer
         self.opt = data_param.optimizer()
@@ -68,24 +71,27 @@ class avec2014_audio(database.Database):
 
     def _val_train(self):
         self.batch_size = 50
-        self.total_num = 30718
+        # 32-30718 # 64-15292 # 128-7571
+        self.total_num = 7571
         self.name = self.name + '_val_train'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_succ64.txt'
 
     def _val(self):
         self.batch_size = 50
-        self.total_num = 28542  # 14199 # 7127
+        # 32-28542 # 64-14199 # 128-7027
+        self.total_num = 7027
         self.name = self.name + '_val'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_val_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_val_succ64.txt'
 
     def _test(self):
         self.batch_size = 50
-        self.total_num = 51074  # 25465 #12759
+        # 32-51074 # 64-25465 # 128-12661
+        self.total_num = 12661
         self.name = self.name + '_test'
         self.reader_thread = 1
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ64.txt'
