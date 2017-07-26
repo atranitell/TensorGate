@@ -6,6 +6,7 @@
 import os
 import math
 import time
+import numpy as np
 
 import tensorflow as tf
 from tensorflow.contrib import framework
@@ -29,7 +30,7 @@ def get_network(X, dataset, phase, scope=''):
     logits, end_points = gate.net.factory.get_network(
         dataset.hps, phase, X, 1)
 
-    return logits, None
+    return logits, end_points
 
 
 def get_loss(logits, labels, batch_size, num_classes):
@@ -135,12 +136,12 @@ def train(data_name, chkp_path=None, exclusions=None):
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
                     test_start_time = time.time()
 
-                    vtn_mae, vtn_rmse, margin = val_train(
-                        data_name, dataset.log.train_dir, summary_test)
+                    # vtn_mae, vtn_rmse, margin = val_train(
+                    #     data_name, dataset.log.train_dir, summary_test)
                     test_mae, test_rmse = test(
-                        data_name, dataset.log.train_dir, summary_test, margin)
+                        data_name, dataset.log.train_dir, summary_test)
                     val_mae, val_rmse = val(
-                        data_name, dataset.log.train_dir, summary_test, margin)
+                        data_name, dataset.log.train_dir, summary_test)
 
                     test_duration = time.time() - test_start_time
 
@@ -175,6 +176,17 @@ def train(data_name, chkp_path=None, exclusions=None):
 
             while not mon_sess.should_stop():
                 mon_sess.run(train_op)
+
+
+def val_train_pipline(data_name, chkp_path, summary_writer=None):
+    """ used for final state to get better result.
+    """
+    vtn_mae, vtn_rmse, margin = val_train(
+        data_name, chkp_path, summary_writer)
+    test_mae, test_rmse = test(
+        data_name, chkp_path, summary_writer, margin)
+    val_mae, val_rmse = val(
+        data_name, chkp_path, summary_writer, margin)
 
 
 def val_train(data_name, chkp_path, summary_writer=None):
@@ -521,5 +533,143 @@ def test(data_name, chkp_path, summary_writer=None, margin=None):
                 summary.value.add(tag='test/rmse', simple_value=mean_rmse)
                 summary.value.add(tag='test/loss', simple_value=mean_loss)
                 summary_writer.add_summary(summary, global_step)
+
+            return mean_mae, mean_rmse
+
+
+def heatmap(name, chkp_path):
+    """ generate heatmap
+    """
+    with tf.Graph().as_default():
+        # Preparing the dataset
+        dataset = gate.dataset.factory.get_dataset(name, 'test', chkp_path)
+        dataset.log.test_dir = chkp_path + '/test_heatmap/'
+        if not os.path.exists(dataset.log.test_dir):
+            os.mkdir(dataset.log.test_dir)
+
+        # load data
+        images, labels, filenames = dataset.loads()
+
+        # get network
+        logits, nets = get_network(images, dataset, 'test')
+
+        # get loss
+        losses, mae, rmse = get_loss(
+            logits, labels, dataset.batch_size, dataset.num_classes)
+
+        # restore from checkpoint
+        saver = tf.train.Saver(name='restore_all')
+
+        with tf.Session() as sess:
+            # get latest checkpoint
+            snapshot = gate.solver.Snapshot()
+            global_step = snapshot.restore(sess, chkp_path, saver)
+
+            # start queue from runner
+            coord = tf.train.Coordinator()
+            threads = []
+            for queuerunner in tf.get_collection(tf.GraphKeys.QUEUE_RUNNERS):
+                threads.extend(queuerunner.create_threads(
+                    sess, coord=coord, daemon=True, start=True))
+
+            # Initial some variables
+            num_iter = int(math.ceil(dataset.total_num / dataset.batch_size))
+            mean_mae, mean_rmse, mean_loss = 0, 0, 0
+
+            # output to file
+            tab = tf.constant(' ', shape=[dataset.batch_size])
+            labels_str = tf.as_string(tf.reshape(
+                labels, shape=[dataset.batch_size]))
+            logits_str = tf.as_string(tf.reshape(
+                logits * dataset.num_classes, shape=[dataset.batch_size]))
+            test_batch_info = filenames + tab + labels_str + tab + logits_str
+
+            test_info_path = os.path.join(
+                dataset.log.test_dir, '%s.txt' % global_step)
+            test_info_fp = open(test_info_path, 'wb')
+
+            # -------------------------------------------------
+            # heatmap related
+            heatmap_path = chkp_path + '/heatmap/'
+            if not os.path.exists(heatmap_path):
+                os.mkdir(heatmap_path)
+
+            # for resnet_v2_50
+            # heatmap data
+            X = nets['gap_conv']
+            # heatmap weights
+            W = gate.utils.analyzer.find_weights(
+                'model_ms_2125/logits/weights')
+            W = tf.reshape(W, [-1])  # flatten
+
+            data_heatmap = []
+            for cur in range(num_iter):
+                # if ctrl-c
+                if coord.should_stop():
+                    break
+
+                # running session to acuqire value
+                feeds = [losses, mae, rmse, test_batch_info, X, W]
+                _loss, _mae, _rmse, _info, x, w = sess.run(feeds)
+
+                # stat
+                mean_loss += _loss
+                mean_mae += _mae
+                mean_rmse += _rmse
+
+                # shape
+                batch_size = x.shape[0]
+                channel = x.shape[2]
+
+                # generate heatmap
+                x = np.transpose(x, (0, 2, 1))
+
+                for _n in range(batch_size):
+                    heat_feat = x[_n][0] * w[0]
+                    for _c in range(1, channel):
+                        heat_feat += x[_n][_c] * w[_c]
+                    data_heatmap.append(heat_feat)
+
+                logger.info('Has Processed %d of %d.' %
+                            (cur * batch_size, dataset.total_num))
+
+                # save tensor info to text file
+                for _line in _info:
+                    test_info_fp.write(_line + b'\r\n')
+
+            data_heatmap = np.array(data_heatmap)
+            np.save(heatmap_path + '/heat_' +
+                    global_step + '.npy', data_heatmap)
+
+            # stop
+            coord.request_stop()
+            coord.join(threads, stop_grace_period_secs=10)
+            test_info_fp.close()
+
+            # statistic
+            mean_loss = 1.0 * mean_loss / num_iter
+            mean_rmse = 1.0 * mean_rmse / num_iter
+            mean_mae = 1.0 * mean_mae / num_iter
+
+            # output result
+            f_str = gate.utils.string.format_iter(global_step)
+            f_str.add('total sample', dataset.total_num, int)
+            f_str.add('num batch', num_iter, int)
+            f_str.add('loss', mean_loss, float)
+            f_str.add('mae', mean_mae, float)
+            f_str.add('rmse', mean_rmse, float)
+            logger.test(f_str.get())
+
+            # for specify dataset
+            # it use different compute method for mae/rmse
+            # rewrite the mean_x value
+            if dataset.name.find('avec') >= 0:
+                mean_mae, mean_rmse = avec2014_error.get_accurate_from_file(
+                    test_info_path, 'img')
+                f_str = gate.utils.string.format_iter(global_step)
+                f_str.add('loss', mean_loss, float)
+                f_str.add('video_mae', mean_mae, float)
+                f_str.add('video_rmse', mean_rmse, float)
+                logger.test(f_str.get())
 
             return mean_mae, mean_rmse
