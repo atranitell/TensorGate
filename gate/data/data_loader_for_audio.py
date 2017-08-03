@@ -30,7 +30,7 @@ def _combine_block_continuous(filepath, start_idx, frames, length, invl):
         start_idx = start + i * invl
         _data = data[start_idx: start_idx + length]
         if is_training:
-            _data += np.random.normal(np.random.normal(0, 0.0001, 1), 0.0001)
+            _data += np.random.normal(0.001, 1)
         audio_data = np.append(audio_data, _data)
 
     audio_data = np.float32(np.reshape(audio_data, [frames, length]))
