@@ -58,6 +58,11 @@ def task_test(config, target):
         target.test(config.dataset, config.model)
 
 
+def task_val_train(config, target):
+    check.raise_none_param(config.model)
+    target.val_train_pipline(config.dataset, config.model)
+
+
 def task_heatmap(config, target):
     check.raise_none_param(config.model)
     if config.all:
@@ -97,6 +102,9 @@ def interface_task(config, target):
 
     elif config.task == 'val':
         task_val(config, target)
+
+    elif config.task == 'val_train':
+        task_val_train(config, target)
 
     elif config.task == 'heatmap':
         task_heatmap(config, target)
@@ -165,10 +173,12 @@ def interface(config):
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument('-target', type=str, default=None, dest='target')
+    PARSER.add_argument('-target', type=str,
+                        default='cnn.regression.audio', dest='target')
     PARSER.add_argument('-task', type=str, default='train', dest='task')
     PARSER.add_argument('-model', type=str, default=None, dest='model')
-    PARSER.add_argument('-dataset', type=str, default=None, dest='dataset')
+    PARSER.add_argument('-dataset', type=str,
+                        default='avec2014_audio', dest='dataset')
     PARSER.add_argument('-init', type=bool, default=True, dest='init')
     PARSER.add_argument('-all', type=bool, default=False, dest='all')
     ARGS, _ = PARSER.parse_known_args()
