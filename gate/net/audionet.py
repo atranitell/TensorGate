@@ -29,35 +29,46 @@ class AudioNet(net.Net):
     def model(self, inputs, num_classes, is_training):
         self.is_training = is_training
         self.activation_fn = tf.nn.relu
-        return self.audionet(inputs, num_classes, is_training, 'sen53')
+        return self.audionet(inputs, num_classes, is_training, 'sen', 53, 'ma')
 
-    def audionet(self, inputs, num_classes, is_training, kind):
-        """ a factory corresponding to different experiments
-            sen9: 11
-            sen17: 1111
-            sen29: 2222
-            sen53: 3553
-            sen53t: 3553-tiny
-            sen71: 35113
-        """
-        if kind == 'sen9':
-            return self.model_ms_short(inputs, num_classes, is_training, [1, 1])
-        elif kind == 'sen17':
-            return self.model_ms(inputs, num_classes, is_training, [1, 1, 1, 1])
-        elif kind == 'sen29':
-            return self.model_ms(inputs, num_classes, is_training, [2, 2, 2, 2])
-        elif kind == 'sen53':
-            return self.model_ms_old(inputs, num_classes, is_training, [3, 5, 5, 3])
-        elif kind == 'sen71':
-            return self.model_ms_old(inputs, num_classes, is_training, [3, 5, 11, 3])
-        elif kind == 'sen53t':
-            return self.model_ms_tiny(inputs, num_classes, is_training, [3, 5, 5, 3])
-        elif kind == 'sen53_res':
-            return self.model_ms_res(inputs, num_classes, is_training, [3, 5, 5, 3])
-        elif kind == 'sen53_dense':
-            return self.model_ms_dense(inputs, num_classes, is_training, [3, 5, 5, 3])
+    def audionet(self, inputs, num_classes, is_training, net_kind, layer_num=17, keep_type='ma'):
+        """ a factory corresponding to different experiments"""
+
+        keep = self.choose_keep_type(keep_type)
+        layer = self.choose_layer_num(layer_num)
+
+        if net_kind == 'sen':
+            return self.model_sen(inputs, num_classes, is_training, keep, layer)
         else:
             raise ValueError('Unknown network.')
+
+    def choose_keep_type(self, keep_type):
+        if keep_type == 'plain':
+            return self.keep_plain
+        elif keep_type == 'ma':
+            return self.keep_ma
+        elif keep_type == 'concat':
+            return self.keep_concat
+        elif keep_type == 'dense':
+            return self.keep_dense
+        elif keep_type == 'res':
+            return self.keep_res
+
+    def choose_layer_num(self, layer_num):
+        if layer_num == 9:
+            return [1, 1, 0, 0]
+        elif layer_num == 17:
+            return [1, 1, 1, 1]
+        elif layer_num == 29:
+            return [2, 2, 2, 2]
+        elif layer_num == 53:
+            return [3, 5, 5, 3]
+        elif layer_num == 71:
+            return [3, 5, 1, 3]
+        elif layer_num == 113:
+            return [3, 13, 17, 3]
+        elif layer_num == 161:
+            return [6, 17, 23, 6]
 
     def pool1d(self, inputs, kernel_size, strides,
                pooling_type='MAX', padding_type='SAME', name=None):
@@ -92,7 +103,7 @@ class AudioNet(net.Net):
                 bias_initializer=tf.constant_initializer(0.0))
             return net
 
-    def conv_bn(self, x, num_filters, k_size, k_stride, name, act=True):
+    def conv_bn(self, x, num_filters, k_size, k_stride, name, act=True, bn=True):
         with tf.variable_scope(name):
             net = tf.layers.conv1d(
                 inputs=x,
@@ -105,8 +116,27 @@ class AudioNet(net.Net):
                     stddev=0.01),
                 kernel_regularizer=layers.l2_regularizer(self.weight_decay),
                 bias_initializer=tf.constant_initializer(0.0))
+            if bn is True:
+                net = self.bn(net)
             if act is True:
-                net = self.bn(self.activation_fn(net))
+                net = self.activation_fn(net)
+            return net
+
+    def conv_pre_bn(self, x, num_filters, k_size, k_stride, name, act=True):
+        if act is True:
+            x = self.activation_fn(self.bn(x))
+        with tf.variable_scope(name):
+            net = tf.layers.conv1d(
+                inputs=x,
+                filters=num_filters,
+                kernel_size=k_size,
+                strides=k_stride,
+                padding='SAME',
+                activation=None,
+                kernel_initializer=tf.truncated_normal_initializer(
+                    stddev=0.01),
+                kernel_regularizer=layers.l2_regularizer(self.weight_decay),
+                bias_initializer=tf.constant_initializer(0.0))
             return net
 
     def activation_out(self, x, act_out):
@@ -115,186 +145,77 @@ class AudioNet(net.Net):
         else:
             return x
 
-    def residual_keep(self, x, in_filters, k_size, name, act_out=True):
+    def keep_res(self, x, in_filters, k_size, name, act_out=True):
         """ conv1 -> conv2 -> conv3
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope('res_' + name):
             net = self.conv(x, in_filters, k_size, 1, 'conv1_1')
             net = self.conv(net, in_filters, k_size * 2, 1, 'conv1_2')
             net = self.conv(net, in_filters, k_size, 1, 'conv1_3')
             return self.activation_out(x + net, act_out)
 
-    def dense_keep(self, x, in_filters, k_size, name, act_out=True):
+    def keep_dense(self, x, in_filters, k_size, name, act_out=True):
         """ conv1 -> conv2 -> conv3
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope('dense_' + name):
             x1 = self.conv(x, in_filters, k_size, 1, 'conv1_1')
             x2 = self.conv(x + x1, in_filters, k_size * 2, 1, 'conv1_2')
             x3 = self.conv(x + x1 + x2, in_filters, k_size, 1, 'conv1_3')
             return self.activation_out(x + x1 + x2 + x3, act_out)
 
-    def ms_keep(self, x, in_filters, k_size, name, act_out=True):
+    def keep_concat(self, x, in_filters, k_size, name, act_out=True):
         """ conv1 -> conv2 -> conv3
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope('concat_' + name):
+            x1 = self.conv(x, in_filters, k_size, 1, 'conv1_1')
+            x1_c = tf.concat([x, x1], axis=2)
+            x2 = self.conv(x1_c, in_filters, k_size * 2, 1, 'conv1_2')
+            x2_c = tf.concat([x, x1, x2], axis=2)
+            x3 = self.conv(x2_c, in_filters, k_size, 1, 'conv1_3')
+            return self.activation_out(x + x3, act_out)
+
+    def keep_ma(self, x, in_filters, k_size, name, act_out=True):
+        """ conv1 -> conv2 -> conv3
+        """
+        with tf.variable_scope('ma_' + name):
             x1 = self.conv(x, in_filters, k_size, 1, 'conv1_1')
             x2 = self.conv(x + x1, in_filters, k_size * 2, 1, 'conv1_2')
             x3 = self.conv(x + x2, in_filters, k_size, 1, 'conv1_3')
             return self.activation_out(x + x3, act_out)
 
-    def ms_keep_bn(self, x, in_filters, k_size, name, act_out=True):
+    def keep_plain(self, x, in_filters, k_size, name, act_out=True):
         """ conv1 -> conv2 -> conv3
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope('plain_' + name):
+            x1 = self.conv(x, in_filters, k_size, 1, 'conv1_1')
+            x2 = self.conv(x1, in_filters, k_size * 2, 1, 'conv1_2')
+            x3 = self.conv(x2, in_filters, k_size, 1, 'conv1_3')
+            return x3
+
+    def keep_ma_bn(self, x, in_filters, k_size, name, act_out=True):
+        """ conv1 -> conv2 -> conv3
+        """
+        with tf.variable_scope('ma_bn_' + name):
             x1 = self.conv_bn(x, in_filters, k_size, 1, 'conv1_1')
             x2 = self.conv_bn(x + x1, in_filters, k_size * 2, 1, 'conv1_2')
-            x3 = self.conv_bn(x + x2, in_filters, k_size, 1, 'conv1_3')
+            x3 = self.conv_bn(x + x2, in_filters, k_size, 1, 'conv1_3', False)
             return self.activation_out(x + x3, act_out)
 
-    def model_ms(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
-        """ best model for paper
+    def keep_ma_pre_bn(self, x, in_filters, k_size, name, act_out=True):
+        """ conv1 -> conv2 -> conv3
         """
-        end_points = {}
+        with tf.variable_scope('ma_prebn_' + name):
+            x1 = self.conv_pre_bn(x, in_filters, k_size, 1, 'conv1_1')
+            x2 = self.conv_pre_bn(x + x1, in_filters, k_size * 2, 1, 'conv1_2')
+            x3 = self.conv_pre_bn(x + x2, in_filters, k_size, 1, 'conv1_3')
+            return x + x3
 
-        with tf.variable_scope('model_ms3_' + itos(num_block)):
-            # root-3200
-            net = self.conv(inputs, 64, 40, 2, name='root')
-            net = self.pool1d(net, 3, 2, name='max_pool0')
-
-            # block1-800
-            for i in range(num_block[0]):
-                net = self.ms_keep(net, 64, 20, cat('k1', i))
-            net = self.conv(net, 128, 20, 2, name='k1')
-
-            # block2-400
-            for i in range(num_block[1]):
-                net = self.ms_keep(net, 128, 15, cat('k2', i))
-            net = self.conv(net, 256, 15, 2, name='k2')
-
-            # block3-200
-            for i in range(num_block[2]):
-                net = self.ms_keep(net, 256, 10, cat('k3', i))
-            net = self.conv(net, 512, 10, 2, name='k3')
-
-            # block4-100
-            for i in range(num_block[3] - 1):
-                net = self.ms_keep(net, 512, 5, cat('k4', i))
-            net = self.ms_keep(net, 512, 5, cat('k4', num_block[3]), False)
-
-            # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
-
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
-
-            return logits, end_points
-
-    def model_ms_old(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
-        """ best model for paper
-        """
-        end_points = {}
-
-        with tf.variable_scope('model_ms3_' + itos(num_block)):
-            # root-3200
-            net = self.conv(inputs, 64, 40, 2, name='root')
-            net = self.pool1d(net, 3, 2, name='max_pool0')
-
-            # block1-800
-            for i in range(1, num_block[0] + 1):
-                net = self.ms_keep(net, 64, 20, cat('k1', i))
-            net = self.conv(net, 128, 20, 2, name='k2')
-
-            # block2-400
-            for i in range(1, num_block[1] + 1):
-                net = self.ms_keep(net, 128, 15, cat('k2', i))
-            net = self.conv(net, 256, 15, 2, name='k3')
-
-            # block3-200
-            for i in range(1, num_block[2] + 1):
-                net = self.ms_keep(net, 256, 10, cat('k3', i))
-            net = self.conv(net, 512, 10, 2, name='k4')
-
-            # block4-100
-            for i in range(1, num_block[3]):
-                net = self.ms_keep(net, 512, 5, cat('k4', i))
-            net = self.ms_keep(net, 512, 5, cat('k4', num_block[3] + 1), False)
-
-            # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
-
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
-
-            return logits, end_points
-
-    def model_ms_bn(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
-        """ best model for paper
-        """
-        end_points = {}
-
-        with tf.variable_scope('ms_bn_' + itos(num_block)):
-            # root-3200
-            net = self.conv_bn(inputs, 64, 40, 2, name='root')
-            net = self.pool1d(net, 3, 2, name='max_pool0')
-
-            # block1-800
-            for i in range(num_block[0]):
-                net = self.ms_keep_bn(net, 64, 20, cat('k1', i))
-            net = self.conv_bn(net, 128, 20, 2, name='k1')
-
-            # block2-400
-            for i in range(num_block[1]):
-                net = self.ms_keep_bn(net, 128, 15, cat('k2', i))
-            net = self.conv_bn(net, 256, 15, 2, name='k2')
-
-            # block3-200
-            for i in range(num_block[2]):
-                net = self.ms_keep_bn(net, 256, 10, cat('k3', i))
-            net = self.conv_bn(net, 512, 10, 2, name='k3')
-
-            # block4-100
-            for i in range(num_block[3] - 1):
-                net = self.ms_keep_bn(net, 512, 5, cat('k4', i))
-            net = self.ms_keep_bn(net, 512, 5, cat('k4', num_block[3]), False)
-
-            # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
-
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
-
-            return logits, end_points
-
-    def model_ms_tiny(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
+    def model_ms_tiny3(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
         """
         """
         end_points = {}
 
-        with tf.variable_scope('ms_tiny_' + itos(num_block)):
+        with tf.variable_scope('ms_tiny3_' + itos(num_block)):
             # root-3200
             net = self.conv(inputs, 64, 40, 2, name='root')
             net = self.pool1d(net, 3, 2, name='max_pool0')
@@ -302,70 +223,22 @@ class AudioNet(net.Net):
             # block1-800
             for i in range(num_block[0]):
                 net = self.ms_keep(net, 64, 3, cat('k1', i))
-            net = self.conv(net, 128, 3, 2, name='k1')
-
-            # block2-400
-            for i in range(num_block[1]):
-                net = self.ms_keep(net, 128, 3, cat('k2', i))
-            net = self.conv(net, 256, 3, 2, name='k2')
-
-            # block3-200
-            for i in range(num_block[2]):
-                net = self.ms_keep(net, 256, 3, cat('k3', i))
-            net = self.conv(net, 512, 3, 2, name='k3')
-
-            # block4-100
-            for i in range(num_block[3] - 1):
-                net = self.ms_keep(net, 512, 3, cat('k4', i))
-            net = self.ms_keep(net, 512, 3, cat('k4', num_block[3]), False)
-
-            # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
-
-            # shape = net.get_shape().as_list()
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
-
-            return logits, end_points
-
-    def model_ms_res(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
-        """ best model for paper
-        """
-        end_points = {}
-
-        with tf.variable_scope('ms_res_' + itos(num_block)):
-            # root-3200
-            net = self.conv(inputs, 64, 40, 2, name='root')
-            net = self.pool1d(net, 3, 2, name='max_pool0')
-
-            # block1-800
-            for i in range(num_block[0]):
-                net = self.residual_keep(net, 64, 20, cat('k1', i))
             net = self.conv(net, 128, 20, 2, name='k1')
 
             # block2-400
             for i in range(num_block[1]):
-                net = self.residual_keep(net, 128, 15, cat('k2', i))
-            net = self.conv(net, 256, 15, 2, name='k2')
+                net = self.ms_keep(net, 128, 1, cat('k2', i))
+            net = self.conv(net, 128, 15, 2, name='k2')
 
             # block3-200
             for i in range(num_block[2]):
-                net = self.residual_keep(net, 256, 10, cat('k3', i))
-            net = self.conv(net, 512, 10, 2, name='k3')
+                net = self.ms_keep(net, 128, 1, cat('k3', i))
+            net = self.conv(net, 256, 10, 2, name='k3')
 
             # block4-100
             for i in range(num_block[3] - 1):
-                net = self.residual_keep(net, 512, 5, cat('k4', i))
-            net = self.residual_keep(
-                net, 512, 5, cat('k4', num_block[3]), False)
+                net = self.ms_keep(net, 256, 1, cat('k4', i))
+            net = self.ms_keep(net, 256, 1, cat('k4', num_block[3]), False)
 
             # 100
             end_points['gap_conv'] = net
@@ -383,84 +256,59 @@ class AudioNet(net.Net):
 
             return logits, end_points
 
-    def model_ms_dense(self, inputs, num_classes, is_training, num_block=[3, 5, 5, 3]):
-        """ best model for paper
+    def model_sen(self, inputs, num_classes, is_training, keep, num_block=[1, 1, 1, 1]):
+        """
         """
         end_points = {}
 
-        with tf.variable_scope('ms_dense_' + itos(num_block)):
+        with tf.variable_scope('sen_' + itos(num_block)):
             # root-3200
             net = self.conv(inputs, 64, 40, 2, name='root')
             net = self.pool1d(net, 3, 2, name='max_pool0')
 
             # block1-800
             for i in range(num_block[0]):
-                net = self.dense_keep(net, 64, 20, cat('k1', i))
+                net = keep(net, 64, 3, cat('k1', i))
             net = self.conv(net, 128, 20, 2, name='k1')
 
             # block2-400
             for i in range(num_block[1]):
-                net = self.dense_keep(net, 128, 15, cat('k2', i))
-            net = self.conv(net, 256, 15, 2, name='k2')
+                net = keep(net, 128, 1, cat('k2', i))
+            net = self.conv(net, 128, 15, 2, name='k2')
+            # branch-400
+            net_400 = self.pool1d(net, 15, 4, name='max_pool1')
 
             # block3-200
             for i in range(num_block[2]):
-                net = self.dense_keep(net, 256, 10, cat('k3', i))
-            net = self.conv(net, 512, 10, 2, name='k3')
+                net = keep(net, 128, 1, cat('k3', i))
+            net = self.conv(net, 256, 10, 2, name='k3')
+            # branch-200
+            net_200 = self.pool1d(net, 10, 2, name='max_pool2')
 
             # block4-100
-            for i in range(num_block[3] - 1):
-                net = self.dense_keep(net, 512, 5, cat('k4', i))
-            net = self.dense_keep(net, 512, 5, cat('k4', num_block[3]), False)
+            for i in range(num_block[3]):
+                net = keep(net, 256, 1, cat('k4', i))
+            net_100 = keep(net, 256, 1, cat('k4', num_block[3]), False)
 
             # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
+            def output(inputs, num_classes, name='logits'):
+                net = tf.reduce_sum(inputs, axis=1)
+                net = layers.dropout(
+                    net, self.dropout, is_training=is_training)
+                logits = layers.fully_connected(
+                    net, num_classes,
+                    biases_initializer=None,
+                    weights_initializer=tf.truncated_normal_initializer(
+                        stddev=0.01),
+                    weights_regularizer=None,
+                    activation_fn=None,
+                    scope=name)
+                return logits
 
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
+            logits1 = output(net_100, num_classes, 'logits1')
+            logits2 = output(net_200, num_classes, 'logits2')
+            logits3 = output(net_400, num_classes, 'logits3')
 
-            return logits, end_points
-
-    def model_ms_short(self, inputs, num_classes, is_training, num_block=[1, 1]):
-        """ best model for paper
-        """
-        end_points = {}
-
-        with tf.variable_scope('model_ms_short' + itos(num_block)):
-            # root-3200
-            net = self.conv(inputs, 64, 40, 2, name='root')
-            net = self.pool1d(net, 3, 2, name='max_pool0')
-
-            # block1-800
-            for i in range(num_block[0]):
-                net = self.ms_keep(net, 64, 20, cat('k1', i))
-            net = self.conv(net, 128, 20, 2, name='k1')
-
-            # block2-400
-            for i in range(num_block[1] - 1):
-                net = self.ms_keep(net, 128, 15, cat('k2', i))
-            net = self.ms_keep(net, 128, 15, cat('k2', num_block[1]), False)
-
-            # 100
-            end_points['gap_conv'] = net
-            net = tf.reduce_sum(net, axis=1)
-            net = layers.dropout(net, self.dropout, is_training=is_training)
-
-            logits = layers.fully_connected(
-                net, num_classes,
-                biases_initializer=None,
-                weights_initializer=tf.truncated_normal_initializer(
-                    stddev=0.01),
-                weights_regularizer=None,
-                activation_fn=None,
-                scope='logits')
+            logits = (logits1 + logits2 + logits3) / 3.0
 
             return logits, end_points

@@ -37,8 +37,9 @@ class avec2014_audio(database.Database):
         self.hps.set_dropout(0.5)
         self.hps.set_weight_decay(0.0001)
         self.hps.set_batch_norm(
-            batch_norm_decay=0.9,
-            batch_norm_epsilon=1e-5)
+            batch_norm_decay=0.999,
+            batch_norm_epsilon=1e-5,
+            batch_norm_scale=False)
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)

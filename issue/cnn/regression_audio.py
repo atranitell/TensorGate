@@ -138,8 +138,8 @@ def train(data_name, chkp_path=None, exclusions=None):
 
                     # vtn_mae, vtn_rmse, margin = val_train(
                     #     data_name, dataset.log.train_dir, summary_test)
-                    test_mae, test_rmse = test(
-                        data_name, dataset.log.train_dir, summary_test)
+                    # test_mae, test_rmse = test(
+                    #     data_name, dataset.log.train_dir, summary_test)
                     val_mae, val_rmse = val(
                         data_name, dataset.log.train_dir, summary_test)
 
@@ -599,7 +599,7 @@ def heatmap(name, chkp_path):
             X = nets['gap_conv']
             # heatmap weights
             W = gate.utils.analyzer.find_weights(
-                'model_ms_2125/logits/weights')
+                'model_ms3_3553/logits/weights')
             W = tf.reshape(W, [-1])  # flatten
 
             data_heatmap = []

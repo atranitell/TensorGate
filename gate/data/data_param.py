@@ -186,10 +186,11 @@ class hps():
     def set_weight_decay(self, weight_decay=None):
         self.weight_decay = weight_decay
 
-    def set_batch_norm(self, batch_norm_decay=None, batch_norm_epsilon=None):
+    def set_batch_norm(self, batch_norm_decay=None, batch_norm_epsilon=None,
+                       batch_norm_scale=True):
         self.batch_norm_decay = batch_norm_decay
         self.batch_norm_epsilon = batch_norm_epsilon
-        self.batch_norm_scale = True
+        self.batch_norm_scale = batch_norm_scale
 
 
 class image():
