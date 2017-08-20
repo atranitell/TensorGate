@@ -29,7 +29,7 @@ class AudioNet(net.Net):
     def model(self, inputs, num_classes, is_training):
         self.is_training = is_training
         self.activation_fn = tf.nn.relu
-        return self.audionet(inputs, num_classes, is_training, 'men11', 53, 'sa')
+        return self.audionet(inputs, num_classes, is_training, 'ssen0', 53, 'sa')
 
     def audionet(self, inputs, num_classes, is_training, net_kind, layer_num, keep_type):
         """ a factory corresponding to different experiments"""
@@ -37,8 +37,8 @@ class AudioNet(net.Net):
         keep = self.choose_keep_type(keep_type)
         layer = self.choose_layer_num(layer_num)
 
-        if net_kind == 'men11':
-            return self.model_men11(inputs, num_classes, is_training, keep, layer, keep_type)
+        if net_kind == 'ssen0':
+            return self.model_ssen0(inputs, num_classes, is_training, keep, layer, keep_type)
         else:
             raise ValueError('Unknown network.')
 
@@ -220,6 +220,15 @@ class AudioNet(net.Net):
             scale = tf.reshape(scale, [-1, 1, in_filters])
         with tf.variable_scope('sa_se_' + name):
             return self.activation_out(x + net_res * scale, act_out)
+
+    def sequeeze_out(self, x, in_filters, name):
+        with tf.variable_scope('seq_' + name):
+            net = tf.reduce_sum(x, axis=1)
+            net = self.fc(net, int(in_filters / 16), 'fc_1')
+            net = self.fc(net, in_filters, 'fc_2')
+            scale = tf.sigmoid(net, 'sigmoid')
+            scale = tf.reshape(scale, [-1, 1, in_filters])
+            return x * scale
 
     def keep_sc(self, x, in_filters, k_size, name, act_out=True):
         """ single concat """
@@ -916,6 +925,55 @@ class AudioNet(net.Net):
 
             return logits, end_points
 
+    def model_sen0(self, inputs, num_classes, is_training, keep, num_block, keep_type):
+        """
+        """
+        end_points = {}
+        num_block = [1, 1, 1, 1]
+
+        with tf.variable_scope('sen0_' + keep_type + '_' + itos(num_block)):
+            # root-12800
+            net = self.conv(inputs, 64, 20, 2, name='conv0')
+            net = self.pool1d(net, 2, 2, name='pool0')
+
+            # block1-3200
+            for i in range(num_block[0]):
+                net = keep(net, 64, 1, cat('k1', i))
+            net = self.conv(net, 128, 10, 2, 'k1')
+            net = self.pool1d(net, 2, 2, name='pool1')
+
+            # block2-800
+            for i in range(num_block[1]):
+                net = keep(net, 128, 1, cat('k2', i))
+            net = self.conv(net, 128, 10, 2, 'k2')
+            net = self.pool1d(net, 2, 2, name='pool2')
+
+            # block3-200
+            for i in range(num_block[2]):
+                net = keep(net, 128, 1, cat('k3', i))
+            net = self.conv(net, 256, 10, 2, 'k3')
+            net = self.pool1d(net, 2, 2, name='pool3')
+
+            # block3-50
+            for i in range(num_block[3] - 1):
+                net = keep(net, 256, 1, cat('k4', i))
+            net = keep(net, 256, 1, cat('k4', num_block[3]), False)
+
+            end_points['gap_conv'] = net
+            net = tf.reduce_sum(net, axis=1)
+            net = layers.dropout(net, self.dropout, is_training=is_training)
+
+            logits = layers.fully_connected(
+                net, num_classes,
+                biases_initializer=None,
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=0.01),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits, end_points
+
     def model_men2(self, inputs, num_classes, is_training, keep, num_block, keep_type):
         """
         """
@@ -1036,6 +1094,68 @@ class AudioNet(net.Net):
             net = tf.concat([net_100, net_200, net_400, net_800], axis=2)
 
             # 100
+            end_points['gap_conv'] = net
+            net = tf.reduce_sum(net, axis=1)
+            net = layers.dropout(net, self.dropout, is_training=is_training)
+
+            logits = layers.fully_connected(
+                net, num_classes,
+                biases_initializer=None,
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=0.01),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits, end_points
+
+    def model_ssen0(self, inputs, num_classes, is_training, keep, num_block, keep_type):
+        """
+        """
+        end_points = {}
+        num_block = [1, 1, 1, 1]
+
+        with tf.variable_scope('ssen0_' + keep_type + '_' + itos(num_block)):
+            # root-12800
+            net = self.conv(inputs, 64, 20, 2, name='conv0')
+            net = self.pool1d(net, 2, 2, name='pool0')
+
+            # block1-3200
+            for i in range(num_block[0]):
+                net = keep(net, 64, 1, cat('k1', i))
+            net = self.conv(net, 128, 10, 2, 'k1')
+            net = self.pool1d(net, 2, 2, name='pool1')
+
+            # block2-800
+            for i in range(num_block[1]):
+                net = keep(net, 128, 1, cat('k2', i))
+            net_k2 = net
+            net = self.conv(net, 128, 10, 2, 'k2')
+            net = self.pool1d(net, 2, 2, name='pool2')
+
+            # block3-200
+            for i in range(num_block[2]):
+                net = keep(net, 128, 1, cat('k3', i))
+            net_k3 = net
+            net = self.conv(net, 256, 10, 2, 'k3')
+            net = self.pool1d(net, 2, 2, name='pool3')
+
+            # block3-50
+            for i in range(num_block[3] - 1):
+                net = keep(net, 256, 1, cat('k4', i))
+            net_k4 = keep(net, 256, 1, cat('k4', num_block[3]), False)
+
+            # scale to same length
+            net_k2 = self.pool1d(net_k2, 16, 16, 'AVG', name='k2_pool')
+            net_k3 = self.pool1d(net_k3, 4, 4, 'AVG', name='k3_pool')
+
+            # seqeeze
+            net_k2 = self.sequeeze_out(net_k2, 128, 'k2')
+            net_k3 = self.sequeeze_out(net_k3, 128, 'k3')
+
+            # concat
+            net = tf.concat([net_k4, net_k3, net_k2], axis=2)
+
             end_points['gap_conv'] = net
             net = tf.reduce_sum(net, axis=1)
             net = layers.dropout(net, self.dropout, is_training=is_training)

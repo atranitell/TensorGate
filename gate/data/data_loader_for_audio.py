@@ -8,6 +8,10 @@ import tensorflow as tf
 
 from gate.data import data_entry
 from gate.data import data_prefetch
+from gate.utils.logger import logger
+
+STD = 0.001
+NORM = 2
 
 
 def _combine_block_continuous(filepath, start_idx, frames, length, invl):
@@ -30,7 +34,7 @@ def _combine_block_continuous(filepath, start_idx, frames, length, invl):
         start_idx = start + i * invl
         _data = data[start_idx: start_idx + length]
         if is_training:
-            _data += np.random.normal(0.001, 1)
+            _data += np.random.normal(STD, NORM)
         audio_data = np.append(audio_data, _data)
 
     audio_data = np.float32(np.reshape(audio_data, [frames, length]))
@@ -48,6 +52,8 @@ def load_continuous_audio_from_npy(
     res = data_entry.parse_from_text(
         data_path, (str, int, int), (True, False, False))
     files, starts, labels = res[0], res[1], res[2]
+
+    logger.info('std:%f, norm%f' % (STD, NORM))
 
     # construct a fifo queue
     files = tf.convert_to_tensor(files, dtype=tf.string)
