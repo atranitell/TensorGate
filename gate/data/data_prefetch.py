@@ -21,8 +21,7 @@ def generate_batch(image, label, filename, shuffle,
             tensors=[image, label, filename],
             batch_size=batch_size,
             capacity=min_queue_num + 3 * batch_size,
-            num_threads=reader_thread,
-            allow_smaller_final_batch=True)
+            num_threads=reader_thread)
 
     return images, tf.reshape(labels, [batch_size]), filenames
 
