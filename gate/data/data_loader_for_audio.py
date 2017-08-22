@@ -10,8 +10,8 @@ from gate.data import data_entry
 from gate.data import data_prefetch
 from gate.utils.logger import logger
 
-STD = 0.001
-NORM = 2
+STD = 0.0
+NORM = 1.0
 
 
 def _combine_block_continuous(filepath, start_idx, frames, length, invl):
@@ -53,7 +53,7 @@ def load_continuous_audio_from_npy(
         data_path, (str, int, int), (True, False, False))
     files, starts, labels = res[0], res[1], res[2]
 
-    logger.info('std:%f, norm%f' % (STD, NORM))
+    logger.info('std:%s, norm:%s' % (str(STD), str(NORM)))
 
     # construct a fifo queue
     files = tf.convert_to_tensor(files, dtype=tf.string)
