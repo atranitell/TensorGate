@@ -10,7 +10,7 @@ from gate.data import data_entry
 from gate.data import data_prefetch
 from gate.utils.logger import logger
 
-STD = 0.0
+STD = 0.001
 NORM = 1.0
 
 

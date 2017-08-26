@@ -29,7 +29,7 @@ class AudioNet(net.Net):
     def model(self, inputs, num_classes, is_training):
         self.is_training = is_training
         self.activation_fn = tf.nn.relu
-        return self.audionet(inputs, num_classes, is_training, 'sen', 53, 'ma')
+        return self.audionet(inputs, num_classes, is_training, 'sen', 113, 'ma')
 
     def audionet(self, inputs, num_classes, is_training, net_kind, layer_num, keep_type):
         """ a factory corresponding to different experiments"""
