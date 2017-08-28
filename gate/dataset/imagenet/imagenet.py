@@ -21,13 +21,13 @@ class imagenet(database.Database):
         self.data_type = data_type
         self.name = name
         self.num_classes = 1000
-        self.min_queue_num = 128
+        self.min_queue_num = 16
         self._set_phase(data_type)
 
         # image
         self.image = data_param.image()
         self.image.set_format(channels=3)
-        self.image.set_raw_size(256, 256)
+        self.image.set_raw_size(-1, -1)
         self.image.set_output_size(224, 224)
         self.image.set_preprocessing('vgg')
 
@@ -39,16 +39,19 @@ class imagenet(database.Database):
                          test_interval=5000)
 
         # setting hps
-        self.hps = data_param.hps('resnet_50')
+        self.hps = data_param.hps('resnet_v2_50')
         self.hps.set_weight_decay(0.0001)
         self.hps.set_dropout(0.5)
+        self.hps.set_batch_norm(
+            batch_norm_decay=0.997,
+            batch_norm_epsilon=1e-5)
 
         # optimizer
         self.opt = data_param.optimizer()
         self.opt.set_momentum(0.9)
 
         # lr
-        self.lr = data_param.learning_rate()
+        self.lr = data_param.learning_rate(0.999)
         self.lr.set_fixed(learning_rate=0.1)
 
         # show
@@ -58,7 +61,7 @@ class imagenet(database.Database):
         self.batch_size = 100
         self.total_num = 50000
         self.name = self.name + '_test'
-        self.reader_thread = 32
+        self.reader_thread = 16
         self.shuffle = False
         self.data_path = '../_datasets/ImageNet/test.txt'
 

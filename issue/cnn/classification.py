@@ -172,6 +172,7 @@ def test(data_name, chkp_path, summary_writer=None):
             # get latest checkpoint
             snapshot = gate.solver.Snapshot()
             global_step = snapshot.restore(sess, chkp_path, saver)
+            global_step = '1'
 
             # start queue from runner
             coord = tf.train.Coordinator()

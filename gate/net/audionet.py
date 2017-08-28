@@ -286,7 +286,7 @@ class AudioNet(net.Net):
         """
         end_points = {}
 
-        with tf.variable_scope('sen_' + keep_type + '_' + itos(num_block)):
+        with tf.variable_scope('sen1_' + keep_type + '_' + itos(num_block)):
             # root-12800
             net = self.conv(inputs, 64, 20, 2, name='conv0')
             net = self.pool1d(net, 2, 2, name='pool0')
@@ -323,6 +323,7 @@ class AudioNet(net.Net):
             # seqeeze
             net_k2 = self.sequeeze_out(net_k2, 128, 'k2')
             net_k3 = self.sequeeze_out(net_k3, 128, 'k3')
+            # net_k4 = self.sequeeze_out(net_k4, 256, 'k4')
 
             # concat
             net = tf.concat([net_k4, net_k3, net_k2], axis=2)
