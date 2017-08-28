@@ -8,6 +8,7 @@ from gate.dataset.cifar import cifar10
 from gate.dataset.cifar import cifar100
 from gate.dataset.imagenet import imagenet
 from gate.dataset.mnist import mnist
+from gate.dataset.mnist import fashion_mnist
 # depression
 from gate.dataset.avec import avec2014
 from gate.dataset.avec import avec2014_4view
@@ -31,6 +32,7 @@ from gate.dataset.lfw import lfw
 
 dataset_map = {
     'mnist': mnist.mnist,
+    'fashion_mnist': fashion_mnist.fashion_mnist,
     'cifar10': cifar10.cifar10,
     'cifar100': cifar100.cifar100,
     'imagenet': imagenet.imagenet,
