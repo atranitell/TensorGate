@@ -29,6 +29,8 @@ from gate.dataset.celeba import celeba
 # msceleb
 from gate.dataset.msceleb import msceleb_align
 from gate.dataset.lfw import lfw
+# traffic flow
+from gate.dataset.trafficflow import traffic_flow
 
 dataset_map = {
     'mnist': mnist.mnist,
@@ -49,7 +51,8 @@ dataset_map = {
     'kinface2_5view_gc': kinface2_5view_gc.kinface2_5view_gc,
     'celeba':  celeba.celeba,
     'msceleb_align': msceleb_align.msceleb_align,
-    'lfw': lfw.lfw
+    'lfw': lfw.lfw,
+    'traffic_flow': traffic_flow.traffic_flow
 }
 
 

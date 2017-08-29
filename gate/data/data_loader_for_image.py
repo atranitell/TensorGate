@@ -443,3 +443,40 @@ def load_image_from_memory(
     return data_prefetch.generate_batch(
         image_content, label, path, shuffle,
         batch_size, min_queue_num, reader_thread)
+
+
+def _load_image_from_npy(filepath, channels):
+    """ load image from npy file.
+    """
+    file_path_abs = str(filepath, encoding='utf-8')
+    data = np.load(file_path_abs)
+
+    data = np.float32(np.reshape(data, [112, 112, channels]))
+    return data
+
+
+def load_image_from_npy(data_path, shuffle, data_type, image,
+                        min_queue_num, batch_size, reader_thread):
+    """ load image
+    """
+    res = data_entry.parse_from_text(data_path, (str, int), (True, False))
+    files, labels = res[0], res[1]
+
+    # construct a fifo queue
+    files = tf.convert_to_tensor(files, dtype=tf.string)
+    labels = tf.convert_to_tensor(labels, dtype=tf.int32)
+    filename, label = tf.train.slice_input_producer(
+        [files, labels], shuffle=shuffle)
+
+    # combine
+    content = tf.py_func(_load_image_from_npy,
+                         [filename, image.channels], tf.float32)
+
+    content = tf.reshape(
+        content, [image.output_height, image.output_width, image.channels])
+
+    print(content)
+
+    return data_prefetch.generate_batch(
+        content, label, filename, shuffle,
+        batch_size, min_queue_num, reader_thread)

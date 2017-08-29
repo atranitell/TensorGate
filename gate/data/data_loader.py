@@ -110,3 +110,10 @@ def load_continuous_audio_from_npy(
     return data_loader_for_audio.load_continuous_audio_from_npy(
         data_path, shuffle, data_type, audio,
         min_queue_num, batch_size, reader_thread)
+
+
+def load_image_from_npy(data_path, shuffle, data_type, image,
+                        min_queue_num, batch_size, reader_thread):
+    return data_loader_for_image.load_image_from_npy(
+        data_path, shuffle, data_type, image,
+        min_queue_num, batch_size, reader_thread)
