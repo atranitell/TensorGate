@@ -28,7 +28,7 @@ class avec2014_audio_rnn(database.Database):
         self.audio = data_param.audio()
         # number of steps
         # all frame will be loaded in lstm at once.
-        self.audio.frames = 16
+        self.audio.frames = 64
         self.audio.frame_length = 200
         self.audio.frame_invl = 200
 
@@ -38,9 +38,9 @@ class avec2014_audio_rnn(database.Database):
         self.rnn.activation = 'relu'
         self.rnn.cell = 'gru'
         self.rnn.initializer = 'orthogonal'
-        self.rnn.num_units = 128
+        self.rnn.num_units = 512
         self.rnn.num_layers = 1
-        self.rnn.dropout = 0.8
+        self.rnn.dropout = 0.5
 
         # log
         self.log = data_param.log(data_type, name, chkp_path)
@@ -66,11 +66,11 @@ class avec2014_audio_rnn(database.Database):
 
     def _test(self):
         self.batch_size = 32
-        self.total_num = 51074 # 25465 #12759
+        self.total_num = 50474
         self.name = self.name + '_test'
         self.reader_thread = 16
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_tst_over128.txt'
 
     def _train(self):
         self.batch_size = 32
@@ -78,13 +78,13 @@ class avec2014_audio_rnn(database.Database):
         self.name = self.name + '_train'
         self.reader_thread = 16
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_raw.txt'
 
     def _val(self):
         self.batch_size = 32
-        self.total_num = 28542 #14199 # 7127
+        self.total_num = 27942
         self.name = self.name + '_val'
         self.reader_thread = 16
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_val_succ.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_val_over128.txt'
 

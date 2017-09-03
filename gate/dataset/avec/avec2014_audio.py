@@ -64,29 +64,20 @@ class avec2014_audio(database.Database):
 
     def _train(self):
         self.batch_size = 32
-        self.total_num = 100
+        self.total_num = 200
         self.name = self.name + '_train'
         self.reader_thread = 16
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_raw.txt'
-
-    def _val_train(self):
-        self.batch_size = 50
-        # 32-30718 # 64-15292 # 128-7571
-        self.total_num = 7571
-        self.name = self.name + '_val_train'
-        self.reader_thread = 16
-        self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_succ128.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_trn_raw200.txt'
 
     def _val(self):
         self.batch_size = 50
         # 32-28542 # 64-14199 # 128-7027
-        self.total_num = 27942
+        self.total_num = 9875  # 27942
         self.name = self.name + '_val'
         self.reader_thread = 16
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014_Audio/pp_val_over128.txt'
+        self.data_path = '../_datasets/AVEC2014_Audio/pp_val160_over128.txt'
 
     def _test(self):
         self.batch_size = 50

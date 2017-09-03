@@ -134,18 +134,18 @@ def train(data_name, chkp_path=None, exclusions=None):
 
                 # evaluation
                 if cur_iter % dataset.log.test_interval == 0 and cur_iter != 0:
-
-                    # vtn_mae, vtn_rmse, margin = val_train(
+                    # val and test
+                    # test_start_time = time.time()
+                    # val_mae, val_rmse = val(
                     #     data_name, dataset.log.train_dir, summary_test)
+                    # test_duration = time.time() - test_start_time
+                    # test(data_name, dataset.log.train_dir, summary_test)
 
+                    # test only
                     test_start_time = time.time()
-                    val_mae, val_rmse = val(
+                    val_mae, val_rmse = test(
                         data_name, dataset.log.train_dir, summary_test)
                     test_duration = time.time() - test_start_time
-
-                    # if the result of val is best, to test
-                    # if val_rmse < self.best_rmse and cur_iter > 45000:
-                    test(data_name, dataset.log.train_dir, summary_test)
 
                     if val_mae < self.best_mae:
                         self.best_mae = val_mae

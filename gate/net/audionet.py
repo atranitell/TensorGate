@@ -8,6 +8,9 @@ from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib import layers
 from gate.net import net
 
+import tensorflow.contrib.rnn as rnn
+from gate.rnn import component
+
 
 def cat(str_v, int_v):
     return str_v + '_' + str(int_v)
@@ -29,7 +32,7 @@ class AudioNet(net.Net):
     def model(self, inputs, num_classes, is_training):
         self.is_training = is_training
         self.activation_fn = tf.nn.relu
-        return self.audionet(inputs, num_classes, is_training, 'sen', 113, 'ma')
+        return self.audionet(inputs, num_classes, is_training, 'sen_rnn', 9, 'ma')
 
     def audionet(self, inputs, num_classes, is_training, net_kind, layer_num, keep_type):
         """ a factory corresponding to different experiments"""
@@ -39,6 +42,8 @@ class AudioNet(net.Net):
 
         if net_kind == 'sen':
             return self.model_sen(inputs, num_classes, is_training, keep, layer, keep_type)
+        elif net_kind == 'sen_rnn':
+            return self.model_sen_rnn(inputs, num_classes, is_training, keep, layer, keep_type)
         else:
             raise ValueError('Unknown network.')
 
@@ -342,3 +347,139 @@ class AudioNet(net.Net):
                 scope='logits')
 
             return logits, end_points
+
+    def model_sen_rnn(self, inputs, num_classes, is_training,
+                      keep, num_block, keep_type):
+        """
+        """
+        end_points = {}
+
+        with tf.variable_scope('sen_rnn_' + keep_type + '_' + itos(num_block)):
+            # root-12800
+            net = self.conv(inputs, 64, 20, 2, name='conv0')
+            net = self.pool1d(net, 2, 2, name='pool0')
+
+            # block1-3200
+            for i in range(num_block[0]):
+                net = keep(net, 64, 1, cat('k1', i))
+            net = self.conv(net, 128, 10, 2, 'k1')
+            net = self.pool1d(net, 2, 2, name='pool1')
+
+            # block2-800
+            for i in range(num_block[1]):
+                net = keep(net, 128, 1, cat('k2', i))
+            net_k2 = net
+            net = self.conv(net, 128, 10, 2, 'k2')
+            net = self.pool1d(net, 2, 2, name='pool2')
+
+            # block3-200
+            for i in range(num_block[2]):
+                net = keep(net, 128, 1, cat('k3', i))
+            net_k3 = net
+            net = self.conv(net, 256, 10, 2, 'k3')
+            net = self.pool1d(net, 2, 2, name='pool3')
+
+            # block3-50
+            for i in range(num_block[3] - 1):
+                net = keep(net, 256, 1, cat('k4', i))
+            net_k4 = keep(net, 256, 1, cat('k4', num_block[3]), False)
+
+            # scale to same length
+            net_k2 = self.pool1d(net_k2, 16, 16, 'AVG', name='k2_pool')
+            net_k3 = self.pool1d(net_k3, 4, 4, 'AVG', name='k3_pool')
+
+            # seqeeze
+            net_k2 = self.sequeeze_out(net_k2, 128, 'k2')
+            net_k3 = self.sequeeze_out(net_k3, 128, 'k3')
+            # net_k4 = self.sequeeze_out(net_k4, 256, 'k4')
+
+            # concat
+            net = tf.concat([net_k4, net_k3, net_k2], axis=2)
+
+            # (N, 50, 512)
+            net = self.sens_rnn(net)
+
+            end_points['gap_conv'] = net
+            net = tf.reduce_sum(net, axis=1)
+            net = layers.dropout(net, self.dropout, is_training=is_training)
+
+            logits = layers.fully_connected(
+                net, num_classes,
+                biases_initializer=None,
+                weights_initializer=tf.truncated_normal_initializer(
+                    stddev=0.01),
+                weights_regularizer=None,
+                activation_fn=None,
+                scope='logits')
+
+            return logits, end_points
+
+    def sens_rnn(self, X):
+        """ input args
+        a. num_layers
+        b. timesteps
+        c. cell_fn
+        d. activation_fn
+        e. batch_size
+        f. num_units
+        """
+        activation_fn = component.activation_fn('relu')
+        cell_fn = component.rnn_cell('gru')
+        initializer_fn = component.initializer_fn('orthogonal')
+
+        num_units = 128
+        num_layers = 1
+
+        # X shape is [batchsize, time_step, feature]
+        n_steps = 50
+        n_dim = 512
+        batch_size = X.get_shape().as_list()[0]
+
+        # reshape
+        # print(X)
+        # X = tf.reshape(X, [-1, n_steps, n_dim])
+
+        # transform to list
+        X = tf.unstack(X, n_steps, axis=1)
+
+        # sequence_length
+        sequence_length = [n_dim for _ in range(batch_size)]
+
+        # multi-layers
+        hidden_input = X
+        for idx_layer in range(num_layers):
+            scope = 'layer_' + str(idx_layer + 1)
+
+            # define
+            forward_cell = cell_fn(
+                num_units, activation=activation_fn)
+            backward_cell = cell_fn(
+                num_units, activation=activation_fn)
+
+            # brnn
+            # forward-backward, forward final state, backward final state
+            fbH, fst, bst = rnn.static_bidirectional_rnn(
+                forward_cell, backward_cell, hidden_input, dtype=tf.float32,
+                sequence_length=sequence_length, scope=scope)
+
+            fbHrs = [tf.reshape(t, [batch_size, 2, num_units])
+                     for t in fbH]
+
+            if idx_layer != num_layers - 1:
+                # output size is [seqlength, batchsize, 2, num_units]
+                output = tf.convert_to_tensor(fbHrs, dtype=tf.float32)
+
+                # output size is [seqlength, batchsize, num_units]
+                output = tf.reduce_sum(output, 2)
+
+                # from [seqlenth, batchsize, num_units]
+                # to [batchsize, seqlenth, num_units]
+                hidden_input = tf.unstack(
+                    tf.transpose(output, [1, 0, 2]), n_steps, axis=1)
+
+        # sum fw and bw
+        # [num_steps, batchsize, n_dim]
+        output = tf.convert_to_tensor(fbHrs, dtype=tf.float32)
+        output = tf.reduce_sum(output, axis=2)
+        output = tf.transpose(output, [1, 0, 2])
+        return output
