@@ -62,6 +62,9 @@
 - *配置自动生成* 需要将配置写入文本中而不是py中
 
 ## 深度学习可视化工具
+- tensorflow summary 单独封装起来，成为一个类，直接添加即可
+- 考虑deep tracker的设计
+- 考虑直接导入数据库的设计（与前端交互）
 
 ## tools
 - checkpoint工具
