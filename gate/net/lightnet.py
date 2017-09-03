@@ -57,7 +57,7 @@ class Lightnet_bn(net.Net):
 
             with arg_scope([layers.batch_norm], is_training=is_training):
 
-                block_in = layers.conv2d(images, 64, [7, 7], 2)
+                block_in = layers.conv2d(images, 64, [7, 7], 1)
                 block_in = layers.max_pool2d(block_in, [3, 3], 2)
 
                 with tf.variable_scope('block1'):

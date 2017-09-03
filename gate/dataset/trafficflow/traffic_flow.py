@@ -27,7 +27,7 @@ class traffic_flow(database.Database):
         # image
         self.image = data_param.image()
         self.image.set_format(channels=10)
-        self.image.set_raw_size(112, 112)
+        self.image.set_raw_size(111, 111)
         self.image.set_output_size(112, 112)
 
         # log
@@ -39,7 +39,7 @@ class traffic_flow(database.Database):
             test_interval=1000)
 
         # setting hps
-        self.hps = data_param.hps('resnet_v2_50')
+        self.hps = data_param.hps('lightnet')
         self.hps.set_dropout(1.0)
         self.hps.set_weight_decay(0.0001)
         self.hps.set_batch_norm(
@@ -55,22 +55,22 @@ class traffic_flow(database.Database):
 
         # lr
         self.lr = data_param.learning_rate()
-        self.lr.set_fixed(learning_rate=0.001)
+        self.lr.set_fixed(learning_rate=0.0001)
 
         self._print()
 
     def _test(self):
         self.batch_size = 50
-        self.total_num = 17727
+        self.total_num = 20
         self.name = self.name + '_test'
         self.reader_thread = 4
         self.shuffle = False
-        self.data_path = '../_datasets/AVEC2014/pp_tst_img.txt'
+        self.data_path = '../_datasets/traffic_flow/test.txt'
 
     def _train(self):
         self.batch_size = 4
-        self.total_num = 23564
+        self.total_num = 81
         self.name = self.name + '_train'
         self.reader_thread = 1
         self.shuffle = True
-        self.data_path = '../_datasets/AVEC2014/pp_trn_0_img.txt'
+        self.data_path = '../_datasets/traffic_flow/train.txt'
