@@ -4,12 +4,7 @@
 
 import os
 from core.utils.logger import logger
-
-
-def type_list_to_str(dtype_list):
-  """ (type1, type2, type3)
-  """
-  return '(' + ', '.join([item.__name__ for item in dtype_list]) + ')'
+from core.utils import string
 
 
 def parse_from_text(text_path, dtype_list, path_list):
@@ -33,7 +28,7 @@ def parse_from_text(text_path, dtype_list, path_list):
 
   # show
   logger.sys('Parse items from text file %s' % text_path)
-  # logger.sys('Items data type: ' + type_list_to_str(dtype_list))
+  # logger.sys('Items data type: ' + string.type_list_to_str(dtype_list))
 
   # construct the value to return and store
   res = []

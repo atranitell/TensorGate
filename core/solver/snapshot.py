@@ -9,37 +9,28 @@ from core.utils.logger import logger
 
 class Snapshot():
 
-  def __init__(self, config):
-    self.summary = None
-    self.summary_hook = None
+  def __init__(self, config, output_dir, name='model'):
+    """ config: config['log']
+    """
     self.chkp_hook = None
+    self.output_dir = output_dir
     self.config = config
+    self.hook = None
+    self.name = name
 
-  def get_chkp_hook(self, name, chkp):
-    if self.chkp_hook is None:
-      self.chkp_hook = tf.train.CheckpointSaverHook(
-          checkpoint_dir=chkp,
-          save_steps=self.config['save_model_iter'],
-          saver=tf.train.Saver(var_list=tf.global_variables(),
-                               max_to_keep=10000, name='save_all'),
-          checkpoint_basename=name + '.ckpt')
-    return self.chkp_hook
+  def init(self):
+    """ should be init after updater
+    """
+    self.hook = tf.train.CheckpointSaverHook(
+        checkpoint_dir=self.output_dir,
+        save_steps=self.config['save_model_iter'],
+        saver=tf.train.Saver(var_list=tf.global_variables(),
+                             max_to_keep=10000, name='save_all'),
+        checkpoint_basename=self.name + '.ckpt')
+    return self.hook
 
-  def get_summary_hook(self, chkp):
-    if self.summary_hook is None:
-      self.summary_hook = tf.train.SummarySaverHook(
-          save_steps=self.config['save_summaries_iter'],
-          output_dir=chkp,
-          summary_op=tf.summary.merge_all())
-    return self.summary_hook
-
-  def get_summary(self, chkp):
-    if self.summary is None:
-      self.summary = tf.summary.FileWriter(chkp)
-    return self.summary
-
-  def restore(self, sess, chkp, saver):
-    ckpt = tf.train.get_checkpoint_state(chkp)
+  def restore(self, sess, saver):
+    ckpt = tf.train.get_checkpoint_state(self.output_dir)
     if ckpt and ckpt.model_checkpoint_path:
       saver.restore(sess, ckpt.model_checkpoint_path)
       global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]

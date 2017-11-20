@@ -50,3 +50,8 @@ class Running_Hook(tf.train.SessionRunHook):
       if self.func_test is not None:
         with tf.Graph().as_default():
           self.func_test()
+
+    if cur_iter == self.config['max_iter']:
+      logger.sys('Has achieved the maximum iterations, \
+          the system will terminate.')
+      exit(0)
