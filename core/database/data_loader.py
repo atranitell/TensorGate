@@ -19,8 +19,10 @@ def load_image_from_text(cfg, phase):
     path-to-fold/img1 10
   """
   # parse
-  res = data_entry.parse_from_text(
+  res, count = data_entry.parse_from_text(
       cfg['entry_path'], (str, int), (True, False))
+  cfg['total_num'] = count
+
   image_list = res[0]
   label_list = res[1]
 

@@ -49,13 +49,13 @@ class Logger():
     """ Print information related to build system.
     """
     if self._SYS:
-      self._print('[SYS]', content)
+      self._print('\033[1;36m[SYS]', '%s\033[0m' % content)
 
   def net(self, content):
     """ build net graph related infomation.
     """
     if self._NET:
-      self._print('[NET]', content)
+      self._print('\033[1;34m[NET]', '%s\033[0m' % content)
 
   def train(self, content):
     """ relate to the training processing.
@@ -73,7 +73,7 @@ class Logger():
     """ relate to the test processing.
     """
     if self._TEST:
-      self._print('[TST]', content)
+      self._print('\033[1;33m[TST]', '%s\033[0m' % content)
 
   def warn(self, content):
     """ some suggest means warning.
@@ -85,13 +85,24 @@ class Logger():
     """ just print it for check information
     """
     if self._INFO:
-      self._print('[INF]', content)
+      self._print('\033[1;32m[INF]', '%s\033[0m' % content)
 
   def error(self, content):
     """ For error info
     """
     if self._ERR:
       self._print('[ERR]', content)
+
+  def iters(self, cur_iter, keys, values):
+    _data = 'Iter:%d' % cur_iter
+    for i in range(len(keys)):
+      if type(values[i]) == int or type(values[i]) == str:
+        _data += ', %s:%s' % (str(keys[i]), str(values[i]))
+      elif keys[i] == 'lr':
+        _data += ', %s:%.6f' % (str(keys[i]), float(values[i]))
+      else:
+        _data += ', %s:%.4f' % (str(keys[i]), float(values[i]))
+    return _data
 
 
 logger = Logger()

@@ -22,8 +22,7 @@ def generate_batch(X, Y, Z, cfg):
         tensors=[X, Y, Z],
         batch_size=cfg['batchsize'],
         capacity=cfg['min_queue_num'] + 3 * cfg['batchsize'],
-        num_threads=cfg['reader_thread'],
-        allow_smaller_final_batch=cfg['smaller_batch'])
+        num_threads=cfg['reader_thread'])
 
   # tf.reshape(Ys, [batch_size])
   return Xs, Ys, Zs

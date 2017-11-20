@@ -33,7 +33,7 @@ def parse_from_text(text_path, dtype_list, path_list):
 
   # show
   logger.sys('Parse items from text file %s' % text_path)
-  logger.sys('Items data type: ' + type_list_to_str(dtype_list))
+  # logger.sys('Items data type: ' + type_list_to_str(dtype_list))
 
   # construct the value to return and store
   res = []
@@ -63,4 +63,4 @@ def parse_from_text(text_path, dtype_list, path_list):
       count += 1
 
   logger.sys('Total loading in %d files.' % count)
-  return res
+  return res, count

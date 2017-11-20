@@ -6,53 +6,61 @@
 import tensorflow as tf
 
 
-def configure(lr, global_step):
+def decay_step(num_epochs_per_decay, batchsize, total_num):
+  return int(total_num / batchsize * num_epochs_per_decay)
+
+
+def configure(config, global_step, batchsize, total_num):
   """Configures the learning rate.
   Args:
-    lr: dataset.lr parameters
+    config: config['train']['lr']
     global_step: The global_step tensor.
   Returns:
     A `Tensor` representing the learning rate.
   """
+  method = config['type']
 
-  if lr.learning_rate_decay_type == 'exponential':
+  if config['type'] == 'exponential':
     return tf.train.exponential_decay(
-        lr.learning_rate,
+        config['learning_rate'],
         global_step,
-        lr.decay_step,
-        lr.learning_rate_decay_factor,
+        decay_step(config[method]['num_epochs_per_decay'],
+                   batchsize, total_num),
+        config[method]['decay_factor'],
         staircase=True,
         name='exponential_decay_learning_rate')
 
-  elif lr.learning_rate_decay_type == 'fixed':
-    return tf.constant(lr.learning_rate, name='fixed_learning_rate')
+  elif config['type'] == 'fixed':
+    return tf.constant(config['learning_rate'], name='fixed_learning_rate')
 
-  elif lr.learning_rate_decay_type == 'vstep':
+  elif config['type'] == 'vstep':
     global_step = tf.to_int32(global_step)
     return tf.train.piecewise_constant(
         global_step,
-        lr.boundaries,
-        lr.values,
+        config[method]['boundaries'],
+        config[method]['values'],
         name='vstep_decay_learning_rate')
 
-  elif lr.learning_rate_decay_type == 'polynomial':
+  elif config['type'] == 'polynomial':
     return tf.train.polynomial_decay(
-        lr.learning_rate,
+        config['learning_rate'],
         global_step,
-        lr.decay_step,
-        lr.end_learning_rate,
+        decay_step(config[method]['num_epochs_per_decay'],
+                   batchsize, total_num),
+        config[method]['end_learning_rate'],
         power=1.0,
         cycle=False,
         name='polynomial_decay_learning_rate')
 
-  elif lr.learning_rate_decay_type == 'natural_exp':
+  elif config['type'] == 'natural_exp':
     return tf.train.natural_exp_decay(
-        lr.learning_rate,
+        config['learning_rate'],
         global_step,
-        lr.decay_steps,
-        lr.decay_rate,
+        decay_step(config[method]['num_epochs_per_decay'],
+                   batchsize, total_num),
+        config[method]['decay_rate'],
         staircase=True,
         name='natural_exp_decay_learning_rate')
   else:
-    raise ValueError('learning_rate_decay_type [%s] was not recognized' % (
-                     lr.learning_rate_decay_type))
+    raise ValueError('learning rate type [ % s] was not recognized' % (
+                     config['type']))

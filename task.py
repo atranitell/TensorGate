@@ -28,7 +28,7 @@ class Task():
     self.logger = None
     self.config = None
 
-  def _initilize(self, config_path):
+  def initilize(self, config_path):
     # initilize global varibles
     with open(config_path) as fp:
       self.config = json.load(fp)
@@ -48,7 +48,11 @@ class Task():
       self.config['output_dir'] = output_name
     else:
       if not os.path.exists(self.config['output_dir']):
-        raise ValueError('Output dir is invalid.')
+        raise ValueError('Output dir %s is invalid.' %
+                         self.config['output_dir'])
+      # prepared for train-restore
+      if 'train' in self.config:
+        self.config['train']['restore'] = True
 
   def _logger(self):
     logger_name = self.config['task'] + '.' + self.pid + '.log'

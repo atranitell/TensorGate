@@ -36,11 +36,11 @@ networks_map = {
 }
 
 
-def network(X, task_cfg, phase, scope='', reuse=None):
+def network(X, config, phase, scope='', reuse=None):
   """ net factory
   """
-  net_cfg = task_cfg['net']
-  net_cfg['num_classes'] = task_cfg['data']['num_classes']
+  net_cfg = config['net']
+  net_cfg['num_classes'] = config[phase]['data']['num_classes']
   is_training = True if phase == 'train' else False
 
   # get network and argscope

@@ -20,5 +20,5 @@ if __name__ == "__main__":
   if not os.path.exists(args.config):
     raise ValueError('Configuration file path %s is invalid.' % args.config)
 
-  task._initilize(args.config)
+  task.initilize(args.config)
   task.run()

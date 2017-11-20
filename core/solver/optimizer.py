@@ -4,12 +4,13 @@
     Updated: 2017-03-16
 """
 import tensorflow as tf
-from gate.core.logger import logger
+from core.utils.logger import logger
 
 
-def configure(opt, learning_rate):
+def configure(config, learning_rate):
   """Configures the optimizer used for training.
   Args:
+    config: config['train']['optimizer']
     learning_rate: A scalar or `Tensor` learning rate.
   Returns:
     An instance of an optimizer.
@@ -17,51 +18,52 @@ def configure(opt, learning_rate):
     ValueError: if opt.optimizer is not recognized.
   """
 
-  logger.info('Routine will use %s optimizer.' % opt.optimizer)
+  logger.info('Routine will use %s optimizer.' % config['type'])
+  cfg = config[config['type']]
 
-  if opt.optimizer == 'adadelta':
+  if config['type'] == 'adadelta':
     optimizer = tf.train.AdadeltaOptimizer(
         learning_rate,
-        rho=opt.adadelta_rho,
-        epsilon=opt.adadelta_epsilon)
+        rho=cfg['rho'],
+        epsilon=cfg['epsilon'])
 
-  elif opt.optimizer == 'adagrad':
+  elif config['type'] == 'adagrad':
     optimizer = tf.train.AdagradOptimizer(
         learning_rate,
-        initial_accumulator_value=opt.adagrad_initial_accumulator_value)
+        initial_accumulator_value=cfg['accumulator_value'])
 
-  elif opt.optimizer == 'adam':
+  elif config['type'] == 'adam':
     optimizer = tf.train.AdamOptimizer(
         learning_rate,
-        beta1=opt.adam_beta1,
-        beta2=opt.adam_beta2,
-        epsilon=opt.adam_epsilon)
+        beta1=cfg['beta1'],
+        beta2=cfg['beta2'],
+        epsilon=cfg['epsilon'])
 
-  elif opt.optimizer == 'ftrl':
+  elif config['type'] == 'ftrl':
     optimizer = tf.train.FtrlOptimizer(
         learning_rate,
-        learning_rate_power=opt.ftrl_learning_rate_power,
-        initial_accumulator_value=opt.ftrl_initial_accumulator_value,
-        l1_regularization_strength=opt.ftrl_l1,
-        l2_regularization_strength=opt.ftrl_l2)
+        learning_rate_power=cfg['power'],
+        initial_accumulator_value=cfg['accumulator_value'],
+        l1_regularization_strength=cfg['l1'],
+        l2_regularization_strength=cfg['l2'])
 
-  elif opt.optimizer == 'momentum':
+  elif config['type'] == 'momentum':
     optimizer = tf.train.MomentumOptimizer(
         learning_rate,
-        momentum=opt.momentum,
+        momentum=cfg['momentum'],
         name='Momentum')
 
-  elif opt.optimizer == 'rmsprop':
+  elif config['type'] == 'rmsprop':
     optimizer = tf.train.RMSPropOptimizer(
         learning_rate,
-        decay=opt.rmsprop_decay,
-        momentum=opt.rmsprop_momentum,
-        epsilon=opt.rmsprop_epsilon)
+        decay=cfg['decay'],
+        momentum=cfg['momentum'],
+        epsilon=cfg['epsilon'])
 
-  elif opt.optimizer == 'sgd':
+  elif config['type'] == 'sgd':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 
   else:
-    raise ValueError('Optimizer [%s] was not recognized' % opt.optimizer)
+    raise ValueError('Optimizer [%s] was not recognized' % config['type'])
 
   return optimizer

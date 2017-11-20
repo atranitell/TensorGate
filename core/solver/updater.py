@@ -22,10 +22,11 @@ class Updater():
     self.variables_to_train = None
     self.variables_to_restore = None
 
-  def get_learning_rate(self, cfg_lr=None):
+  def get_learning_rate(self, cfg_lr=None, batchsize=None, total_num=None):
     if self.learning_rate is not None:
       return self.learning_rate
-    return learning_rate.configure(cfg_lr, self.global_step)
+    return learning_rate.configure(cfg_lr, self.global_step,
+                                   batchsize, total_num)
 
   def get_optimizer(self, cfg_opt=None):
     if self.optimizer is not None:
@@ -45,17 +46,17 @@ class Updater():
     self.grads = self.optimizer.compute_gradients(
         losses, var_list=self.variables_to_train)
     # NOTE: for future to seperate it.
-    if cfg_opt.clip_method is 'clip_by_value':
-      cmin = cfg_opt.clip_value_min
-      cmax = cfg_opt.clip_value_max
-      self.grads = [(tf.clip_by_value(grad, cmin, cmax), var)
-                    for grad, var in self.grads]
+    # if cfg_opt.clip_method is 'clip_by_value':
+    #   cmin = cfg_opt.clip_value_min
+    #   cmax = cfg_opt.clip_value_max
+    #   self.grads = [(tf.clip_by_value(grad, cmin, cmax), var)
+    #                 for grad, var in self.grads]
     return self.grads
 
   def get_global_step(self):
     if self.global_step is not None:
       return self.global_step
-    return framework.create_global_step()
+    return tf.train.create_global_step()
 
   def _inclusion_var(self, exclusions, var_list):
     """ exclude prefix elements of exclusions in var_list
@@ -99,25 +100,27 @@ class Updater():
     return tf.train.Saver(var_list=self.variables_to_restore,
                           name='restore', allow_empty=True)
 
-  def init_default_updater(self, cfg_lr, cfg_opt, loss, var_list=None):
+  def init_default_updater(self, config, loss):
     """ initialize default updater
     """
     # NOTE need to processing var list
-
-    #
     self.global_step = self.get_global_step()
-    self.learning_rate = self.get_learning_rate(cfg_lr)
-    self.optimizer = self.get_optimizer(cfg_opt)
+    self.learning_rate = self.get_learning_rate(
+        config['lr'], config['data']['batchsize'], 
+        config['data']['total_num'])
+    
+    self.optimizer = self.get_optimizer(config['optimizer'])
 
     # variable to train
     self.variables_to_train = self.get_trainable_list()
 
     # compute gradients
-    self.grads = self.get_gradients(loss, cfg_opt)
+    self.grads = self.get_gradients(loss, config['optimizer'])
     grad_op = self.optimizer.apply_gradients(
         self.grads, self.global_step, name='train_step')
 
     self.train_op = grad_op
 
+    # setting restore variables
     self.variables_to_restore = self.get_restore_list()
     self.saver = self.get_variables_saver()
