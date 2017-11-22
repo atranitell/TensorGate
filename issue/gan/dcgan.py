@@ -118,13 +118,13 @@ class DCGAN():
 
     # pay attention
     # there global_step just running once
-    d_optim = tf.train.RMSPropOptimizer(0.0001).minimize(
+    d_optim = tf.train.AdamOptimizer(0.00002).minimize(
         loss=D_loss, global_step=global_step, var_list=d_vars)
-    g_optim = tf.train.RMSPropOptimizer(0.0001).minimize(
+    g_optim = tf.train.AdamOptimizer(0.00002).minimize(
         loss=G_loss, var_list=g_vars)
 
     train_op = [[d_optim, g_optim]]
-    restore_saver = tf.train.Saver()
+    restore_saver = tf.train.Saver(var_list=tf.trainable_variables())
 
     # hooks
     snapshot_hook = self.snapshot.init()
@@ -158,10 +158,10 @@ class DCGAN():
     """
     self._enter_('test')
     test_dir = filesystem.mkdir(self.config['output_dir'] + '/test/')
+    logit_G, net_G = self._generator(self.datacfg['batchsize'], 100, 'test')
     saver = tf.train.Saver(name='restore_all')
     with tf.Session() as sess:
       global_step = self.snapshot.restore(sess, saver)
-      logit_G, net_G = self._generator(self.datacfg['batchsize'], 100, 'test')
       imgs = sess.run(logit_G)
       img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
       utils.save_images(imgs, [8, 8], img_path)

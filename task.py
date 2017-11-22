@@ -7,9 +7,10 @@
 import os
 import json
 from datetime import datetime
+from core.utils import filesystem
 from core.utils.logger import logger
 
-OUTPUTS = './_outputs/'
+OUTPUTS = filesystem.mkdir('_outputs/')
 
 
 class Task():
@@ -76,7 +77,7 @@ class Task():
     # setting application
     if self.config['target'] == 'cnn.classification':
       from issue.cnn.classification import classification as App
-    
+
     if self.config['target'] == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
 
