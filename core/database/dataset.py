@@ -15,3 +15,4 @@ class Dataset():
 
   def loads(self):
     return data_loader.load_image_from_text(self.config, self.phase)
+    # return data_loader.load_pair_image_from_text(self.config, self.phase)

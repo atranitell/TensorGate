@@ -12,7 +12,8 @@ def mkdir(path, raise_path_exits=False):
   """
   if not os.path.exists(path):
     os.mkdir(path)
-    return path
   else:
     if raise_path_exits:
       raise ValueError('Path %s has existed.' % path)
+  return path
+

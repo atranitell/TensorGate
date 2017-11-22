@@ -80,6 +80,14 @@ class Task():
 
     if self.config['target'] == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
+    elif self.config['target'] == 'gan.cgan':
+      from issue.gan.cgan import CGAN as App
+    elif self.config['target'] == 'gan.cwgan':
+      from issue.gan.cwgan import CWGAN as App
+    elif self.config['target'] == 'gan.acgan':
+      from issue.gan.acgan import ACGAN as App
+    elif self.config['target'] == 'gan.kingan':
+      from issue.gan.kingan import KinGAN as App
 
     # initilization
     app = App(self.config)
