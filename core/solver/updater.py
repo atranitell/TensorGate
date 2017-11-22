@@ -12,13 +12,13 @@ from core.solver import learning_rate
 
 class Updater():
 
-  def __init__(self):
+  def __init__(self, global_step):
+    self.global_step = global_step
     self.learning_rate = None
     self.optimizer = None
     self.grads = None
     self.saver = None
     self.train_op = None
-    self.global_step = None
     self.variables_to_train = None
     self.variables_to_restore = None
 
@@ -52,11 +52,6 @@ class Updater():
     #   self.grads = [(tf.clip_by_value(grad, cmin, cmax), var)
     #                 for grad, var in self.grads]
     return self.grads
-
-  def get_global_step(self):
-    if self.global_step is not None:
-      return self.global_step
-    return tf.train.create_global_step()
 
   def _inclusion_var(self, exclusions, var_list):
     """ exclude prefix elements of exclusions in var_list
@@ -104,11 +99,10 @@ class Updater():
     """ initialize default updater
     """
     # NOTE need to processing var list
-    self.global_step = self.get_global_step()
     self.learning_rate = self.get_learning_rate(
-        config['lr'], config['data']['batchsize'], 
+        config['lr'], config['data']['batchsize'],
         config['data']['total_num'])
-    
+
     self.optimizer = self.get_optimizer(config['optimizer'])
 
     # variable to train

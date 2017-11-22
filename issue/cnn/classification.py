@@ -7,27 +7,43 @@ import os
 import tensorflow as tf
 from core.loss import softmax
 from core.database.dataset import Dataset
-from core.network.factory import network
+from core.network.cnn import network
 from core.solver.updater import Updater
 from core.solver.snapshot import Snapshot
 from core.solver.summary import Summary
-from core.utils.logger import logger
+
 from core.utils import string
+from core.utils import filesystem
+from core.utils.logger import logger
 from core.utils.context import QueueContext
+
 from issue.running_hook import Running_Hook
 
 
-class cnn_classification():
+class classification():
 
   def __init__(self, config):
     self.config = config
-    self.phase = config['task']
-    self.taskcfg = config[self.phase]
     self.summary = Summary(self.config['log'], config['output_dir'])
     self.snapshot = Snapshot(self.config['log'], config['output_dir'])
+    # current work env
+    self.taskcfg = None
 
-  def _net(self, data):
-    logit, net = network(data, self.config, self.phase)
+  def _enter_(self, phase):
+    """ task enter
+    """
+    self.pre_taskcfg = self.taskcfg
+    self.taskcfg = self.config[phase]
+    self.datacfg = self.taskcfg['data']
+
+  def _exit_(self):
+    """ task exit
+    """
+    self.taskcfg = self.pre_taskcfg
+    self.datacfg = self.taskcfg['data']
+
+  def _net(self, data, phase):
+    logit, net = network(data, self.config, phase)
     return logit, net
 
   def _loss(self, logit, label):
@@ -44,23 +60,21 @@ class cnn_classification():
     """
     """
     # set phase
-    self.phase = 'train'
-    self.taskcfg = self.config[self.phase]
+    self._enter_('train')
 
     # get data pipeline
-    data, label, path = Dataset(self.taskcfg['data'], self.phase).loads()
+    data, label, path = Dataset(self.datacfg, 'train').loads()
     # get network
-    logit, net = self._net(data)
+    logit, net = self._net(data, 'train')
     # get loss
     loss, error, pred = self._loss(logit, label)
 
     # update
     with tf.name_scope('updater'):
-      updater = Updater()
+      global_step = tf.train.create_global_step()
+      updater = Updater(global_step)
       updater.init_default_updater(self.taskcfg, loss)
-      lr = updater.get_learning_rate()
       train_op = updater.get_train_op()
-      global_step = updater.get_global_step()
       restore_saver = updater.get_variables_saver()
 
     # hooks
@@ -93,24 +107,18 @@ class cnn_classification():
     """
     """
     # save current context
-    cur_phase = self.phase
-    cur_taskcfg = self.taskcfg
-    self.phase = 'test'
-    self.taskcfg = self.config[self.phase]
-
-    # alias
-    batchsize = self.taskcfg['data']['batchsize'])
-    total_num = self.taskcfg['data']['total_num']
+    self._enter_('test')
 
     # create a folder to save
-    test_dir = self.config['output_dir'] + '/test/'
-    if not os.path.exists(test_dir):
-      os.mkdir(test_dir)
+    test_dir = filesystem.mkdir(self.config['output_dir'] + '/test/')
 
     # get data pipeline
-    data, label, path = Dataset(self.taskcfg['data'], self.phase).loads()
+    data, label, path = Dataset(self.datacfg, 'test').loads()
+    # alias
+    batchsize = self.datacfg['batchsize']
+    total_num = self.datacfg['total_num']
     # get network
-    logit, net = self._net(data)
+    logit, net = self._net(data, 'test')
     # get loss
     loss, error, pred = self._loss(logit, label)
 
@@ -119,11 +127,9 @@ class cnn_classification():
     with tf.Session() as sess:
       # get latest checkpoint
       global_step = self.snapshot.restore(sess, saver)
-
       # Initial some variables
       num_iter = int(total_num / batchsize)
       mean_err, mean_loss = 0, 0
-
       # output to file
       info = string.concat_str_in_tab(batchsize, [path, label, pred])
       with open(test_dir + '%s.txt' % global_step, 'wb') as fw:
@@ -134,16 +140,15 @@ class cnn_classification():
             mean_loss += _loss
             mean_err += _err
             # save tensor info to text file
-            for _line in _info:
-              fw.write(_line + b'\r\n')
+            [fw.write(_line + b'\r\n') for _line in _info]
 
       # statistic
       mean_loss = 1.0 * mean_loss / num_iter
       mean_err = 1.0 * mean_err / num_iter
 
       # display results on screen
-      keys = ['total sample', 'num batch', 'loss', 'err']
-      vals = [self.taskcfg['data']['total_num'], num_iter, mean_loss, mean_err]
+      keys = ['total sample', 'num batch', 'loss', 'error']
+      vals = [total_num, num_iter, mean_loss, mean_err]
       logger.test(logger.iters(int(global_step), keys, vals))
 
       # write to summary
@@ -151,9 +156,7 @@ class cnn_classification():
                         tags=['test/error', 'test/loss'],
                         values=[mean_err, mean_loss])
 
-      # restore context
-      self.phase = cur_phase
-      self.taskcfg = cur_taskcfg
+      self._exit_()
       return mean_err
 
   def val(self):

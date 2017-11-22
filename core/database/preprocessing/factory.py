@@ -4,10 +4,13 @@
     Updated: 2017-08-28
 """
 import tensorflow as tf
+
 from core.database.preprocessing.slim import cifarnet_preprocessing
 from core.database.preprocessing.slim import inception_preprocessing
 from core.database.preprocessing.slim import lenet_preprocessing
 from core.database.preprocessing.slim import vgg_preprocessing
+
+from core.database.preprocessing.gan import mnist_preprocessing
 
 
 def is_training(phase):
@@ -43,11 +46,19 @@ def vgg_fn(X, phase, cfg):
       X, cfg['output_height'], cfg['output_width'], is_training(phase))
 
 
+def gan_mnist_fn(X, phase, cfg):
+  """ mnist like image (3channels) for gan
+  """
+  return mnist_preprocessing.preprocess_image(
+      X, cfg['output_height'], cfg['output_width'], is_training(phase))
+
+
 preprocessing_map = {
     'cifarnet': cifarnet_fn,
     'inception': inception_fn,
     'lenet': lenet_fn,
-    'vgg': vgg_fn
+    'vgg': vgg_fn,
+    'gan.mnist': gan_mnist_fn
 }
 
 

@@ -75,7 +75,10 @@ class Task():
   def run(self):
     # setting application
     if self.config['target'] == 'cnn.classification':
-      from issue.cnn_classification import cnn_classification as App
+      from issue.cnn.classification import classification as App
+    
+    if self.config['target'] == 'gan.dcgan':
+      from issue.gan.dcgan import DCGAN as App
 
     # initilization
     app = App(self.config)
