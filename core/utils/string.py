@@ -39,9 +39,9 @@ def as_batch(tensor, batchsize):
 
 
 def concat(batchsize, tensorlist, connector=' '):
-  """ t1 + tab + t2 + tab + ... + tn
+  """ t1 + connector + t2 + connector + ... + tn
     1) convert tensor to batch string
-    2) combine them with tab
+    2) combine them with connector
   """
   str_batch = [as_batch(i, batchsize) for i in tensorlist]
   return tf.string_join(str_batch, connector)

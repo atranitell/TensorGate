@@ -9,20 +9,18 @@ from core.utils.logger import logger
 
 class Summary():
 
-  def __init__(self, config, output_dir):
+  def __init__(self, config):
     """ summary helper
-      config: config['log']
     """
     # setting path
     self.config = config
-    self.output_dir = output_dir
     self.hook = None
-    self.summary = tf.summary.FileWriter(self.output_dir)
+    self.summary = tf.summary.FileWriter(self.config.output_dir)
 
   def init(self):
     self.hook = tf.train.SummarySaverHook(
-        save_steps=self.config['save_summaries_iter'],
-        output_dir=self.output_dir,
+        save_steps=self.config.log.save_summaries_invl,
+        output_dir=self.config.output_dir,
         summary_op=tf.summary.merge_all())
     return self.hook
 

@@ -6,19 +6,80 @@
 
 import os
 import argparse
+from datetime import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-from task import task
+from config import factory
+from core.utils import filesystem
+from core.utils.logger import logger
+
+OUTPUTS = filesystem.mkdir('_outputs/')
+
+
+class Gate():
+
+  def __init__(self):
+    """
+    """
+    self.config = None
+    self.pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
+
+  def initilize(self, name):
+    # 0. load config params, default of 'train'
+    config = factory.get(name)
+
+    # 1. setting output dir
+    if config.output_dir is None:
+      config.output_dir = filesystem.mkdir(
+          OUTPUTS + config.name + '.' + config.target + '.' + self.pid)
+
+    # 2. setting logger location
+    logger.init(config.name + '.' + self.pid, config.output_dir)
+    logger.info('Initilized logger successful.')
+    logger.info('Current model in %s' % config.output_dir)
+
+    # 3. save config as own
+    self.config = config
+
+  def run(self):
+    """Target"""
+    # For CNN
+    if self.config.target == 'cnn.classification':
+      from issue.cnn.classification import classification as App
+    # For GAN
+    elif self.config.target == 'gan.dcgan':
+      from issue.gan.dcgan import DCGAN as App
+    elif self.config.target == 'gan.cgan':
+      from issue.gan.cgan import CGAN as App
+    elif self.config.target == 'gan.cwgan':
+      from issue.gan.cwgan import CWGAN as App
+    elif self.config.target == 'gan.acgan':
+      from issue.gan.acgan import ACGAN as App
+    elif self.config.target == 'gan.kingan':
+      from issue.gan.kingan import KinGAN as App
+    # Unkown
+    else:
+      raise ValueError('Unknown target [%s]' % self.config.target)
+
+    """Init"""
+    app = App(self.config)
+
+    """For Task"""
+    if self.config.phase == 'train':
+      app.train()
+    elif self.config.phase == 'test':
+      app.test()
+    else:
+      raise ValueError('Unknown task [%s]' % self.config.phase)
+
+
+task = Gate()
 
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-config', type=str, dest='config',
-                      default='_datasets/settings.json')
+  parser.add_argument('-name', type=str, dest='name', default='mnist_gan')
   args, _ = parser.parse_known_args()
 
-  if not os.path.exists(args.config):
-    raise ValueError('Configuration file path %s is invalid.' % args.config)
-
-  task.initilize(args.config)
+  task.initilize(args.name)
   task.run()

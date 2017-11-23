@@ -24,10 +24,10 @@ from core.network.nets.nasnet import nasnet
 def slim_cifarnet(X, config, is_training):
   """ the config is config[task][net]
   """
-  argscope = cifarnet.cifarnet_arg_scope(config['weight_decay'])
-  net = cifarnet.cifarnet(X, num_classes=config['num_classes'],
+  argscope = cifarnet.cifarnet_arg_scope(config.net.weight_decay)
+  net = cifarnet.cifarnet(X, num_classes=config.data.num_classes,
                           is_training=is_training,
-                          dropout_keep_prob=config['dropout_keep'])
+                          dropout_keep_prob=config.net.dropout_keep)
   return net, argscope
 
 
@@ -36,16 +36,12 @@ networks_map = {
 }
 
 
-def network(X, config, phase, scope='', reuse=None):
+def network(X, config, scope='', reuse=None):
   """ net factory
   """
-  net_cfg = config['net']
-  net_cfg['num_classes'] = config[phase]['data']['num_classes']
-  is_training = True if phase == 'train' else False
-
+  is_training = True if config.phase == 'train' else False
   # get network and argscope
-  net, argscope = networks_map[net_cfg['name']](X, net_cfg, is_training)
-
+  net, argscope = networks_map[config.net.name](X, config, is_training)
   with tf.variable_scope(scope) as scope:
     if reuse:
       scope.reuse_variables()

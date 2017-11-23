@@ -21,14 +21,14 @@ def cifarnet_fn(X, phase, cfg):
   """ preprocessing cifarnet
   """
   return cifarnet_preprocessing.preprocess_image(
-      X, cfg['output_height'], cfg['output_width'], is_training(phase))
+      X, cfg.output_height, cfg.output_width, is_training(phase))
 
 
 def inception_fn(X, phase, cfg):
   """ preprocessing inception
   """
   return inception_preprocessing.preprocess_image(
-      X, cfg['output_height'], cfg['output_width'], is_training(phase),
+      X, cfg.output_height, cfg.output_width, is_training(phase),
       bbox=None, fast_mode=True)
 
 
@@ -36,21 +36,21 @@ def lenet_fn(X, phase, cfg):
   """ preprocessing lenet
   """
   return lenet_preprocessing.preprocess_image(
-      X, cfg['output_height'], cfg['output_width'], is_training(phase))
+      X, cfg.output_height, cfg.output_width, is_training(phase))
 
 
 def vgg_fn(X, phase, cfg):
   """ preprocessing vgg
   """
   return vgg_preprocessing.preprocess_image(
-      X, cfg['output_height'], cfg['output_width'], is_training(phase))
+      X, cfg.output_height, cfg.output_width, is_training(phase))
 
 
 def gan_mnist_fn(X, phase, cfg):
   """ mnist like image (3channels) for gan
   """
   return mnist_preprocessing.preprocess_image(
-      X, cfg['output_height'], cfg['output_width'], is_training(phase))
+      X, cfg.output_height, cfg.output_width, is_training(phase))
 
 
 preprocessing_map = {

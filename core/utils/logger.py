@@ -1,7 +1,7 @@
 # -*- coding: utf-8
 """ Logger to control display
 """
-
+import os
 import platform
 import logging
 from datetime import datetime
@@ -21,6 +21,13 @@ class Logger():
     self._WARN = True
     self._INFO = True
     self._ERR = True
+
+  def init(self, name, output_dir):
+    """
+    """
+    logger_path = os.path.join(output_dir, name + '.log')
+    self.set_filestream(logger_path)
+    self.set_screenstream()
 
   def set_filestream(self, filepath, level=logging.DEBUG):
     """ setting content output to file

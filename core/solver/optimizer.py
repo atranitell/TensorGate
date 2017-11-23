@@ -7,7 +7,7 @@ import tensorflow as tf
 from core.utils.logger import logger
 
 
-def configure(config, learning_rate):
+def configure_optimizer(config, learning_rate):
   """Configures the optimizer used for training.
   Args:
     config: config['train']['optimizer']
@@ -18,52 +18,51 @@ def configure(config, learning_rate):
     ValueError: if opt.optimizer is not recognized.
   """
 
-  logger.info('Routine will use %s optimizer.' % config['type'])
-  cfg = config[config['type']]
+  logger.info('Routine will use %s optimizer.' % config.name)
 
-  if config['type'] == 'adadelta':
+  if config.name == 'adadelta':
     optimizer = tf.train.AdadeltaOptimizer(
         learning_rate,
-        rho=cfg['rho'],
-        epsilon=cfg['epsilon'])
+        rho=config.rho,
+        epsilon=config.epsilon)
 
-  elif config['type'] == 'adagrad':
+  elif config.name == 'adagrad':
     optimizer = tf.train.AdagradOptimizer(
         learning_rate,
-        initial_accumulator_value=cfg['accumulator_value'])
+        initial_accumulator_value=config.initial_accumulator_value)
 
-  elif config['type'] == 'adam':
+  elif config.name == 'adam':
     optimizer = tf.train.AdamOptimizer(
         learning_rate,
-        beta1=cfg['beta1'],
-        beta2=cfg['beta2'],
-        epsilon=cfg['epsilon'])
+        beta1=config.beta1,
+        beta2=config.beta2,
+        epsilon=config.epsilon)
 
-  elif config['type'] == 'ftrl':
+  elif config.name == 'ftrl':
     optimizer = tf.train.FtrlOptimizer(
         learning_rate,
-        learning_rate_power=cfg['power'],
-        initial_accumulator_value=cfg['accumulator_value'],
-        l1_regularization_strength=cfg['l1'],
-        l2_regularization_strength=cfg['l2'])
+        learning_rate_power=config.learning_rate_power,
+        initial_accumulator_value=config.initial_accumulator_value,
+        l1_regularization_strength=config.l1,
+        l2_regularization_strength=config.l2)
 
-  elif config['type'] == 'momentum':
+  elif config.name == 'momentum':
     optimizer = tf.train.MomentumOptimizer(
         learning_rate,
-        momentum=cfg['momentum'],
+        momentum=config.momentum,
         name='Momentum')
 
-  elif config['type'] == 'rmsprop':
+  elif config.name == 'rmsprop':
     optimizer = tf.train.RMSPropOptimizer(
         learning_rate,
-        decay=cfg['decay'],
-        momentum=cfg['momentum'],
-        epsilon=cfg['epsilon'])
+        decay=config.decay,
+        momentum=config.momentum,
+        epsilon=config.epsilon)
 
-  elif config['type'] == 'sgd':
+  elif config.name == 'sgd':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 
   else:
-    raise ValueError('Optimizer [%s] was not recognized' % config['type'])
+    raise ValueError('Optimizer [%s] was not recognized' % config.name)
 
   return optimizer
