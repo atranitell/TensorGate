@@ -38,10 +38,10 @@ def as_batch(tensor, batchsize):
   return tf.as_string(tf.reshape(tensor, shape=[batchsize]))
 
 
-def concat_str_in_tab(batchsize, tensorlist):
+def concat(batchsize, tensorlist, connector=' '):
   """ t1 + tab + t2 + tab + ... + tn
     1) convert tensor to batch string
     2) combine them with tab
   """
   str_batch = [as_batch(i, batchsize) for i in tensorlist]
-  return tf.string_join(str_batch, ' ')
+  return tf.string_join(str_batch, connector)
