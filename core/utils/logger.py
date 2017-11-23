@@ -2,6 +2,7 @@
 """ Logger to control display
 """
 
+import platform
 import logging
 from datetime import datetime
 
@@ -49,13 +50,19 @@ class Logger():
     """ Print information related to build system.
     """
     if self._SYS:
-      self._print('\033[1;36m[SYS]', '%s\033[0m' % content)
+      if platform.system() == 'Linux':
+        self._print('\033[1;36m[SYS]', '%s\033[0m' % content)
+      else:
+        self._print('[SYS]', content)
 
   def net(self, content):
     """ build net graph related infomation.
     """
     if self._NET:
-      self._print('\033[1;34m[NET]', '%s\033[0m' % content)
+      if platform.system() == 'Linux':
+        self._print('\033[1;34m[NET]', '%s\033[0m' % content)
+      else:
+        self._print('[NET]', content)
 
   def train(self, content):
     """ relate to the training processing.
@@ -73,7 +80,10 @@ class Logger():
     """ relate to the test processing.
     """
     if self._TEST:
-      self._print('\033[1;33m[TST]', '%s\033[0m' % content)
+      if platform.system() == 'Linux':
+        self._print('\033[1;33m[TST]', '%s\033[0m' % content)
+      else:
+        self._print('[TST]', content)
 
   def warn(self, content):
     """ some suggest means warning.
@@ -85,7 +95,10 @@ class Logger():
     """ just print it for check information
     """
     if self._INFO:
-      self._print('\033[1;32m[INF]', '%s\033[0m' % content)
+      if platform.system() == 'Linux':
+        self._print('\033[1;32m[INF]', '%s\033[0m' % content)
+      else:
+        self._print('[INF]', content)
 
   def error(self, content):
     """ For error info
