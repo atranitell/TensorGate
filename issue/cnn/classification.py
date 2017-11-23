@@ -16,6 +16,7 @@ from core.utils import string
 from core.utils import filesystem
 from core.utils.logger import logger
 from core.utils.context import QueueContext
+from core.utils.profiler import Profiler
 
 from issue.running_hook import Running_Hook
 
@@ -35,12 +36,14 @@ class classification():
     self.pre_taskcfg = self.taskcfg
     self.taskcfg = self.config[phase]
     self.datacfg = self.taskcfg['data']
+    self.batchsize = self.datacfg['batchsize']
 
   def _exit_(self):
     """ task exit
     """
     self.taskcfg = self.pre_taskcfg
     self.datacfg = self.taskcfg['data']
+    self.batchsize = self.datacfg['batchsize']
 
   def _net(self, data, phase):
     logit, net = network(data, self.config, phase)
@@ -49,9 +52,7 @@ class classification():
   def _loss(self, logit, label):
     # get loss
     loss, logit = softmax.get_loss(
-        logit, label, self.taskcfg['data']['num_classes'],
-        self.taskcfg['data']['batchsize'])
-
+        logit, label, self.datacfg['num_classes'], self.batchsize)
     # get error
     error, pred = softmax.get_error(logit, label)
     return loss, error, pred
@@ -70,12 +71,11 @@ class classification():
     loss, error, pred = self._loss(logit, label)
 
     # update
-    with tf.name_scope('updater'):
-      global_step = tf.train.create_global_step()
-      updater = Updater(global_step)
-      updater.init_default_updater(self.taskcfg, loss)
-      train_op = updater.get_train_op()
-      restore_saver = updater.get_variables_saver()
+    global_step = tf.train.create_global_step()
+    updater = Updater(global_step)
+    updater.init_default_updater(self.taskcfg, loss)
+    train_op = updater.get_train_op()
+    restore_saver = updater.get_variables_saver()
 
     # hooks
     snapshot_hook = self.snapshot.init()
@@ -99,7 +99,9 @@ class classification():
       if 'restore' in self.taskcfg and self.taskcfg['restore']:
         self.snapshot.restore(sess, restore_saver)
 
-      # running
+      # Profile
+      # Profiler.time_memory(self.config['output_dir'], sess, train_op)
+
       while not sess.should_stop():
         sess.run(train_op)
 
@@ -114,8 +116,7 @@ class classification():
 
     # get data pipeline
     data, label, path = Dataset(self.datacfg, 'test').loads()
-    # alias
-    batchsize = self.datacfg['batchsize']
+    # total_num
     total_num = self.datacfg['total_num']
     # get network
     logit, net = self._net(data, 'test')
@@ -128,10 +129,10 @@ class classification():
       # get latest checkpoint
       global_step = self.snapshot.restore(sess, saver)
       # Initial some variables
-      num_iter = int(total_num / batchsize)
+      num_iter = int(total_num / self.batchsize)
       mean_err, mean_loss = 0, 0
       # output to file
-      info = string.concat_str_in_tab(batchsize, [path, label, pred])
+      info = string.concat_str_in_tab(self.batchsize, [path, label, pred])
       with open(test_dir + '%s.txt' % global_step, 'wb') as fw:
         with QueueContext(sess):
           for _ in range(num_iter):
