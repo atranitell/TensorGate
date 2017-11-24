@@ -96,6 +96,7 @@ _data
 _bin
 _outputs
 _datasets
+_projects
 *.npy
 
 # for mac
