@@ -11,6 +11,7 @@ from core.database.preprocessing.slim import lenet_preprocessing
 from core.database.preprocessing.slim import vgg_preprocessing
 
 from core.database.preprocessing.gan import mnist_preprocessing
+from core.database.preprocessing.vae import kinship_preprocessing
 
 
 def is_training(phase):
@@ -53,12 +54,18 @@ def gan_mnist_fn(X, phase, cfg):
       X, cfg.output_height, cfg.output_width, is_training(phase))
 
 
+def vae_kinship_fn(X, phase, cfg):
+  return kinship_preprocessing.preprocess_image(
+      X, cfg.output_height, cfg.output_width, is_training(phase))
+
+
 preprocessing_map = {
     'cifarnet': cifarnet_fn,
     'inception': inception_fn,
     'lenet': lenet_fn,
     'vgg': vgg_fn,
-    'gan.mnist': gan_mnist_fn
+    'gan.mnist': gan_mnist_fn,
+    'vae.kinship': vae_kinship_fn
 }
 
 
