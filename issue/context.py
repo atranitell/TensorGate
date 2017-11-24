@@ -33,6 +33,10 @@ class Context():
     self.config.set_phase(self.phase)
     self.data = self.config.data
 
+  @property
+  def is_train(self):
+    return True if self.phase == 'train' else False
+
 
 class Running_Hook(tf.train.SessionRunHook):
   """ Running Hooks for training showing information """
