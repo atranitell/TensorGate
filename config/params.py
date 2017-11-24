@@ -170,8 +170,8 @@ class Data():
       self.configs.append(image_config)
 
   def label(self,
-            num_classes=10,
-            span=10,
+            num_classes=None,
+            span=None,
             one_hot=False,
             scale=False):
     """ 
@@ -194,7 +194,8 @@ class Image():
                raw_width=None,
                output_height=None,
                output_width=None,
-               preprocessing_method=None):
+               preprocessing_method=None,
+               gray=False):
     self.name = 'image'
     self.channels = channels
     self.frames = frames
@@ -203,3 +204,4 @@ class Image():
     self.output_height = output_height
     self.output_width = output_width
     self.preprocessing_method = preprocessing_method
+    self.gray = gray
