@@ -2,45 +2,22 @@
 """ classification task for image
     updated: 2017/11/19
 """
-
-import os
 import tensorflow as tf
-from core.loss import softmax
 from core.database.factory import loads
+from core.loss import softmax
 from core.network.cnn import network
 from core.solver import updater
 from core.solver import variables
-from core.solver.snapshot import Snapshot
-from core.solver.summary import Summary
-
-from core.utils import string
-from core.utils import filesystem
+from core import utils
 from core.utils.logger import logger
-from core.utils.context import QueueContext
 from core.utils.profiler import Profiler
+from issue import context
 
-from issue.running_hook import Running_Hook
 
-
-class classification():
+class classification(context.Context):
 
   def __init__(self, config):
-    self.config = config
-    self.phase = config.phase
-    self.data = config.data
-    self.summary = Summary(config)
-    self.snapshot = Snapshot(config)
-
-  def _enter_(self, phase):
-    self.prephase = self.phase
-    self.phase = phase
-    self.config.set_phase(phase)
-    self.data = self.config.data
-
-  def _exit_(self):
-    self.phase = self.prephase
-    self.config.set_phase(self.phase)
-    self.data = self.config.data
+    context.Context.__init__(self, config)
 
   def _net(self, data):
     logit, net = network(data, self.config, self.phase)
@@ -70,12 +47,12 @@ class classification():
 
     # for storage
     saver = tf.train.Saver(var_list=variables.all())
-    variables.print_global_list()
+    variables.print_trainable_list()
 
     # hooks
     snapshot_hook = self.snapshot.init()
     summary_hook = self.summary.init()
-    running_hook = Running_Hook(
+    running_hook = context.Running_Hook(
         config=self.config.log,
         step=global_step,
         keys=['loss', 'error'],
@@ -90,8 +67,7 @@ class classification():
             save_checkpoint_secs=None,
             save_summaries_steps=None) as sess:
 
-      # restore model: if it could not find a valid checkpoint
-      #   do nothing
+      # restore model: if checkpoint does not exited, do nothing
       self.snapshot.restore(sess, saver)
 
       # Profile
@@ -107,7 +83,7 @@ class classification():
     self._enter_('test')
 
     # create a folder to save
-    test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
+    test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
 
     # get data pipeline
     data, label, path = loads(self.config)
@@ -126,13 +102,13 @@ class classification():
       global_step = self.snapshot.restore(sess, saver)
 
       # output to file
-      info = string.concat(batchsize, [path, label, pred])
+      info = utils.string.concat(batchsize, [path, label, pred])
       with open(test_dir + '%s.txt' % global_step, 'wb') as fw:
-        with QueueContext(sess):
+        with context.QueueContext(sess):
           # Initial some variables
           num_iter = int(total_num / batchsize)
           mean_err, mean_loss = 0, 0
-          
+
           for _ in range(num_iter):
             # running session to acuqire value
             _loss, _err, _info = sess.run([loss, error, info])
@@ -140,7 +116,7 @@ class classification():
             mean_err += _err
             # save tensor info to text file
             [fw.write(_line + b'\r\n') for _line in _info]
-          
+
           # statistic
           mean_loss = 1.0 * mean_loss / num_iter
           mean_err = 1.0 * mean_err / num_iter
