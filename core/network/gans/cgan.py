@@ -47,7 +47,7 @@ def generator(batchsize, z, y, is_training=True, reuse=False):
     net = deconv2d(net, 64, (4, 4), (2, 2), name='g_dc3')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='g_bn3'))
 
-    logit = deconv2d(net, 3, (4, 4), (2, 2), name='g_dc4')
+    logit = deconv2d(net, 1, (4, 4), (2, 2), name='g_dc4')
     logit = tf.nn.sigmoid(logit)
 
     return logit, net
