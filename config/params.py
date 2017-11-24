@@ -148,8 +148,8 @@ class Optimizer():
 class Data():
 
   def __init__(self, batchsize,
-               entry_path,
-               shuffle,
+               entry_path=None,
+               shuffle=None,
                total_num=None,
                loader=None,
                reader_thread=8,
@@ -165,18 +165,25 @@ class Data():
     self.configs = []
 
   def add_image(self, image_config):
-    """ add a data attribution to configs 
-    """
+    """ add a data attribution to configs  """
     if type(image_config) is type(Image()):
       self.configs.append(image_config)
 
   def label(self,
             num_classes=10,
-            one_hot=False):
-    """ one hot: if the input label as a one hot
+            span=10,
+            one_hot=False,
+            scale=False):
+    """ 
+    num_classes: net output dim, for regression, the value is 1
+    span(range): label span: (0, range)
+    one hot: if the input label as a one hot
+    scale: True for (0, num_classes) -> (0, 1)
     """
-    self.one_hot = one_hot
     self.num_classes = num_classes
+    self.one_hot = one_hot
+    self.range = span
+    self.scale = scale
 
 
 class Image():

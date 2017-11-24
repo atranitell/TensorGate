@@ -46,6 +46,8 @@ class Gate():
     # For CNN
     if self.config.target == 'cnn.classification':
       from issue.cnn.classification import classification as App
+    elif self.config.target == 'cnn.regression':
+      from issue.cnn.regression import regression as App
     # For GAN
     elif self.config.target == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
@@ -78,7 +80,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='mnist_gan')
+  parser.add_argument('-name', type=str, dest='name', default='mnist_regression')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)

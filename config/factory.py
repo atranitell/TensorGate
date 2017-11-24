@@ -6,10 +6,12 @@
 
 from config.mnist import mnist
 from config.mnist import mnist_gan
+from config.mnist import mnist_regression
 
 config_map = {
     'mnist': mnist.mnist,
-    'mnist_gan': mnist_gan.mnist_gan
+    'mnist_gan': mnist_gan.mnist_gan,
+    'mnist_regression': mnist_regression.mnist_regression
 }
 
 

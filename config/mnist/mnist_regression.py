@@ -6,12 +6,12 @@
 from config import params
 
 
-class mnist():
+class mnist_regression():
 
   def __init__(self):
 
     self.name = 'mnist'
-    self.target = 'cnn.classification'
+    self.target = 'cnn.regression'
     self.data_dir = '_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -60,10 +60,10 @@ class mnist():
         total_num=55000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=10)
+    self.data.label(num_classes=1, span=10, scale=True)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.1)
+    self.lr[0].fixed(learning_rate=0.001)
 
     self.optimizer = [params.Optimizer()]
     self.optimizer[0].adam(beta1=0.9)
@@ -77,4 +77,4 @@ class mnist():
         total_num=10000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=10)
+    self.data.label(num_classes=1, span=10, scale=True)
