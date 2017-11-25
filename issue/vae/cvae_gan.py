@@ -2,18 +2,13 @@
 """ Conditional GAN
     updated: 2017/11/22
 """
-import os
 import tensorflow as tf
-
 from core.database.factory import loads
 from core.network.vaes import cvae_gan
-
 from core.solver import updater
 from core.solver import variables
-from core.utils import filesystem
-
+from core import utils
 from issue import context
-from issue.gan import utils
 
 
 class CVAE_GAN(context.Context):
@@ -152,7 +147,7 @@ class CVAE_GAN(context.Context):
     """ random test a group of image
     """
     self._enter_('test')
-    test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
+    test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
 
     # for conditional gan
     y = [[i for i in range(10)] for i in range(10)]
@@ -160,9 +155,10 @@ class CVAE_GAN(context.Context):
     fake = self._decoder(z, y)
     saver = tf.train.Saver()
     with tf.Session() as sess:
-      global_step = self.snapshot.restore(sess, saver)
+      step = self.snapshot.restore(sess, saver)
       imgs = sess.run(fake)
-      img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
-      utils.save_images(imgs, [10, 10], img_path)
+      utils.image.save_images(
+          images=imgs, size=[10, 10],
+          path=utils.path.join_step(test_dir, step, 'png'))
 
     self._exit_()
