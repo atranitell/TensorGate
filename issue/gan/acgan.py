@@ -3,99 +3,59 @@
     https://arxiv.org/abs/1610.09585
     updated: 2017/11/22
 """
-
-import os
 import tensorflow as tf
-
-from core.loss import softmax
-from core.database.dataset import Dataset
+from core.database.factory import loads
 from core.network.gans import acgan
-from core.solver.updater import Updater
-from core.solver.snapshot import Snapshot
-from core.solver.summary import Summary
-
-from core.utils import filesystem
-from core.utils import string
-from core.utils.logger import logger
-from core.utils.context import QueueContext
-
-from issue.running_hook import Running_Hook
-from issue.gan import utils
+from core.solver import updater
+from core.solver import variables
+from core import utils
+from issue import context
 
 
-class ACGAN():
-  """ CGAN
+class ACGAN(context.Context):
+  """ ACGAN
   """
 
   def __init__(self, config):
-    self.config = config
-    self.summary = Summary(self.config['log'], config['output_dir'])
-    self.snapshot = Snapshot(self.config['log'], config['output_dir'])
-    # current work env
-    self.taskcfg = None
-    self.z_dim = 100
+    context.Context.__init__(self, config)
 
-  def _enter_(self, phase):
-    """ task enter
-    """
-    self.pre_taskcfg = self.taskcfg
-    self.taskcfg = self.config[phase]
-    self.datacfg = self.taskcfg['data']
-    self.batchsize = self.datacfg['batchsize']
-    self.num_classes = self.datacfg['num_classes']
-
-  def _exit_(self):
-    """ task exit
-    """
-    self.taskcfg = self.pre_taskcfg
-    self.datacfg = self.taskcfg['data']
-    self.batchsize = self.datacfg['batchsize']
-    self.num_classes = self.datacfg['num_classes']
-
-  def _discriminator(self, x, y, phase, reuse=None):
-    is_training = True if phase == 'train' else False
+  def _discriminator(self, x, y, reuse=None):
     logit, net, out = acgan.discriminator(
-        self.batchsize, x, is_training, reuse)
+        self.data.batchsize, x,
+        self.is_train, reuse)
     return logit, net, out
 
-  def _generator(self, y, phase, reuse=None):
-    """ from z distribution to sample a random vector
-    """
-    z = tf.random_normal([self.batchsize, self.z_dim])
-    is_training = True if phase == 'train' else False
-    logit, net = acgan.generator(self.batchsize, z, y, is_training, reuse)
+  def _generator(self, y, reuse=None):
+    z = tf.random_normal([self.data.batchsize,
+                          self.config.net.z_dim])
+    logit, net = acgan.generator(
+        self.data.batchsize, z, y,
+        self.is_train, reuse)
     return logit, net
 
-  def _classifier(self, out, phase, reuse=None):
-    """
-    """
-    is_training = True if phase == 'train' else False
-    return acgan.classifier(out, self.num_classes, is_training, reuse)
+  def _classifier(self, out, reuse=None):
+    return acgan.classifier(out, self.data.num_classes,
+                            self.is_train, reuse)
 
   def _loss(self, label, logit_F, logit_R, c_F, c_R):
-    """
-    """
     # discriminator loss
     D_loss_F = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.zeros_like(logit_F), logits=logit_F))
     D_loss_R = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.ones_like(logit_R), logits=logit_R))
     D_loss = D_loss_F + D_loss_R
-
     # generator loss
     G_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.ones_like(logit_F), logits=logit_F))
-
     # info loss
     onehot_label = tf.to_float(tf.one_hot(
-        label, depth=self.num_classes, on_value=1))
+        label, depth=self.data.num_classes, on_value=1))
     C_loss_R = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=onehot_label, logits=c_R))
     C_loss_F = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=onehot_label, logits=c_F))
-
+    # assemble
     C_loss = C_loss_F + C_loss_R
-
     return D_loss, G_loss, C_loss
 
   def train(self):
@@ -105,53 +65,47 @@ class ACGAN():
     self._enter_('train')
 
     # get data pipeline
-    data, label, path = Dataset(self.datacfg, 'train').loads()
+    data, label, path = loads(self.config)
 
     # generate fake images
-    logit_G, net_G = self._generator(label, 'train')
+    logit_G, net_G = self._generator(label)
 
     # discriminate fake images
     logit_F, net_F, out_F = self._discriminator(
-        logit_G, label, 'train', reuse=False)
+        logit_G, label, reuse=False)
     # discriminate real images
     logit_R, net_R, out_R = self._discriminator(
-        data, label, 'train', reuse=True)
+        data, label, reuse=True)
 
     # classify fake
-    c_F = self._classifier(out_F, 'train', reuse=False)
+    c_F = self._classifier(out_F, reuse=False)
     # classify real
-    c_R = self._classifier(out_R, 'train', reuse=True)
+    c_R = self._classifier(out_R, reuse=True)
 
     # loss
     D_loss, G_loss, C_loss = self._loss(label, logit_F, logit_R, c_F, c_R)
 
-    # acquire update list
-    t_vars = tf.trainable_variables()
-    d_vars = [var for var in t_vars if 'discriminator' in var.name]
-    g_vars = [var for var in t_vars if 'generator' in var.name]
-    c_vars = [var for var in t_vars if 'classifier' in var.name]
+    # t_vars = tf.trainable_variables()
+    d_vars = variables.select_vars('discriminator')
+    g_vars = variables.select_vars('generator')
+    c_vars = variables.select_vars('classifier')
 
     # update
-    global_step = tf.train.create_global_step()
+    step = tf.train.create_global_step()
+    d_op = updater.default(self.config, D_loss, step, d_vars, 0)
+    g_op = updater.default(self.config, G_loss, step, g_vars, 0)
+    c_op = updater.default(self.config, C_loss, step, c_vars, 0)
 
-    # pay attention
-    # there global_step just running once
-    d_optim = tf.train.AdamOptimizer(0.0002, beta1=0.5).minimize(
-        loss=D_loss, var_list=d_vars, global_step=global_step)
-    g_optim = tf.train.AdamOptimizer(0.0002, beta1=0.5).minimize(
-        loss=G_loss, var_list=g_vars)
-    c_optim = tf.train.AdamOptimizer(0.0002, beta1=0.5).minimize(
-        loss=C_loss, var_list=c_vars)
-
-    train_op = [[d_optim, g_optim]]
-    restore_saver = tf.train.Saver(var_list=tf.trainable_variables())
+    # assemble
+    train_op = [[d_op, g_op, c_op]]
+    saver = tf.train.Saver(variables.all())
 
     # hooks
     snapshot_hook = self.snapshot.init()
     summary_hook = self.summary.init()
-    running_hook = Running_Hook(
-        config=self.config['log'],
-        step=global_step,
+    running_hook = context.Running_Hook(
+        config=self.config.log,
+        step=step,
         keys=['D_loss', 'G_loss', 'C_loss'],
         values=[D_loss, G_loss, C_loss],
         func_test=self.test,
@@ -166,8 +120,7 @@ class ACGAN():
             save_summaries_steps=None) as sess:
 
       # restore model
-      if 'restore' in self.taskcfg and self.taskcfg['restore']:
-        self.snapshot.restore(sess, restore_saver)
+      self.snapshot.restore(sess, saver)
 
       # running
       while not sess.should_stop():
@@ -177,16 +130,18 @@ class ACGAN():
     """ random test a group of image
     """
     self._enter_('test')
-    test_dir = filesystem.mkdir(self.config['output_dir'] + '/test/')
+    test_dir = utils.filesystem.mkdir(self.config['output_dir'] + '/test/')
 
-    # for conditional gan
+    # add conditional gan
     y = [[i for i in range(10)] for i in range(10)]
-
     logit_G, net_G = self._generator(y, 'test')
+
     saver = tf.train.Saver(name='restore_all')
     with tf.Session() as sess:
-      global_step = self.snapshot.restore(sess, saver)
+      step = self.snapshot.restore(sess, saver)
       imgs = sess.run(logit_G)
-      img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
-      utils.save_images(imgs, [10, 10], img_path)
+      utils.image.save_images(
+          images=imgs, size=[10, 10],
+          path=utils.path.join_step(test_dir, step, 'png'))
+
     self._exit_()

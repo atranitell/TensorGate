@@ -2,65 +2,35 @@
 """ Conditional GAN
     updated: 2017/11/22
 """
-
-import os
 import tensorflow as tf
-
-from core.loss import softmax
 from core.database.factory import loads
 from core.network.gans import cgan
 from core.solver import updater
 from core.solver import variables
-from core.solver.snapshot import Snapshot
-from core.solver.summary import Summary
-
-from core.utils import filesystem
-from core.utils import string
-from core.utils.logger import logger
-from core.utils.context import QueueContext
-
-from issue.running_hook import Running_Hook
-from issue.gan import utils
+from core import utils
+from issue import context
 
 
-class CGAN():
-  """ CGAN
+class CGAN(context.Context):
+  """ CGAN (D:G = 1:5)
   """
 
   def __init__(self, config):
-    self.config = config
-    self.phase = config.phase
-    self.data = config.data
-    self.summary = Summary(config)
-    self.snapshot = Snapshot(config)
-
-  def _enter_(self, phase):
-    self.prephase = self.phase
-    self.phase = phase
-    self.config.set_phase(phase)
-    self.data = self.config.data
-
-  def _exit_(self):
-    self.phase = self.prephase
-    self.config.set_phase(self.phase)
-    self.data = self.config.data
+    context.Context.__init__(self, config)
 
   def _discriminator(self, x, y, reuse=None):
-    is_training = True if self.phase == 'train' else False
     logit, net = cgan.discriminator(
         self.data.batchsize, x, y,
         self.data.num_classes,
-        is_training, reuse)
+        self.is_train, reuse)
     return logit, net
 
   def _generator(self, y, reuse=None):
     """ from z distribution to sample a random vector
     """
-    z = tf.random_normal([self.data.batchsize, self.config.net.z_dim])
-    is_training = True if self.phase == 'train' else False
+    z = tf.random_uniform([self.data.batchsize, self.config.net.z_dim], -1, 1)
     logit, net = cgan.generator(
-        self.data.batchsize, z, y,
-        is_training, reuse)
+        self.data.batchsize, z, y, self.is_train, reuse)
     return logit, net
 
   def _loss(self, logit_F, logit_R):
@@ -108,12 +78,11 @@ class CGAN():
     # update at the same time
     train_op = [[d_optim, g_optim]]
     saver = tf.train.Saver(var_list=variables.all())
-    variables.print_trainable_list()
 
     # hooks
     snapshot_hook = self.snapshot.init()
     summary_hook = self.summary.init()
-    running_hook = Running_Hook(
+    running_hook = context.Running_Hook(
         config=self.config.log,
         step=global_step,
         keys=['D_loss', 'G_loss'],
@@ -140,15 +109,18 @@ class CGAN():
     """ random test a group of image
     """
     self._enter_('test')
-    test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
+    test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
 
     # for conditional gan
     y = [[i for i in range(10)] for i in range(10)]
     logit_G, net_G = self._generator(y)
+    
     saver = tf.train.Saver()
     with tf.Session() as sess:
-      global_step = self.snapshot.restore(sess, saver)
+      step = self.snapshot.restore(sess, saver)
       imgs = sess.run(logit_G)
-      img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
-      utils.save_images(imgs, [10, 10], img_path)
+      utils.image.save_images(
+          images=imgs, size=[10, 10],
+          path=utils.path.join_step(test_dir, step, 'png'))
+
     self._exit_()

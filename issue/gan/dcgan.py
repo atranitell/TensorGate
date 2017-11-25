@@ -2,27 +2,16 @@
 """ GAN for normal image
     updated: 2017/11/22
 """
-
-import os
 import tensorflow as tf
-
-from core.loss import softmax
-from core.database.dataset import Dataset
+from core.database.factory import loads
 from core.network.gans import dcgan
-from core.solver.updater import Updater
-from core.solver.snapshot import Snapshot
-from core.solver.summary import Summary
-
-from core.utils import filesystem
-from core.utils import string
-from core.utils.logger import logger
-from core.utils.context import QueueContext
-
-from issue.running_hook import Running_Hook
-from issue.gan import utils
+from core.solver import updater
+from core.solver import variables
+from core import utils
+from issue import context
 
 
-class DCGAN():
+class DCGAN(context.Context):
   """ DCGAN 
   net:
     image_fake, net_fake = Generator(random_vector)
@@ -36,49 +25,25 @@ class DCGAN():
 
     optimize(d_loss)
     optimize(g_loss)
-
   """
 
   def __init__(self, config):
-    self.config = config
-    self.summary = Summary(self.config['log'], config['output_dir'])
-    self.snapshot = Snapshot(self.config['log'], config['output_dir'])
-    # current work env
-    self.taskcfg = None
-    # global param
-    self.z_dim = 100
+    context.Context.__init__(self, config)
 
-  def _enter_(self, phase):
-    """ task enter
-    """
-    self.pre_taskcfg = self.taskcfg
-    self.taskcfg = self.config[phase]
-    self.datacfg = self.taskcfg['data']
-    self.batchsize = self.datacfg['batchsize']
-
-  def _exit_(self):
-    """ task exit
-    """
-    self.taskcfg = self.pre_taskcfg
-    self.datacfg = self.taskcfg['data']
-    self.batchsize = self.datacfg['batchsize']
-
-  def _discriminator(self, X, phase, reuse=None):
-    is_training = True if phase == 'train' else False
-    logit, net = dcgan.discriminator(self.batchsize, X, is_training, reuse)
+  def _discriminator(self, x, reuse=None):
+    logit, net = dcgan.discriminator(
+        self.data.batchsize, x, self.is_train, reuse)
     return logit, net
 
-  def _generator(self, z_dim, phase):
+  def _generator(self):
     """ from z distribution to sample a random vector
     """
-    z = tf.random_normal([self.batchsize, z_dim])
-    is_training = True if phase == 'train' else False
-    logit, net = dcgan.generator(self.batchsize, z, is_training)
+    z = tf.random_normal([self.data.batchsize, self.config.net.z_dim])
+    logit, net = dcgan.generator(self.data.batchsize, z, self.is_train)
     return logit, net
 
   def _loss(self, logit_F, logit_R):
-    """
-    """
+    """ GAN-LIKE """
     D_loss_F = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.zeros_like(logit_F), logits=logit_F))
     D_loss_R = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
@@ -96,41 +61,38 @@ class DCGAN():
     self._enter_('train')
 
     # get data pipeline
-    data, label, path = Dataset(self.datacfg, 'train').loads()
+    data, label, path = loads(self.config)
     # generate fake images
-    logit_G, net_G = self._generator(self.z_dim, 'train')
+    logit_G, net_G = self._generator()
     # discriminate fake images
-    logit_F, net_F = self._discriminator(logit_G, 'train', reuse=False)
+    logit_F, net_F = self._discriminator(logit_G, reuse=False)
     # discriminate real images
-    logit_R, net_R = self._discriminator(data, 'train', reuse=True)
+    logit_R, net_R = self._discriminator(data, reuse=True)
 
     # loss
     D_loss, G_loss = self._loss(logit_F, logit_R)
 
     # acquire update list
-    t_vars = tf.trainable_variables()
-    d_vars = [var for var in t_vars if 'discriminator' in var.name]
-    g_vars = [var for var in t_vars if 'generator' in var.name]
+    d_vars = variables.select_vars('discriminator')
+    g_vars = variables.select_vars('generator')
 
-    # update
-    global_step = tf.train.create_global_step()
+    # allocate two optimizer
+    step = tf.train.create_global_step()
+    d_optim = updater.default(
+        self.config, D_loss, step, d_vars, index=0)
+    g_optim = updater.default(
+        self.config, G_loss, None, g_vars, index=1)
 
-    # pay attention
-    # there global_step just running once
-    d_optim = tf.train.AdamOptimizer(0.0002, beta1=0.5).minimize(
-        loss=D_loss, global_step=global_step, var_list=d_vars)
-    g_optim = tf.train.AdamOptimizer(0.0002, beta1=0.5).minimize(
-        loss=G_loss, var_list=g_vars)
-
+    # update at the same time
     train_op = [[d_optim, g_optim]]
-    restore_saver = tf.train.Saver(var_list=tf.trainable_variables())
+    saver = tf.train.Saver(var_list=variables.all())
 
     # hooks
     snapshot_hook = self.snapshot.init()
     summary_hook = self.summary.init()
     running_hook = Running_Hook(
         config=self.config['log'],
-        step=global_step,
+        step=step,
         keys=['D_loss', 'G_loss'],
         values=[D_loss, G_loss],
         func_test=self.test,
@@ -145,8 +107,7 @@ class DCGAN():
             save_summaries_steps=None) as sess:
 
       # restore model
-      if 'restore' in self.taskcfg and self.taskcfg['restore']:
-        self.snapshot.restore(sess, restore_saver)
+      self.snapshot.restore(sess, saver)
 
       # running
       while not sess.should_stop():
@@ -156,12 +117,18 @@ class DCGAN():
     """ random test a group of image
     """
     self._enter_('test')
-    test_dir = filesystem.mkdir(self.config['output_dir'] + '/test/')
+
+    # mkdir
+    test_dir = utils.filesystem.mkdir(self.config['output_dir'] + '/test/')
+    # acquire fake image
     logit_G, net_G = self._generator(self.z_dim, 'test')
+    
     saver = tf.train.Saver(name='restore_all')
     with tf.Session() as sess:
-      global_step = self.snapshot.restore(sess, saver)
+      step = self.snapshot.restore(sess, saver)
       imgs = sess.run(logit_G)
-      img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
-      utils.save_images(imgs, [10, 10], img_path)
+      utils.image.save_images(
+          images=imgs, size=[10, 10],
+          path=utils.path.join_step(test_dir, step, 'png'))
+          
     self._exit_()
