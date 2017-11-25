@@ -2,19 +2,13 @@
 """ Conditional GAN
     updated: 2017/11/22
 """
-import os
 import tensorflow as tf
-
 from core.database.factory import loads
 from core.network.vaes import kin_vae
-
-from core.loss import cosine
 from core.solver import updater
 from core.solver import variables
-from core.utils import filesystem
-
+from core import utils
 from issue import context
-from issue.gan import utils
 
 
 class KIN_VAE(context.Context):
@@ -85,11 +79,6 @@ class KIN_VAE(context.Context):
 
     return D_loss, G_loss, C_loss
 
-  # def _loss_cosine(self, feat_fake, feat_real):
-  #   """
-  #   """
-  #   cosine.get_loss(feat_fake, feat_real, )
-
   def train(self):
     """
     """
@@ -120,7 +109,6 @@ class KIN_VAE(context.Context):
     # loss
     ELBO_loss = self._loss(real2, fake, mu, sigma)
     D_loss, G_loss, C_loss = self._loss_gan(D_F, D_R2, C_F, label)
-    # S_loss = self._loss_cosine(D_net_F, D_net_R2)
     loss = ELBO_loss + D_loss + G_loss + C_loss
 
     # allocate two optimizer
@@ -139,8 +127,8 @@ class KIN_VAE(context.Context):
         step=global_step,
         keys=['ELBO', 'D', 'G', 'C'],
         values=[ELBO_loss, D_loss, G_loss, C_loss],
-        func_test=self.test,
-        func_val=None)
+        func_test=None,
+        func_val=self.val)
 
     # monitor session
     with tf.train.MonitoredTrainingSession(
@@ -160,11 +148,7 @@ class KIN_VAE(context.Context):
     """ random test a group of image
     """
     self._enter_('test')
-    test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
-
-    # for conditional gan
-    # y = [[i for i in range(4)] for i in range(10)]
-    # z = tf.random_normal([self.data.batchsize, self.config.net.z_dim])
+    test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
 
     # considering output train image
     data, label, path = loads(self.config)
@@ -172,20 +156,53 @@ class KIN_VAE(context.Context):
 
     # encode image to a vector
     mu, sigma = self._encoder(real1, label)
-
     # resample from the re-parameterzation
     z = mu + sigma * tf.random_normal(tf.shape(mu))
-
     # decoding
     fake = self._decoder(z, label, reuse=False)
     fake = tf.clip_by_value(fake, 1e-8, 1 - 1e-8)
 
-    # fake = self._decoder(z, y)
+    # start to test
     saver = tf.train.Saver()
+    num_iter = int(self.data.total_num / self.data.batchsize)
     with tf.Session() as sess:
-      global_step = self.snapshot.restore(sess, saver)
-      imgs = sess.run(fake)
-      img_path = os.path.join(test_dir, '{:08d}.png'.format(int(global_step)))
-      utils.save_images(imgs, [10, 10], img_path)
+      step = self.snapshot.restore(sess, saver)
+      img_dir = utils.filesystem.mkdir(test_dir + step)
+      with context.QueueContext(sess):
+        for i in range(num_iter):
+          imgs, paths = sess.run([fake, path])
+          utils.image.saveall(img_dir, imgs, paths)
+
+    self._exit_()
+
+  def val(self):
+    """ random test a group of image
+    """
+    self._enter_('val')
+    val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
+
+    # considering output train image
+    data, label, path = loads(self.config)
+    real1, real2 = tf.unstack(data, axis=1)
+
+    # encode image to a vector
+    mu, sigma = self._encoder(real1, label)
+    # resample from the re-parameterzation
+    z = mu + sigma * tf.random_normal(tf.shape(mu))
+    # decoding
+    fake = self._decoder(z, label, reuse=False)
+    fake = tf.clip_by_value(fake, 1e-8, 1 - 1e-8)
+
+    saver = tf.train.Saver()
+    num_iter = int(self.data.total_num / self.data.batchsize)
+
+    with tf.Session() as sess:
+      step = self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(num_iter):
+          imgs = sess.run(fake)
+          utils.image.save_images(
+              images=imgs, size=[10, 10],
+              path=utils.path.join_step(val_dir, step, 'png'))
 
     self._exit_()
