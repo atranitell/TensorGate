@@ -3,7 +3,6 @@
 """
 import scipy.misc
 import numpy as np
-from PIL import Image
 from core import utils
 
 
@@ -11,8 +10,8 @@ def saveall(dst, imgs, paths):
   """ save all imgs to dst dir with name(paths)
   """
   for idx, content in enumerate(imgs):
-    dst = utils.path.join_name(dst, paths[idx])
-    save(content, dst)
+    img_path = utils.path.join_name(dst, paths[idx])
+    save(content, img_path)
 
 
 def save(image, path):
