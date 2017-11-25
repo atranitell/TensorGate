@@ -15,6 +15,12 @@ def select_vars(include_name, var_list=None):
     var_list = tf.trainable_variables()
   return [var for var in var_list if include_name in var.name]
 
+def exclude_vars(exclude_name, var_list=None):
+  """ exclude variables from var list
+  """
+  if var_list is None:
+    var_list = tf.trainable_variables()
+  return [var for var in var_list if exclude_name not in var.name]
 
 def all():
   """ return all variables in the model
