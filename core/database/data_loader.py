@@ -74,3 +74,31 @@ def load_pair_image_from_text(config):
 
   return data_prefetch.generate_batch(
       [image1, image2], label, path1, config.data)
+
+
+def load_npy_from_text(config):
+  """
+  """
+  res, count = data_entry.parse_from_text(
+      config.data.entry_path, (str, float), (True, False))
+
+  imgcfg = config.data.configs[0]
+
+  files = tf.convert_to_tensor(res[0], dtype=tf.string)
+  labels = tf.convert_to_tensor(res[1], dtype=tf.float32)
+  filename, label = tf.train.slice_input_producer(
+      [files, labels], shuffle=config.data.shuffle)
+
+  def load(filepath, height, width, channels):
+    """ load image from npy file. """
+    file_path_abs = str(filepath, encoding='utf-8')
+    data = np.load(file_path_abs)
+    data = np.float32(np.reshape(data, [height, width, channels]))
+    return data
+
+  param_in = [filename, imgcfg.raw_height, imgcfg.raw_width, imgcfg.channels]
+  content = tf.py_func(load, param_in, tf.float32)
+  content = tf.reshape(
+      content, [imgcfg.raw_height, imgcfg.raw_width, imgcfg.channels])
+
+  return data_prefetch.generate_batch(content, label, filename, config.data)
