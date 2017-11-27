@@ -31,8 +31,24 @@ def slim_cifarnet(X, config, is_training):
   return net, argscope
 
 
+def slim_resnet_v2_50(X, config, is_training):
+  """
+  """
+  argscope = resnet_v2.resnet_arg_scope(config.net.weight_decay,
+                                        config.net.batch_norm_decay,
+                                        config.net.batch_norm_epsilon,
+                                        config.net.batch_norm_scale,
+                                        config.net.activation_fn,
+                                        config.net.use_batch_norm)
+  net = resnet_v2.resnet_v2_50(X, num_classes=config.data.num_classes,
+                               is_training=is_training,
+                               global_pool=True)
+  return net, argscope
+
+
 networks_map = {
-    'cifarnet': slim_cifarnet
+    'cifarnet': slim_cifarnet,
+    'resnet_v2_50': slim_resnet_v2_50
 }
 
 

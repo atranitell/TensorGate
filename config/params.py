@@ -3,6 +3,7 @@
     Author: Kai JIN
     Updated: 2017-11-23
 """
+import tensorflow as tf
 
 
 class Net():
@@ -16,6 +17,21 @@ class Net():
     self.name = 'cifarnet'
     self.weight_decay = weight_decay
     self.dropout_keep = dropout_keep
+
+  def resnet(self, name,
+             weight_decay=0.0001,
+             batch_norm_decay=0.997,
+             batch_norm_epsilon=1e-5,
+             batch_norm_scale=True,
+             activation_fn=tf.nn.relu,
+             use_batch_norm=True):
+    self.name = name
+    self.weight_decay = weight_decay
+    self.batch_norm_decay = batch_norm_decay
+    self.batch_norm_epsilon = batch_norm_epsilon
+    self.batch_norm_scale = batch_norm_scale
+    self.activation_fn = activation_fn
+    self.use_batch_norm = use_batch_norm
 
   def cgan(self, z_dim=100):
     """ condition gan
