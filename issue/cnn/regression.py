@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" classification task for image
+""" regression task for image
     updated: 2017/11/19
 """
 import tensorflow as tf
