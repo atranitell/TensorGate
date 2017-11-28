@@ -31,7 +31,8 @@ networks_map = {
     'mobilenet_v1': cnn.MobileNet_v1,
     'nasnet_cifar': cnn.NasNet,
     'nasnet_mobile': cnn.NasNet,
-    'nasnet_large': cnn.NasNet
+    'nasnet_large': cnn.NasNet,
+    'lightnet': cnn.LightNet
 }
 
 

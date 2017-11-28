@@ -34,8 +34,11 @@ class trafficflow():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net()
-    self.net.resnet('resnet_v2_50')
+    self.net = params.Net('lightnet')
+    self.net.set_weight_decay(0.002)
+    self.net.set_batch_norm(0.99)
+    # self.net.set_activation_fn('relu')
+    self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -53,18 +56,19 @@ class trafficflow():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=32,
-        entry_path="E:/Datasets/TrafficNet/data_0.6_train.txt",
+        entry_path="E:/Datasets/TrafficNet/data_0.6_train_tidy.txt",
         shuffle=True,
-        total_num=21642,
+        total_num=10000,
         loader='load_npy_from_text')
     self.data.add_image(self.image)
     self.data.label(num_classes=1, span=1)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.1)
+    self.lr[0].fixed(learning_rate=0.01)
 
     self.optimizer = [params.Optimizer()]
     self.optimizer[0].adam(beta1=0.9)
+    # self.optimizer[0].sgd()
 
   def _test(self):
     self.phase = 'test'
