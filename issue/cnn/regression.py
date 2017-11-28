@@ -4,8 +4,8 @@
 """
 import tensorflow as tf
 from core.database.factory import loads
+from core.network.factory import network
 from core.loss import l2
-from core.network.cnn import network
 from core.solver import updater
 from core.solver import variables
 from core import utils
@@ -48,6 +48,7 @@ class regression(context.Context):
     # for storage
     saver = tf.train.Saver(var_list=variables.all())
     variables.print_trainable_list()
+    variables.print_global_list()
 
     # hooks
     snapshot_hook = self.snapshot.init()

@@ -4,8 +4,8 @@
 """
 import tensorflow as tf
 from core.database.factory import loads
+from core.network.factory import network
 from core.loss import softmax
-from core.network.cnn import network
 from core.solver import updater
 from core.solver import variables
 from core import utils
