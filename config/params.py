@@ -8,35 +8,43 @@ import tensorflow as tf
 
 class Net():
 
-  def __init__(self):
-    pass
+  def __init__(self, name):
+    self.name = name
 
-  def cifarnet(self, weight_decay=None, dropout_keep=None):
-    """ Cifarnet: input 28x28 images
-    """
-    self.name = 'cifarnet'
+  def set_weight_decay(self, weight_decay=0.0001):
     self.weight_decay = weight_decay
+
+  def set_dropout_keep(self, dropout_keep=0.5):
     self.dropout_keep = dropout_keep
 
-  def resnet(self, name,
-             weight_decay=0.0001,
-             batch_norm_decay=0.997,
-             batch_norm_epsilon=1e-5,
-             batch_norm_scale=True,
-             activation_fn=tf.nn.relu,
-             use_batch_norm=True):
-    self.name = name
-    self.weight_decay = weight_decay
+  def set_batch_norm(self, batch_norm_decay=0.997,
+                     batch_norm_epsilon=1e-5,
+                     batch_norm_scale=True,
+                     use_batch_norm=True):
+    """ USE Batch Normalization """
+    self.use_batch_norm = use_batch_norm
     self.batch_norm_decay = batch_norm_decay
     self.batch_norm_epsilon = batch_norm_epsilon
     self.batch_norm_scale = batch_norm_scale
-    self.activation_fn = activation_fn
-    self.use_batch_norm = use_batch_norm
 
-  def cgan(self, z_dim=100):
-    """ condition gan
-    """
-    self.z_dim = 100
+  def set_activation_fn(self, name='relu'):
+    """ choose different activation function """
+    if name is 'relu':
+      self.activation_fn = tf.nn.relu
+    elif name is 'sigmoid':
+      self.activation_fn = tf.nn.sigmoid
+    elif name is 'tanh':
+      self.activation_fn = tf.nn.tanh
+    elif name is 'elu':
+      self.activation_fn = tf.nn.elu
+    elif name is 'tanh':
+      self.activation_fn = tf.nn.tanh
+    else:
+      raise ValueError('Unknown activation fn [%s]' % name)
+
+  def set_z_dim(self, z_dim):
+    """ USE FOR GAN/VAE, z vector """
+    self.z_dim = z_dim
 
 
 class Log():

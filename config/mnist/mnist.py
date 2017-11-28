@@ -36,8 +36,9 @@ class mnist():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net()
-    self.net.cifarnet(weight_decay=0.0001, dropout_keep=0.5)
+    self.net = params.Net('cifarnet')
+    self.net.set_weight_decay(0.0001)
+    self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
     """ for switch phase

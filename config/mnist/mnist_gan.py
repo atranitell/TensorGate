@@ -11,7 +11,7 @@ class mnist_gan():
   def __init__(self):
 
     self.name = 'mnist'
-    self.target = 'gan.cgan'
+    self.target = 'vae.cvae'
     self.data_dir = '_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -20,9 +20,9 @@ class mnist_gan():
     self.log = params.Log(
         print_invl=20,
         save_summaries_invl=10,
-        save_model_invl=100,
-        test_invl=100,
-        val_invl=100,
+        save_model_invl=500,
+        test_invl=500,
+        val_invl=500,
         max_iter=999999)
 
     self.image = params.Image(
@@ -32,12 +32,13 @@ class mnist_gan():
         raw_width=28,
         output_height=28,
         output_width=28,
-        preprocessing_method='gan.mnist')
+        preprocessing_method='gan.mnist',
+        gray=True)
 
     self.set_phase(self.phase)
 
-    self.net = params.Net()
-    self.net.cgan()
+    self.net = params.Net('cvae')
+    self.net.set_z_dim(100)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -54,7 +55,7 @@ class mnist_gan():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=32,
+        batchsize=64,
         entry_path="_datasets/mnist/train.txt",
         shuffle=True,
         total_num=55000,
@@ -64,8 +65,8 @@ class mnist_gan():
 
     self.lr = [params.LearningRate(),
                params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.0002)
-    self.lr[1].fixed(learning_rate=0.0002)
+    self.lr[0].fixed(learning_rate=0.001)
+    self.lr[1].fixed(learning_rate=0.001)
 
     self.optimizer = [params.Optimizer(),
                       params.Optimizer()]

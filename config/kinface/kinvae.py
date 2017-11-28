@@ -37,8 +37,8 @@ class kinvae():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net()
-    self.net.cgan()
+    self.net = params.Net('cgan')
+    self.net.set_z_dim(100)
 
   def set_phase(self, phase):
     """ for switch phase
