@@ -59,6 +59,13 @@ class Gate():
       from issue.gan.acgan import ACGAN as App
     elif self.config.target == 'gan.kingan':
       from issue.gan.kingan import KinGAN as App
+    # For VAE
+    elif self.config.target == 'vae.cvae':
+      from issue.vae.cvae import CVAE as App
+    elif self.config.target == 'vae.cvae_gan':
+      from issue.vae.cvae_gan import CVAE_GAN as App
+    elif self.config.target == 'vae.kinvae':
+      from issue.vae.kinvae import KIN_VAE as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
@@ -80,7 +87,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='mnist_regression')
+  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
