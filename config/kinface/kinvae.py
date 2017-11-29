@@ -10,9 +10,9 @@ class kinvae():
 
   def __init__(self):
 
-    self.name = 'kinface'
+    self.name = 'kinvae'
     self.target = 'vae.kinvae'
-    self.data_dir = '_datasets/mnist'
+    self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
     self.device = '0'
@@ -58,7 +58,7 @@ class kinvae():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=64,
-        entry_path="_datasets/kinface2/train.txt",
+        entry_path="../_datasets/kinface2/train.txt",
         shuffle=True,
         total_num=800,
         loader='load_pair_image_from_text')
@@ -80,7 +80,7 @@ class kinvae():
     self.phase = 'test'
     self.data = params.Data(
         batchsize=100,
-        entry_path="_datasets/kinface2/all.txt",
+        entry_path="../_datasets/kinface2/all.txt",
         shuffle=False,
         total_num=1000,
         loader='load_pair_image_from_text',
@@ -93,7 +93,7 @@ class kinvae():
     self.phase = 'val'
     self.data = params.Data(
         batchsize=100,
-        entry_path="_datasets/kinface2/test.txt",
+        entry_path="../_datasets/kinface2/test.txt",
         shuffle=False,
         total_num=100,
         loader='load_pair_image_from_text',

@@ -12,7 +12,7 @@ class trafficflow_dual():
 
     self.name = 'trafficflow_dual'
     self.target = 'cnn.regression_dual'
-    self.data_dir = 'E:/Datasets/TrafficNet'
+    self.data_dir = '../_datasets/TrafficNet'
     self.phase = 'train'
     self.output_dir = None
     self.device = '0'
@@ -33,7 +33,6 @@ class trafficflow_dual():
         preprocessing_method=None)
 
     self.set_phase(self.phase)
-
     self.net = params.Net('lightnet')
     self.net.set_weight_decay(0.002)
     self.net.set_batch_norm(0.99)
@@ -56,7 +55,7 @@ class trafficflow_dual():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=32,
-        entry_path="E:/Datasets/TrafficNet/data_0.6_train_tidy.txt",
+        entry_path="../_datasets/TrafficNet/data_0.6_train_tidy.txt",
         shuffle=True,
         total_num=10000,
         loader='load_npy_from_text')
@@ -74,7 +73,7 @@ class trafficflow_dual():
     self.phase = 'test'
     self.data = params.Data(
         batchsize=50,
-        entry_path="E:/Datasets/TrafficNet/data_0.6_test_tidy.txt",
+        entry_path="../_datasets/TrafficNet/data_0.6_test_tidy.txt",
         shuffle=False,
         total_num=5410,
         loader='load_npy_from_text')

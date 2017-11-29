@@ -12,7 +12,7 @@ class mnist_gan():
 
     self.name = 'mnist'
     self.target = 'vae.cvae'
-    self.data_dir = '_datasets/mnist'
+    self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
     self.device = '0'
@@ -56,7 +56,7 @@ class mnist_gan():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=64,
-        entry_path="_datasets/mnist/train.txt",
+        entry_path="../_datasets/mnist/train.txt",
         shuffle=True,
         total_num=55000,
         loader='load_image_from_text')
