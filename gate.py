@@ -5,15 +5,29 @@
 """
 
 import os
+import sys
 import argparse
 from datetime import datetime
+
+# hidden device output
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
+# showing the avaliable devices
+# from tensorflow.python.client import device_lib as _device_lib
+# for x in _device_lib.list_local_devices():
+#   print(x)
+
+# allocate GPU to sepcify device
+gpu_cluster = ['0', '1', '2', '3']
+gpu_id = '0' if sys.argv[1] not in gpu_cluster else sys.argv[1]
+os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 from config import factory
 from core.utils import filesystem
 from core.utils.logger import logger
 
-OUTPUTS = filesystem.mkdir('_outputs/')
+OUTPUTS = filesystem.mkdir('../_outputs/')
 
 
 class Gate():
@@ -89,7 +103,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='trafficflow_dual')
+  parser.add_argument('-name', type=str, dest='name', default='kinvae')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
