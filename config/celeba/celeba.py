@@ -6,12 +6,12 @@
 from config import params
 
 
-class kinvae():
+class celeba():
 
   def __init__(self):
 
-    self.name = 'kinvae'
-    self.target = 'vae.kinvae'
+    self.name = 'celeba'
+    self.target = 'vae.cvae_gan'
     self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -57,7 +57,7 @@ class kinvae():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=32,
+        batchsize=64,
         entry_path="../_datasets/kinface2/train.txt",
         shuffle=True,
         total_num=800,

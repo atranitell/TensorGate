@@ -57,17 +57,21 @@ def decoder(batchsize, z, y, is_training=True, reuse=False):
     net = linear(z, 1024, scope='de_fc1')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn1'))
 
-    net = linear(net, 128 * 8 * 8, scope='de_fc2')
+    net = linear(net, 256 * 4 * 4, scope='de_fc2')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn2'))
 
-    net = tf.reshape(net, [batchsize, 8, 8, 128])
-    net = deconv2d(net, 64, (4, 4), (2, 2), name='de_dc3')
+    net = tf.reshape(net, [batchsize, 4, 4, 256])
+
+    net = deconv2d(net, 256, (3, 3), (2, 2), name='de_dc31')
+    net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn31'))
+
+    net = deconv2d(net, 128, (3, 3), (2, 2), name='de_dc3')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn3'))
 
-    net = deconv2d(net, 32, (4, 4), (2, 2), name='de_dc4')
+    net = deconv2d(net, 64, (5, 5), (2, 2), name='de_dc4')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn4'))
 
-    logit = deconv2d(net, 3, (4, 4), (2, 2), name='de_dc5')
+    logit = deconv2d(net, 3, (5, 5), (2, 2), name='de_dc5')
     logit = tf.nn.sigmoid(logit)
 
     return logit
@@ -91,7 +95,6 @@ def discriminator(batchsize, x, y, y_dim, is_training=True, reuse=False):
     y = tf.one_hot(y, depth=y_dim, on_value=1)
     y = tf.to_float(tf.reshape(y, [batchsize, 1, 1, y_dim]))
     x = conv_cond_concat(x, y)
-
 
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
     net = lrelu(net, name='d_conv1')

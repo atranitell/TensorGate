@@ -10,6 +10,7 @@ from config.mnist import mnist_regression
 from config.kinface import kinvae
 from config.trafficflow import trafficflow
 from config.trafficflow import trafficflow_dual
+from config.celeba import celeba
 
 config_map = {
     'mnist': mnist.mnist,
@@ -17,7 +18,8 @@ config_map = {
     'mnist_regression': mnist_regression.mnist_regression,
     'kinvae': kinvae.kinvae,
     'trafficflow': trafficflow.trafficflow,
-    'trafficflow_dual': trafficflow_dual.trafficflow_dual
+    'trafficflow_dual': trafficflow_dual.trafficflow_dual,
+    'celeba': celeba.celeba
 }
 
 

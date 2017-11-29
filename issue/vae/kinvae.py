@@ -109,9 +109,9 @@ class KIN_VAE(context.Context):
     # loss
     ELBO_loss = self._loss(real2, fake, mu, sigma)
     D_loss, G_loss, C_loss = self._loss_gan(D_F, D_R2, C_F, label)
-    loss = ELBO_loss + D_loss + G_loss + C_loss
+    loss = D_loss + C_loss + ELBO_loss + G_loss
 
-    # allocate two optimizer
+    # # allocate two optimizer
     global_step = tf.train.create_global_step()
     train_op = updater.default(self.config, loss, global_step)
 
@@ -156,7 +156,7 @@ class KIN_VAE(context.Context):
     # encode image to a vector
     mu, sigma = self._encoder(real1, label)
     # resample from the re-parameterzation
-    z = mu + sigma * tf.random_normal(tf.shape(mu))
+    z = mu + sigma # * tf.random_normal(tf.shape(mu))
     # decoding
     fake = self._decoder(z, label, reuse=False)
     fake = tf.clip_by_value(fake, 1e-8, 1 - 1e-8)
