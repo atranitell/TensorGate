@@ -108,7 +108,8 @@ class CVAE_GAN(context.Context):
     # loss
     ELBO_loss = self._loss(real, fake, mu, sigma)
     D_loss, G_loss, C_loss = self._loss_gan(D_F, D_R, C_F, label)
-    loss = ELBO_loss + D_loss + G_loss + C_loss
+    # loss = ELBO_loss + D_loss + G_loss + C_loss
+    loss = D_loss + G_loss + C_loss
 
     # allocate two optimizer
     global_step = tf.train.create_global_step()
