@@ -9,6 +9,7 @@ import numpy as np
 from core.utils.logger import logger
 from core.solver.snapshot import Snapshot
 from core.solver.summary import Summary
+from core.solver import variables
 
 
 class Context():
@@ -57,7 +58,13 @@ class Running_Hook(tf.train.SessionRunHook):
     self.func_val = func_val
     self.func_test = func_test
 
+  def begin(self):
+    # display variables
+    variables.print_trainable_list()
+    variables.print_global_list()
+
   def before_run(self, run_context):
+    # feed monitor values
     self.start_time = time.time()
     return tf.train.SessionRunArgs([self.step] + self.values)
 

@@ -36,7 +36,7 @@ networks_map = {
 }
 
 
-def network(X, config, phase, reuse=None, name=''):
+def network(X, config, phase, name='', reuse=None):
   """ net factory
   """
   is_training = True if phase == 'train' else False

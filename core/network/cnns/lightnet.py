@@ -33,8 +33,8 @@ def lightnet_argscope(weight_decay,
                  weights_initializer=layers.xavier_initializer(),
                  #    biases_initializer=tf.constant_initializer(0.1),
                  activation_fn=tf.nn.relu,
-                 normalizer_fn=layers.batch_norm,
-                 normalizer_params=batch_norm_params,
+                 normalizer_fn=None, #layers.batch_norm,
+                #  normalizer_params=batch_norm_params,
                  padding='SAME'):
     with arg_scope([layers.batch_norm], **batch_norm_params):
       with arg_scope([layers.max_pool2d, layers.avg_pool2d], padding='SAME') as arg_sc:
@@ -93,6 +93,8 @@ def lightnet(images, num_classes, is_training, dropout_keep_prob, scope='Lightne
     block_in = layers.dropout(
         block_in, keep_prob=dropout_keep_prob, is_training=is_training)
     block_in = layers.avg_pool2d(block_in, [6, 6], 1, padding='VALID')
+
+    end_points['global_pool'] = block_in
 
     logits = layers.fully_connected(
         block_in, num_classes,

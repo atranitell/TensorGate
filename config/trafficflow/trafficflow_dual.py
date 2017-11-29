@@ -6,11 +6,11 @@
 from config import params
 
 
-class trafficflow():
+class trafficflow_dual():
 
   def __init__(self):
 
-    self.name = 'trafficflow'
+    self.name = 'trafficflow_dual'
     self.target = 'cnn.regression_dual'
     self.data_dir = 'E:/Datasets/TrafficNet'
     self.phase = 'train'

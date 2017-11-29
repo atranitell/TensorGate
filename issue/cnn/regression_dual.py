@@ -14,13 +14,14 @@ from core.utils.profiler import Profiler
 from issue import context
 
 
-class regression(context.Context):
+class regression_dual(context.Context):
 
   def __init__(self, config):
     context.Context.__init__(self, config)
 
   def _net(self, data):
-    logit, net = network(data, self.config, self.phase)
+    logit, net = network(data, self.config, self.phase, name='net1')
+    print(net['global_pool'])
     return logit, net
 
   def _loss(self, logit, label):

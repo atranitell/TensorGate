@@ -48,6 +48,8 @@ class Gate():
       from issue.cnn.classification import classification as App
     elif self.config.target == 'cnn.regression':
       from issue.cnn.regression import regression as App
+    elif self.config.target == 'cnn.regression_dual':
+      from issue.cnn.regression_dual import regression_dual as App
     # For GAN
     elif self.config.target == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
@@ -87,7 +89,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
+  parser.add_argument('-name', type=str, dest='name', default='trafficflow_dual')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
