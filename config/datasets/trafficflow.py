@@ -34,10 +34,10 @@ class trafficflow():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net('resnet_v2_50')
+    self.net = params.Net('simplenet')
     self.net.set_weight_decay(0.0001)
-    self.net.set_batch_norm(0.9)
-    self.net.set_activation_fn('relu')
+    # self.net.set_batch_norm(0.9)
+    # self.net.set_activation_fn('relu')
     # self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
