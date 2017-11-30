@@ -33,7 +33,8 @@ networks_map = {
     'nasnet_mobile': cnn.NasNet,
     'nasnet_large': cnn.NasNet,
     'lightnet': cnn.LightNet,
-    'lightnet64': cnn.LightNet64
+    'lightnet64': cnn.LightNet64,
+    'simplenet': cnn.SimpleNet
 }
 
 
@@ -45,5 +46,8 @@ def network(X, config, phase, name='', reuse=None):
     net, argscope = networks_map[config.net.name](X, config, is_training)
     if reuse:
       scope.reuse_variables()
-    with arg_scope(argscope):
+    if argscope is not None:
+      with arg_scope(argscope):
+        return net
+    else:
       return net

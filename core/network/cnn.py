@@ -18,6 +18,7 @@ from core.network.nets import vgg
 from core.network.nets.nasnet import nasnet
 from core.network.cnns import lightnet
 from core.network.cnns import lightnet64
+from core.network.cnns import simplenet
 
 
 def CifarNet(X, config, is_train):
@@ -250,3 +251,10 @@ def LightNet64(X, config, is_train):
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep)
   return net, argscope
+
+
+def SimpleNet(X, config, is_train):
+  net = simplenet.simplenet(
+      X, num_classes=config.data.num_classes,
+      is_training=is_train)
+  return net, None
