@@ -47,7 +47,6 @@ class classification(context.Context):
 
     # for storage
     saver = tf.train.Saver(var_list=variables.all())
-    variables.print_trainable_list()
 
     # hooks
     snapshot_hook = self.snapshot.init()
