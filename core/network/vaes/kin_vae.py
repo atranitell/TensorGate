@@ -8,13 +8,12 @@ from core.network.gans.ops import *
 
 
 # Gaussian Encoder
-def encoder(batchsize, x, y, y_dim, z_dim,
-            is_training=True, reuse=False):
+def encoder(batchsize, x, z_dim, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):
     # transform to one-hot form
-    y = tf.one_hot(y, depth=y_dim, on_value=1)
-    y = tf.to_float(tf.reshape(y, [batchsize, 1, 1, y_dim]))
-    x = conv_cond_concat(x, y)
+    # y = tf.one_hot(y, depth=y_dim, on_value=1)
+    # y = tf.to_float(tf.reshape(y, [batchsize, 1, 1, y_dim]))
+    # x = conv_cond_concat(x, y)
 
     # input 3x64x64
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
@@ -44,15 +43,15 @@ def encoder(batchsize, x, y, y_dim, z_dim,
     return mean, stddev
 
 
-def decoder(batchsize, z, y, is_training=True, reuse=False):
+def decoder(batchsize, z, is_training=True, reuse=None):
   # Network Architecture is exactly same as in infoGAN (https://arxiv.org/abs/1606.03657)
   # Architecture : FC1024_BR-FC7x7x128_BR-(64)4dc2s_BR-(1)4dc2s_S
   # Bernoulli decoder
   with tf.variable_scope("KIN_VAE/decoder", reuse=reuse):
 
     # merge noise and label
-    y = tf.to_float(tf.reshape(y, [batchsize, 1]))
-    z = tf.concat([z, y], 1)
+    # y = tf.to_float(tf.reshape(y, [batchsize, 1]))
+    # z = tf.concat([z, y], 1)
 
     net = linear(z, 1024, scope='de_fc1')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn1'))
@@ -88,13 +87,13 @@ def classifier(x, y_dim, is_training, reuse):
     return out
 
 
-def discriminator(batchsize, x, y, y_dim, is_training=True, reuse=False):
+def discriminator(batchsize, x, is_training=True, reuse=None):
   # discrinator D
   # just discrinator true or false
   with tf.variable_scope('KIN_VAE/discriminator', reuse=reuse):
-    y = tf.one_hot(y, depth=y_dim, on_value=1)
-    y = tf.to_float(tf.reshape(y, [batchsize, 1, 1, y_dim]))
-    x = conv_cond_concat(x, y)
+    # y = tf.one_hot(y, depth=y_dim, on_value=1)
+    # y = tf.to_float(tf.reshape(y, [batchsize, 1, 1, y_dim]))
+    # x = conv_cond_concat(x, y)
 
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
     net = lrelu(net, name='d_conv1')

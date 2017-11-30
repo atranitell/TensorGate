@@ -15,12 +15,14 @@ def select_vars(include_name, var_list=None):
     var_list = tf.trainable_variables()
   return [var for var in var_list if include_name in var.name]
 
+
 def exclude_vars(exclude_name, var_list=None):
   """ exclude variables from var list
   """
   if var_list is None:
     var_list = tf.trainable_variables()
   return [var for var in var_list if exclude_name not in var.name]
+
 
 def all():
   """ return all variables in the model
@@ -50,3 +52,9 @@ def print_restore_list(restore_vars):
   logger.sys('RESTORE LIST:')
   for var in restore_vars:
     logger.sys(str(var))
+
+
+def print_vars(var_list):
+  logger.sys('VAR LIST:')
+  for var in var_list:
+    logger.net(str(var))

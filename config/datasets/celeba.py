@@ -6,12 +6,12 @@
 from config import params
 
 
-class mnist_gan():
+class celeba():
 
   def __init__(self):
 
-    self.name = 'mnist'
-    self.target = 'vae.cvae'
+    self.name = 'celeba'
+    self.target = 'vae.cvae.gan'
     self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -21,23 +21,23 @@ class mnist_gan():
         print_invl=20,
         save_summaries_invl=10,
         save_model_invl=500,
-        test_invl=500,
+        test_invl=2000,
         val_invl=500,
         max_iter=999999)
 
     self.image = params.Image(
         channels=3,
         frames=1,
-        raw_height=28,
-        raw_width=28,
-        output_height=28,
-        output_width=28,
-        preprocessing_method='gan.mnist',
-        gray=True)
+        raw_height=64,
+        raw_width=64,
+        output_height=64,
+        output_width=64,
+        preprocessing_method='vae.kinship',
+        gray=False)
 
     self.set_phase(self.phase)
 
-    self.net = params.Net('cvae')
+    self.net = params.Net('cgan')
     self.net.set_z_dim(100)
 
   def set_phase(self, phase):
@@ -47,6 +47,8 @@ class mnist_gan():
       self._train()
     elif phase == 'test':
       self._test()
+    elif phase == 'val':
+      self._val()
     else:
       raise ValueError('Unknown phase [%s]' % phase)
 
@@ -56,12 +58,13 @@ class mnist_gan():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=64,
-        entry_path="../_datasets/mnist/train.txt",
+        entry_path="../_datasets/kinface2/train.txt",
         shuffle=True,
-        total_num=55000,
-        loader='load_image_from_text')
+        total_num=800,
+        loader='load_pair_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=10)
+    self.data.add_image(self.image)
+    self.data.label(num_classes=4)
 
     self.lr = [params.LearningRate(),
                params.LearningRate()]
@@ -75,5 +78,26 @@ class mnist_gan():
 
   def _test(self):
     self.phase = 'test'
-    self.data = params.Data(batchsize=100)
-    self.data.label(num_classes=10)
+    self.data = params.Data(
+        batchsize=100,
+        entry_path="../_datasets/kinface2/all.txt",
+        shuffle=False,
+        total_num=1000,
+        loader='load_pair_image_from_text',
+        reader_thread=1)
+    self.data.add_image(self.image)
+    self.data.add_image(self.image)
+    self.data.label(num_classes=4)
+
+  def _val(self):
+    self.phase = 'val'
+    self.data = params.Data(
+        batchsize=100,
+        entry_path="../_datasets/kinface2/test.txt",
+        shuffle=False,
+        total_num=100,
+        loader='load_pair_image_from_text',
+        reader_thread=1)
+    self.data.add_image(self.image)
+    self.data.add_image(self.image)
+    self.data.label(num_classes=4)

@@ -17,6 +17,7 @@ from core.network.nets import resnet_v2
 from core.network.nets import vgg
 from core.network.nets.nasnet import nasnet
 from core.network.cnns import lightnet
+from core.network.cnns import lightnet64
 
 
 def CifarNet(X, config, is_train):
@@ -232,6 +233,19 @@ def LightNet(X, config, is_train):
       batch_norm_epsilon=config.net.batch_norm_epsilon,
       batch_norm_scale=config.net.batch_norm_scale)
   net = lightnet.lightnet(
+      X, num_classes=config.data.num_classes,
+      is_training=is_train,
+      dropout_keep_prob=config.net.dropout_keep)
+  return net, argscope
+
+
+def LightNet64(X, config, is_train):
+  argscope = lightnet64.lightnet64_argscope(
+      weight_decay=config.net.weight_decay,
+      batch_norm_decay=config.net.batch_norm_decay,
+      batch_norm_epsilon=config.net.batch_norm_epsilon,
+      batch_norm_scale=config.net.batch_norm_scale)
+  net = lightnet64.lightnet64(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep)

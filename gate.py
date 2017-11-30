@@ -62,8 +62,8 @@ class Gate():
       from issue.cnn.classification import classification as App
     elif self.config.target == 'cnn.regression':
       from issue.cnn.regression import regression as App
-    elif self.config.target == 'cnn.regression_dual':
-      from issue.cnn.regression_dual import regression_dual as App
+    elif self.config.target == 'cnn.pairwise':
+      from issue.cnn.pairwise import pairwise as App
     # For GAN
     elif self.config.target == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
@@ -73,15 +73,15 @@ class Gate():
       from issue.gan.cwgan import CWGAN as App
     elif self.config.target == 'gan.acgan':
       from issue.gan.acgan import ACGAN as App
-    elif self.config.target == 'gan.kingan':
-      from issue.gan.kingan import KinGAN as App
     # For VAE
     elif self.config.target == 'vae.cvae':
       from issue.vae.cvae import CVAE as App
-    elif self.config.target == 'vae.cvae_gan':
+    elif self.config.target == 'vae.cvae.gan':
       from issue.vae.cvae_gan import CVAE_GAN as App
     elif self.config.target == 'vae.kinvae':
       from issue.vae.kinvae import KIN_VAE as App
+    elif self.config.target == 'vae.kinvae.pair':
+      from issue.vae.kinvae_pair import KIN_VAE_PAIR as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
@@ -103,7 +103,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='kinvae')
+  parser.add_argument('-name', type=str, dest='name', default='kinvae.pair')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)

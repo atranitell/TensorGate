@@ -53,7 +53,7 @@ def inception_arg_scope(weight_decay=0.00004,
       # epsilon to prevent 0s in variance.
       'epsilon': batch_norm_epsilon,
       # collection containing update_ops.
-      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+      'updates_collections': None, # tf.GraphKeys.UPDATE_OPS,
       # use fused batch norm if possible.
       'fused': None,
   }

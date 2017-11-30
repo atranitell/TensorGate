@@ -4,7 +4,6 @@
     Updated: 2017-08-28
 """
 import tensorflow as tf
-
 from core.utils.logger import logger
 from core.solver.optimizer import configure_optimizer
 from core.solver.learning_rate import configure_lr
@@ -42,6 +41,6 @@ def default(config, loss, global_step, var_list=None, index=0):
   grad_op = optimizer.apply_gradients(grads, global_step)
 
   # assemble
-  train_op = [grad_op]
+  train_op = grad_op
 
   return train_op

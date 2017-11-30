@@ -32,7 +32,8 @@ networks_map = {
     'nasnet_cifar': cnn.NasNet,
     'nasnet_mobile': cnn.NasNet,
     'nasnet_large': cnn.NasNet,
-    'lightnet': cnn.LightNet
+    'lightnet': cnn.LightNet,
+    'lightnet64': cnn.LightNet64
 }
 
 
@@ -40,8 +41,8 @@ def network(X, config, phase, name='', reuse=None):
   """ net factory
   """
   is_training = True if phase == 'train' else False
-  net, argscope = networks_map[config.net.name](X, config, is_training)
   with tf.variable_scope(name) as scope:
+    net, argscope = networks_map[config.net.name](X, config, is_training)
     if reuse:
       scope.reuse_variables()
     with arg_scope(argscope):
