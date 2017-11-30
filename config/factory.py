@@ -6,6 +6,7 @@
 
 from config.datasets import mnist
 from config.datasets import kinvae
+from config.datasets import kinface
 from config.datasets import trafficflow
 from config.datasets import celeba
 
@@ -15,6 +16,7 @@ config_map = {
     'mnist.regression': mnist.mnist_regression,
     'kinvae': kinvae.kinvae,
     'kinvae.pair': kinvae.kinvae_pair,
+    'kinface': kinface.kinface,
     'trafficflow': trafficflow.trafficflow,
     'celeba': celeba.celeba
 }
