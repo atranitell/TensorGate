@@ -4,7 +4,6 @@
 """
 import tensorflow as tf
 from core.database.factory import loads
-from core.network.factory import network
 from core.network.vaes import kin_vae
 from core.solver import updater
 from core.solver import variables
@@ -41,14 +40,11 @@ class KIN_VAE_PAIR(context.Context):
         self.is_train, reuse)
 
   def _recognitor(self, x1, x2, label):
-    with tf.variable_scope('KIN_VAE/recognitor'):
-      logit1, net1 = network(x1, self.config, self.phase, 'net1')
-      logit2, net2 = network(x2, self.config, self.phase, 'net2')
-      feat1 = net1['global_pool']
-      feat2 = net2['global_pool']
-      return cosine.get_loss(feat1, feat2, label,
-                             self.data.batchsize,
-                             is_training=self.is_train)
+    feat1 = kin_vae.recognitor(x1, self.is_train, 'net1')
+    feat2 = kin_vae.recognitor(x2, self.is_train, 'net2')
+    return cosine.get_loss(feat1, feat2, label,
+                           self.data.batchsize,
+                           is_training=self.is_train)
 
   def _loss(self, real, fake, mu, sigma):
     """
@@ -124,11 +120,11 @@ class KIN_VAE_PAIR(context.Context):
     var_g = variables.select_vars('decoder')
     var_d = variables.select_vars('discriminator')
     var_r = variables.select_vars('recognitor')
-  
+
     op1 = updater.default(self.config, loss, global_step, var_e, 0)
-    op2 = updater.default(self.config, loss, None, var_g, 0)
+    op2 = updater.default(self.config, loss, None, var_g, 1)
     op3 = updater.default(self.config, loss, None, var_d, 0)
-    op4 = updater.default(self.config, loss, None, var_r, 0)
+    op4 = updater.default(self.config, loss, None, var_r, 2)
     train_op = tf.group(op1, op2, op3, op4)
 
     # train_op = updater.default(
@@ -173,8 +169,9 @@ class KIN_VAE_PAIR(context.Context):
 
     # encode image to a vector
     mu, sigma = self._encoder(real1)
-    z = mu + sigma  # * tf.random_normal(tf.shape(mu))
+    z = mu + sigma * tf.random_normal(tf.shape(mu))
     fake = self._decoder(z)
+    fake = tf.clip_by_value(fake, 1e-8, 1 - 1e-8)
     loss = self._recognitor(fake, real2, label)
 
     saver = tf.train.Saver()
@@ -189,7 +186,7 @@ class KIN_VAE_PAIR(context.Context):
         with context.QueueContext(sess):
           for i in range(num_iter):
             imgs, paths, _info = sess.run([fake, path, info])
-            utils.image.saveall(img_dir, imgs, paths)
+            # utils.image.saveall(img_dir, imgs, paths)
             [fw.write(_line + b'\r\n') for _line in _info]
 
     self._exit_()

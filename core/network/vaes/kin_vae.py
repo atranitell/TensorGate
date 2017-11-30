@@ -19,7 +19,7 @@ def encoder(batchsize, x, z_dim, is_training=True, reuse=None):
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
     net = lrelu(net, name='en_conv1')
 
-    # input 64x32x32 
+    # input 64x32x32
     net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
     net = lrelu(bn(net, is_training=is_training, scope='en_bn2'))
 
@@ -70,24 +70,13 @@ def decoder(batchsize, z, is_training=True, reuse=None):
     net = deconv2d(net, 64, (5, 5), (2, 2), name='de_dc4')
     net = tf.nn.relu(bn(net, is_training=is_training, scope='de_bn4'))
 
-    logit = deconv2d(net, 3, (5, 5), (2, 2), name='de_dc5')
+    logit = deconv2d(net, 1, (5, 5), (2, 2), name='de_dc5')
     logit = tf.nn.sigmoid(logit)
 
     return logit
 
 
-def classifier(x, y_dim, is_training, reuse):
-  # classifier
-  # x is not real data, but a vector from discriminator
-  with tf.variable_scope('KIN_VAE/classifier', reuse=reuse):
-    net = linear(x, 128, scope='c_fc1')
-    net = lrelu(bn(net, is_training=is_training, scope='c_bn1'))
-    logit = linear(net, y_dim, scope='c_fc2')
-    out = tf.nn.softmax(logit)
-    return out
-
-
-def discriminator(batchsize, x, is_training=True, reuse=None):
+def discriminator(batchsize, x, is_training, reuse=None):
   # discrinator D
   # just discrinator true or false
   with tf.variable_scope('KIN_VAE/discriminator', reuse=reuse):
@@ -112,3 +101,25 @@ def discriminator(batchsize, x, is_training=True, reuse=None):
     logit = tf.nn.sigmoid(logit)
 
     return logit, net
+
+
+def recognitor(x, is_training, scope, reuse=None):
+  with tf.variable_scope('KIN_VAE/recognitor/' + scope, reuse=reuse):
+    
+    net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
+    net = lrelu(bn(net, is_training, 'r_bn1'))
+    
+    net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
+    net = lrelu(bn(net, is_training, 'r_bn2'))
+    
+    net = conv2d(net, 128, (4, 4), (2, 2), name='conv3')
+    net = lrelu(bn(net, is_training, 'r_bn3'))
+    
+    net = conv2d(net, 256, (4, 4), (2, 2), name='conv4')
+    net = lrelu(bn(net, is_training, 'r_bn4'))
+   
+    net = conv2d(net, 512, (4, 4), (2, 2), name='conv5')
+    net = tf.reduce_mean(net, axis=[1, 2])
+    net = layers.flatten(net)
+    
+    return net

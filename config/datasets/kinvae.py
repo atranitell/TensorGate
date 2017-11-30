@@ -130,7 +130,7 @@ class kinvae_pair():
         output_height=64,
         output_width=64,
         preprocessing_method='vae.kinship',
-        gray=False)
+        gray=True)
 
     self.set_phase(self.phase)
 
@@ -170,16 +170,16 @@ class kinvae_pair():
     self.lr = [params.LearningRate(),
                params.LearningRate(),
                params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.001)
-    self.lr[1].fixed(learning_rate=0.01)
-    self.lr[2].fixed(learning_rate=0.001)
+    self.lr[0].fixed(learning_rate=0.0002)
+    self.lr[1].fixed(learning_rate=0.001)
+    self.lr[2].fixed(learning_rate=0.01)
 
     self.optimizer = [params.Optimizer(),
                       params.Optimizer(),
                       params.Optimizer()]
     self.optimizer[0].adam(beta1=0.5)
     self.optimizer[1].adam(beta1=0.5)
-    self.optimizer[2].adam(beta1=0.5)
+    self.optimizer[2].sgd()
 
   def _test(self):
     self.phase = 'test'
