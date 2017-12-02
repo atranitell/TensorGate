@@ -3,19 +3,21 @@
     Author: Kai JIN
     Updated: 2017-11-23
 """
-
-from config.datasets import mnist
-from config.datasets import kinvae
-from config.datasets import kinface
-from config.datasets import trafficflow
-from config.datasets import celeba
+from config.datasets.mnist import mnist
+from config.datasets.mnist import mnist_gan
+from config.datasets.mnist import mnist_regression
+from config.datasets.kinface import kinface
+from config.datasets.kinface import kinvae
+from config.datasets.kinface import kinvae_pair
+from config.datasets.celeba import celeba
+from config.datasets.trafficflow import trafficflow
 
 config_map = {
     'mnist': mnist.mnist,
-    'mnist.gan': mnist.mnist_gan,
-    'mnist.regression': mnist.mnist_regression,
+    'mnist.gan': mnist_gan.mnist_gan,
+    'mnist.regression': mnist_regression.mnist_regression,
     'kinvae': kinvae.kinvae,
-    'kinvae.pair': kinvae.kinvae_pair,
+    'kinvae.pair': kinvae_pair.kinvae_pair,
     'kinface': kinface.kinface,
     'trafficflow': trafficflow.trafficflow,
     'celeba': celeba.celeba
