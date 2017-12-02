@@ -21,6 +21,7 @@ def get_loss(x, y, labels, batch_size, is_training=True):
     x1 = tf.expand_dims(x, axis=2)
     x1 = tf.transpose(x1, perm=[0, 2, 1])
     y1 = tf.expand_dims(y, axis=2)
+    
     loss = tf.reshape(
         tf.matmul(x1, y1), [batch_size, 1]) / (norm_x * norm_y)
 
@@ -28,6 +29,7 @@ def get_loss(x, y, labels, batch_size, is_training=True):
       loss = loss * tf.to_float(labels)
 
     losses = 1.0 - tf.reduce_mean(loss)
+    loss = 1 - loss
 
     tf.summary.scalar('losses', losses)
-    return losses
+    return losses, loss
