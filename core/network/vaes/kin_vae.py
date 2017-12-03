@@ -1,61 +1,18 @@
 # -*- coding: utf-8 -*-
-""" CVAE-GAN: Fine-Grained Image Generation through Asymmetric Training
-    https://arxiv.org/abs/1703.10155
+""" FOR KINFACE VAE-GAN
     updated: 2017/11/24
 """
 import tensorflow as tf
 from tensorflow.contrib import layers
+from core.network.gans.ops import *
 
 
-def deconv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="deconv2d"):
-  return tf.layers.conv2d_transpose(
-      inputs=x,
-      filters=filters,
-      kernel_size=ksize,
-      strides=stride,
-      padding='SAME',
-      kernel_initializer=layers.xavier_initializer(),
-      name=name)
-
-
-def lrelu(x, leak=0.2, name="lrelu"):
-  return tf.maximum(x, leak * x)
-
-
-def linear(x, output_size, scope="linear"):
-  return layers.fully_connected(
-      inputs=x,
-      num_outputs=output_size,
-      activation_fn=None,
-      weights_initializer=layers.xavier_initializer(),
-      scope=scope)
-
-
-def bn(x, is_training, scope):
-  return layers.batch_norm(
-      inputs=x,
-      decay=0.9,
-      updates_collections=None,
-      epsilon=1e-5,
-      scale=True,
-      is_training=is_training,
-      scope=scope)
-
-
-def conv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="conv2d"):
-  return tf.layers.conv2d(
-      inputs=x,
-      filters=filters,
-      kernel_size=ksize,
-      strides=stride,
-      padding='SAME',
-      kernel_initializer=layers.xavier_initializer(),
-      kernel_regularizer=layers.l2_regularizer(0.0005),
-      name=name)
-
-
-def encoder(x, z_dim, is_training=True, reuse=None):
+def encoder(x, y, y_dim, z_dim, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):
+    # condition
+    y = tf.one_hot(y, depth=y_dim, on_value=1)
+    y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
+    x = conv_cond_concat(x, y)
     # input 3x64x64
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
     net = lrelu(net, name='en_conv1')
@@ -76,7 +33,6 @@ def encoder(x, z_dim, is_training=True, reuse=None):
     # net = lrelu(bn(net, is_training=is_training, scope='en_bn6'))
     # input 512x1x1
     net = layers.flatten(net)
-    # net = linear(net, 256, scope='fc7')
     # net = lrelu(bn(net, is_training=is_training, scope='en_bn7'))
     # output gaussian distribution
     gaussian_params = linear(net, 2 * z_dim, scope='en_fc8')
@@ -88,8 +44,11 @@ def encoder(x, z_dim, is_training=True, reuse=None):
     return mean, stddev, net
 
 
-def generator(z, is_training=True, reuse=None):
+def generator(z, y, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/generator", reuse=reuse):
+    # merge noise and label
+    y = tf.to_float(tf.reshape(y, [-1, 1]))
+    z = tf.concat([z, y], 1)
     # input z_dim
     net = linear(z, 512 * 1 * 1, scope='de_fc1')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn1'))
@@ -116,11 +75,14 @@ def generator(z, is_training=True, reuse=None):
     return logit
 
 
-def discriminator(x, is_training, reuse=None):
+def discriminator(x, y, y_dim, is_training, reuse=None):
   with tf.variable_scope('KIN_VAE/discriminator', reuse=reuse):
+    # condition
+    y = tf.one_hot(y, depth=y_dim, on_value=1)
+    y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
+    x = conv_cond_concat(x, y)
     # input 1x64x64
     net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
-    net = lrelu(net, name='d_conv1')
     # input 64x32x32
     net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
     net = lrelu(bn(net, is_training=is_training, scope='d_bn2'))
@@ -140,28 +102,3 @@ def discriminator(x, is_training, reuse=None):
     # input 1024
     # logit = tf.nn.sigmoid(net)
     return net, net
-
-
-def recognitor(x, is_training, scope, reuse=None):
-  with tf.variable_scope('KIN_VAE/recognitor/' + scope, reuse=reuse):
-    # input 1x64x64
-    net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
-    net = lrelu(bn(net, is_training, 'r_bn1'))
-    # input 64x32x32
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
-    net = lrelu(bn(net, is_training, 'r_bn2'))
-    # input 128x16x16
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv3')
-    net = lrelu(bn(net, is_training, 'r_bn3'))
-    # input 128x8x8
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv4')
-    net = lrelu(bn(net, is_training, 'r_bn4'))
-    # input 256x4x4
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv5')
-    net = lrelu(bn(net, is_training, 'r_bn5'))
-    # input 256x2x2
-    net = conv2d(net, 512, (4, 4), (2, 2), name='conv6')
-    # input 512x1x1
-    # for cosine - output features
-    net = layers.flatten(net)
-    return net
