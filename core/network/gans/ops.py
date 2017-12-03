@@ -25,7 +25,7 @@ def conv_cond_concat(x, y):
   return tf.concat([x, y * tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])], 3)
 
 
-def conv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="conv2d"):
+def conv2d(x, filters, ksize, stride, name="conv2d"):
   return tf.layers.conv2d(
       inputs=x,
       filters=filters,
@@ -36,7 +36,7 @@ def conv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="conv2d"):
       name=name)
 
 
-def deconv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="deconv2d"):
+def deconv2d(x, filters, ksize, stride, name="deconv2d"):
   return tf.layers.conv2d_transpose(
       inputs=x,
       filters=filters,
@@ -47,7 +47,7 @@ def deconv2d(x, filters, ksize=(5, 5), stride=(2, 2), stddev=0.02, name="deconv2
       name=name)
 
 
-def lrelu(x, leak=0.2, name="lrelu"):
+def lrelu(x, leak=0.2, name='leak_relu'):
   return tf.maximum(x, leak * x)
 
 
