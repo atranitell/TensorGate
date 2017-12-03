@@ -30,6 +30,7 @@ def default(config, loss, global_step, var_list=None, index=0):
                     tf.train.get_global_step(),
                     config.data.batchsize,
                     config.data.total_num)
+  tf.summary.scalar('train/lr', lr)
 
   # configure optimizer
   optimizer = configure_optimizer(config.optimizer[index], lr)
@@ -43,4 +44,37 @@ def default(config, loss, global_step, var_list=None, index=0):
   # assemble
   train_op = grad_op
 
+  # add
+  # add_grad_to_summary(grads, True)
+  # add_weight_to_summary()
+
   return train_op
+
+
+def add_grad_to_summary(grads, grad_summary=True, grad_hist=False):
+  with tf.name_scope('grads'):
+    for grad, var in grads:
+      prefix = var.op.name
+      if prefix.find('global_step') == 0 or grad is None:
+        continue
+      if grad_summary:
+        tf.summary.scalar(var.op.name + '_mean', tf.reduce_mean(grad))
+        tf.summary.scalar(var.op.name + '_max', tf.reduce_max(grad))
+        tf.summary.scalar(var.op.name + '_sum', tf.reduce_sum(grad))
+      if grad_hist:
+        tf.summary.histogram(var.op.name + '/gradients', grad)
+
+
+def add_weight_to_summary(weight_summary=True, weight_hist=False):
+  with tf.name_scope('weights'):
+    for weight in tf.trainable_variables():
+      prefix = weight.op.name
+      if prefix.find('global_step') == 0 or weight is None:
+        continue
+      if weight_summary:
+        tf.summary.scalar(weight.op.name + '_mean', tf.reduce_mean(weight))
+        tf.summary.scalar(weight.op.name + '_max', tf.reduce_max(weight))
+        tf.summary.scalar(weight.op.name + '_sum', tf.reduce_sum(weight))
+      # Add histograms for trainable variables.
+      if weight_hist:
+        tf.summary.histogram(weight.op.name, weight)
