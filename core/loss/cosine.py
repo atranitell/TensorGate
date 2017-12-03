@@ -14,7 +14,7 @@ def get_loss(x, y, labels, batch_size, is_training=True):
       loss: a batchsize of loss for per sample
   """
   with tf.name_scope('cosine_loss'):
-    labels = tf.reshape(labels, [batch_size, 1])
+    label = tf.reshape(labels, [batch_size, 1])
     norm_x = tf.reshape(tf.norm(x, axis=1), [batch_size, 1])
     norm_y = tf.reshape(tf.norm(y, axis=1), [batch_size, 1])
 
@@ -26,7 +26,7 @@ def get_loss(x, y, labels, batch_size, is_training=True):
         tf.matmul(x1, y1), [batch_size, 1]) / (norm_x * norm_y)
 
     if is_training:
-      loss = loss * tf.to_float(labels)
+      loss = loss * tf.to_float(label)
 
     losses = 1.0 - tf.reduce_mean(loss)
     loss = 1 - loss
