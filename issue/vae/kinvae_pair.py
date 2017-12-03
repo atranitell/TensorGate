@@ -88,6 +88,7 @@ class KIN_VAE_PAIR(context.Context):
     data, info, path = loads(self.config)
     c1_real, p1_real, p2_real = tf.unstack(data, axis=1)
     label, cond = tf.unstack(info, axis=1)
+    path1, path2, path3 = tf.unstack(path, axis=1)
 
     # encode image to a vector
     c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real, cond)
@@ -153,6 +154,7 @@ class KIN_VAE_PAIR(context.Context):
     data, info, path = loads(self.config)
     c1_real, p1_real, p2_real = tf.unstack(data, axis=1)
     label, cond = tf.unstack(info, axis=1)
+    path1, path2, path3 = tf.unstack(path, axis=1)
 
     # encode image to a vector
     c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real, cond)
@@ -174,22 +176,23 @@ class KIN_VAE_PAIR(context.Context):
     with tf.Session() as sess:
       # load snapshot from filepath
       step = self.snapshot.restore(sess, saver)
-      info = utils.string.concat(batchsize, [path, label, loss])
-      output = [c1_fake, p1_real, p2_real, path, info, feat_c1, feat_p2, label]
+      info = utils.string.concat(batchsize, [path1, path2, path3, label, loss])
+      output = [c1_fake, p1_real, p2_real, info, feat_c1, feat_p2, label]
       # img_dir = utils.filesystem.mkdir(dstdir + step)
 
       with open(dstdir + '%s.txt' % step, 'wb') as fw:
         with context.QueueContext(sess):
           for i in range(num_iter):
             # running session
-            _c1, _p1, _p2, _path, _info, _x, _y, _label = sess.run(output)
+            _c1, _p1, _p2, _info, _x, _y, _label = sess.run(output)
             # to compute PCA
             self._write_feat_to_npy(i, _x, _y, _label)
             # save all iamges to folder
             # utils.image.saveall(img_dir, _fake, _path)
-            utils.image.save_batch(_c1, batchsize, dstdir, step, '_c1')
-            utils.image.save_batch(_p1, batchsize, dstdir, step, '_p1')
-            utils.image.save_batch(_p2, batchsize, dstdir, step, '_p2')
+            _step = str(step).zfill(8) + '_' + str(i)
+            utils.image.save_batch(_c1, batchsize, dstdir, _step + '_c1')
+            utils.image.save_batch(_p1, batchsize, dstdir, _step + '_p1')
+            utils.image.save_batch(_p2, batchsize, dstdir, _step + '_p2')
             # write to file
             [fw.write(_line + b'\r\n') for _line in _info]
 
