@@ -8,9 +8,12 @@ def preprocess_for_train(image, output_height, output_width):
   """ Preprocesses the given image for training."""
   # Transform the image to floats.
   image = tf.to_float(image) / 255.
-  # image = tf.pad(image, [[4, 4], [4, 4], [0, 0]])
-  # image = tf.random_crop(image, [output_height, output_width, 3])
+  image = tf.image.resize_images(image, (output_height, output_width))
   # image = tf.image.random_flip_left_right(image)
+  # image = tf.image.random_hue(image, max_delta=0.05)
+  # image = tf.image.random_contrast(image, lower=0.3, upper=1.0)
+  # image = tf.image.random_brightness(image, max_delta=0.2)
+  # image = tf.image.random_saturation(image, lower=0.0, upper=2.0)
   return image
 
 
@@ -18,7 +21,7 @@ def preprocess_for_eval(image, output_height, output_width):
   """ Preprocesses the given image for evaluation. """
   # Transform the image to floats.
   image = tf.to_float(image) / 255.
-  # image = tf.image.resize_images(image, (output_height, output_width))
+  image = tf.image.resize_images(image, (output_height, output_width))
   return image
 
 

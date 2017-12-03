@@ -189,7 +189,7 @@ class KIN_VAE_PAIR(context.Context):
             self._write_feat_to_npy(i, _x, _y, _label)
             # save all iamges to folder
             # utils.image.saveall(img_dir, _fake, _path)
-            _step = str(step).zfill(8) + '_' + str(i)
+            _step = str(step).zfill(8) # + '_' + str(i)
             utils.image.save_batch(_c1, batchsize, dstdir, _step + '_c1')
             utils.image.save_batch(_p1, batchsize, dstdir, _step + '_p1')
             utils.image.save_batch(_p2, batchsize, dstdir, _step + '_p2')

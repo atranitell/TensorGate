@@ -14,22 +14,22 @@ def encoder(x, y, y_dim, z_dim, is_training=True, reuse=None):
     y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
     x = conv_cond_concat(x, y)
     # input 3x64x64
-    net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
+    net = conv2d(x, 64, (5, 5), (2, 2), name='conv1')
     net = lrelu(net, name='en_conv1')
     # input 64x32x32
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
+    net = conv2d(net, 128, (5, 5), (2, 2), name='conv2')
     net = lrelu(bn(net, is_training=is_training, scope='en_bn2'))
     # input 128x16x16
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv3')
+    net = conv2d(net, 128, (5, 5), (2, 2), name='conv3')
     net = lrelu(bn(net, is_training=is_training, scope='en_bn3'))
     # input 256x8x8
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv4')
+    net = conv2d(net, 256, (5, 5), (2, 2), name='conv4')
     net = lrelu(bn(net, is_training=is_training, scope='en_bn4'))
     # input 256x4x4
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv5')
+    net = conv2d(net, 256, (5, 5), (2, 2), name='conv5')
     net = lrelu(bn(net, is_training=is_training, scope='en_bn5'))
     # input 256x2x2
-    net = conv2d(net, 512, (4, 4), (2, 2), name='conv6')
+    net = conv2d(net, 512, (5, 5), (2, 2), name='conv6')
     # net = lrelu(bn(net, is_training=is_training, scope='en_bn6'))
     # input 512x1x1
     net = layers.flatten(net)
@@ -54,22 +54,22 @@ def generator(z, y, is_training=True, reuse=None):
     net = lrelu(bn(net, is_training=is_training, scope='de_bn1'))
     net = tf.reshape(net, [-1, 1, 1, 512])
     # input 512*1*1
-    net = deconv2d(net, 256, (4, 4), (2, 2), name='de_dc2')
+    net = deconv2d(net, 256, (5, 5), (2, 2), name='de_dc2')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn2'))
     # input 256*2*2
-    net = deconv2d(net, 256, (4, 4), (2, 2), name='de_dc3')
+    net = deconv2d(net, 256, (5, 5), (2, 2), name='de_dc3')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn3'))
     # input 256*4*4
-    net = deconv2d(net, 128, (4, 4), (2, 2), name='de_dc4')
+    net = deconv2d(net, 128, (5, 5), (2, 2), name='de_dc4')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn4'))
     # input 128*8*8
-    net = deconv2d(net, 128, (4, 4), (2, 2), name='de_dc5')
+    net = deconv2d(net, 128, (5, 5), (2, 2), name='de_dc5')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn5'))
     # input 128*16*16
-    net = deconv2d(net, 64, (4, 4), (2, 2), name='de_dc6')
+    net = deconv2d(net, 64, (5, 5), (2, 2), name='de_dc6')
     net = lrelu(bn(net, is_training=is_training, scope='de_bn6'))
     # input 64*32*32
-    logit = deconv2d(net, 3, (4, 4), (2, 2), name='de_dc7')
+    logit = deconv2d(net, 3, (5, 5), (2, 2), name='de_dc7')
     # input 1*64*64
     logit = tf.nn.sigmoid(logit)
     return logit
@@ -82,23 +82,24 @@ def discriminator(x, y, y_dim, is_training, reuse=None):
     y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
     x = conv_cond_concat(x, y)
     # input 1x64x64
-    net = conv2d(x, 64, (4, 4), (2, 2), name='conv1')
+    net = conv2d(x, 64, (5, 5), (2, 2), name='conv1')
     # input 64x32x32
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv2')
+    net = conv2d(net, 128, (5, 5), (2, 2), name='conv2')
     net = lrelu(bn(net, is_training=is_training, scope='d_bn2'))
     # input 128x16x16
-    net = conv2d(net, 128, (4, 4), (2, 2), name='conv3')
+    net = conv2d(net, 128, (5, 5), (2, 2), name='conv3')
     net = lrelu(bn(net, is_training=is_training, scope='d_bn3'))
     # input 256x8x8
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv4')
+    net = conv2d(net, 256, (5, 5), (2, 2), name='conv4')
     net = lrelu(bn(net, is_training=is_training, scope='d_bn4'))
     # input 256x4x4
-    net = conv2d(net, 256, (4, 4), (2, 2), name='conv5')
+    net = conv2d(net, 256, (5, 5), (2, 2), name='conv5')
     net = lrelu(bn(net, is_training=is_training, scope='d_bn5'))
     # input 256x2x2
-    net = conv2d(net, 512, (4, 4), (2, 2), name='conv6')
+    net = conv2d(net, 512, (5, 5), (2, 2), name='conv6')
     # input 512x1x1
     net = layers.flatten(net)
+    # logit = linear(net, 1, scope='fc7')
     # input 1024
     # logit = tf.nn.sigmoid(net)
     return net, net
