@@ -3,6 +3,7 @@
 """
 import scipy.misc
 import numpy as np
+import math
 from core import utils
 
 
@@ -43,3 +44,8 @@ def save_images(images, size, path):
       img[j * h: j * h + h, i * w:i * w + w, :] = image
     return img
   return save(merge_images(images, size), path)
+
+def save_batch(images, batchsize, dstdir, name):
+  L = int(math.sqrt(batchsize))
+  path = utils.path.join(dstdir, name, 'png')
+  save_images(images, [L, L], path)

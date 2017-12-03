@@ -5,11 +5,17 @@
 import os
 
 
-def join_step(dir1, step, fmt='txt'):
+def join_step(dir1, step, fmt='txt', ext=''):
   """ step: global iteration
       fmt: file format
   """
-  return os.path.join(dir1, '%08d.%s' % (int(step), fmt))
+  return os.path.join(dir1, '%08d%s.%s' % (int(step), ext, fmt))
+
+
+def join(dir1, ext, fmt='txt'):
+  """ dir1/ext.fmt
+  """
+  return os.path.join(dir1, '%s.%s' % (ext, fmt))
 
 
 def filename(path):
