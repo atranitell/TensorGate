@@ -126,7 +126,7 @@ class regression(context.Context):
 
       # write to summary
       self.summary.adds(global_step=global_step,
-                        tags=['test/loss', 'test/mae', 'tes/rmse'],
+                        tags=['test/loss', 'test/mae', 'test/rmse'],
                         values=[mean_loss, mean_mae, mean_rmse])
 
       self._exit_()
