@@ -20,7 +20,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
 # allocate GPU to sepcify device
 gpu_cluster = ['0', '1', '2', '3']
-gpu_id = '0' if sys.argv[1] not in gpu_cluster else sys.argv[1]
+gpu_id = '0' if len(sys.argv) < 2 else sys.argv[1]
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 from config import factory
@@ -94,6 +94,8 @@ class Gate():
       app.train()
     elif self.config.phase == 'test':
       app.test()
+    elif self.config.phase == 'val':
+      app.val()
     else:
       raise ValueError('Unknown task [%s]' % self.config.phase)
 
