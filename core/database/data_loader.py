@@ -76,24 +76,27 @@ def load_pair_image_from_text(config):
       [image1, image2], label, path1, config.data)
 
 
-def load_triple_image_from_text(config):
+def load_triple_image_with_cond(config):
   """
   Format:
-    path label
-    path-to-fold/img0 path-to-fold/img0' path-to-fold/img0'' 0
-    path-to-fold/img1 path-to-fold/img1' path-to-fold/img1'' 10
+    path1 path2 path3 label cond
+    path-to-fold/img0 path-to-fold/img0' path-to-fold/img0'' 1 0
+    path-to-fold/img1 path-to-fold/img1' path-to-fold/img1'' -1 0
   """
   # parse
   res, count = data_entry.parse_from_text(
-      config.data.entry_path, (str, str, str, int), (True, True, True, False))
+      config.data.entry_path,
+      (str, str, str, int, int),
+      (True, True, True, False, False))
 
   # construct a fifo queue
   image1 = tf.convert_to_tensor(res[0], dtype=tf.string)
   image2 = tf.convert_to_tensor(res[1], dtype=tf.string)
   image3 = tf.convert_to_tensor(res[2], dtype=tf.string)
   label = tf.convert_to_tensor(res[3], dtype=tf.int32)
-  path1, path2, path3, label = tf.train.slice_input_producer(
-      [image1, image2, image3, label], shuffle=config.data.shuffle)
+  cond = tf.convert_to_tensor(res[4], dtype=tf.int32)
+  path1, path2, path3, label, cond = tf.train.slice_input_producer(
+      [image1, image2, image3, label, cond], shuffle=config.data.shuffle)
 
   # preprocessing
   image1 = _load_image(path1, config.data.configs[0], config.phase)
@@ -101,7 +104,7 @@ def load_triple_image_from_text(config):
   image3 = _load_image(path3, config.data.configs[2], config.phase)
 
   return data_prefetch.generate_batch(
-      [image1, image2, image3], label, path1, config.data)
+      [image1, image2, image3], [label, cond], [path1, path2, path3], config.data)
 
 
 def load_npy_from_text(config):

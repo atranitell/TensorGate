@@ -53,15 +53,15 @@ class Error():
     return val_err, val_thed, test_err
 
   def _parse_from_file(self, filepath):
-    """ path1 path2 label value
+    """ path1 path2 path3 label value
     """
     dists = []
     labels = []
     with open(filepath) as fp:
       for line in fp:
         r = line.split(' ')
-        labels.append(int(r[1]))
-        dists.append(float(r[2]))
+        labels.append(int(r[3]))
+        dists.append(float(r[4]))
     return np.array(dists), np.array(labels)
 
   def get_result_from_file(self, filepath, threshold=None):
@@ -92,7 +92,7 @@ class Error():
     """ A pipline for processing the data
     """
     if use_PCA:
-      self.pca = sklearn.decomposition.pca.PCA(100)
+      self.pca = sklearn.decomposition.pca.PCA(399)
       val_x, val_y, test_x, test_y = self._pca_process(
           val_x, val_y, test_x, test_y)
 
