@@ -10,6 +10,7 @@ from core.utils.logger import logger
 from core.solver.snapshot import Snapshot
 from core.solver.summary import Summary
 from core.solver import variables
+from core.utils.string import print_members
 
 
 class Context():
@@ -22,6 +23,7 @@ class Context():
     self.data = config.data
     self.summary = Summary(config)
     self.snapshot = Snapshot(config)
+    print_members(self.config)
 
   def _enter_(self, phase):
     self.prephase = self.phase
