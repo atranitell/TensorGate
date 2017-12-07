@@ -4,6 +4,7 @@
     Updated: 2017-06-23
 """
 import tensorflow as tf
+from core.utils.logger import logger
 
 
 def clip_last_sub_string(string, separator='/', keep_sep=False):
@@ -28,6 +29,25 @@ def type_list_to_str(dtype_list):
 
 def class_members(obj):
   return ', '.join(['%s: %s' % item for item in sorted(obj.__dict__.items())])
+
+
+def split_class_str(name):
+  return str(name).split('\'')[1].split('.')[2] + '-> '
+
+
+def print_members(obj):
+  common_type = [int, str, float]
+  if '__dict__' in dir(obj):
+    res = []
+    for item in sorted(obj.__dict__.items()):
+      if type(item[1]) in common_type and item[0].find('__') < 0:
+        res.append('%s: %s' % item)
+      elif type(item[1]) == list:
+        [print_members(sub) for sub in item[1]]
+      else:
+        print_members(item[1])
+    if len(res):
+      logger.info(split_class_str(obj.__class__) + ', '.join(sorted(res)))
 
 
 def as_batch(tensor, batchsize):
