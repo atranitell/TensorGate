@@ -10,6 +10,13 @@ class Net():
 
   def __init__(self, name):
     self.name = name
+    self.weight_decay = None
+    self.dropout_keep = None
+    self.use_batch_norm = None
+    self.batch_norm_decay = None
+    self.batch_norm_epsilon = None
+    self.batch_norm_scale = None
+    self.activation_fn = None
 
   def set_weight_decay(self, weight_decay=0.0001):
     self.weight_decay = weight_decay

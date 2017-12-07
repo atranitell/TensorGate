@@ -34,11 +34,13 @@ class trafficflow():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net('simplenet')
-    # self.net.set_weight_decay(0.0001)
-    # self.net.set_batch_norm(0.9)
+    # self.net = params.Net('simplenet')
+    # self.net = params.Net('vgg_16')
+    self.net = params.Net('lightnet')
+    self.net.set_weight_decay(0.0005)
+    # self.net.set_batch_norm(use_batch_norm=False)
     # self.net.set_activation_fn('relu')
-    # self.net.set_dropout_keep(0.5)
+    self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -55,11 +57,10 @@ class trafficflow():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=32,
+        batchsize=16,
         entry_path="../_datasets/TrafficNet/data_112_train.txt",
-        # entry_path="../_datasets/TrafficNet/data_224_train.txt",
         shuffle=True,
-        total_num=17608,  # 17507-224, 17608-112
+        total_num=13661,
         loader='load_npy_from_text',
         reader_thread=16)
     self.data.add_image(self.image)
@@ -76,9 +77,8 @@ class trafficflow():
     self.data = params.Data(
         batchsize=50,
         entry_path="../_datasets/TrafficNet/data_112_test.txt",
-        # entry_path="../_datasets/TrafficNet/data_224_test.txt",
         shuffle=False,
-        total_num=4355,  # 4456-224, 4355-112
+        total_num=3340,
         loader='load_npy_from_text',
         reader_thread=1)
     self.data.add_image(self.image)

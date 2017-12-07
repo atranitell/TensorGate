@@ -31,17 +31,17 @@ def lightnet_argscope(weight_decay,
   with arg_scope([layers.conv2d],
                  weights_regularizer=layers.l2_regularizer(weight_decay),
                  weights_initializer=layers.xavier_initializer(),
-                 #    biases_initializer=tf.constant_initializer(0.1),
+                 biases_initializer=tf.constant_initializer(0.1),
                  activation_fn=tf.nn.relu,
-                 normalizer_fn=None, #layers.batch_norm,
-                #  normalizer_params=batch_norm_params,
+                 normalizer_fn=None,  # layers.batch_norm,
+                 #  normalizer_params=batch_norm_params,
                  padding='SAME'):
     with arg_scope([layers.batch_norm], **batch_norm_params):
       with arg_scope([layers.max_pool2d, layers.avg_pool2d], padding='SAME') as arg_sc:
         return arg_sc
 
 
-def lightnet(images, num_classes, is_training, dropout_keep_prob, scope='Lightnet'):
+def lightnet(images, num_classes, is_training, dropout_keep_prob, scope='lightnet'):
 
   end_points = {}
 
