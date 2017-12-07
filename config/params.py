@@ -21,6 +21,9 @@ class Net():
     self.activation_fn = None
     self.initializer_fn = None
     self.cell_fn = None
+    self.num_layers = None
+    self.num_units = None
+    self.z_dim = None
 
   def set_weight_decay(self, weight_decay=0.0001):
     self.weight_decay = weight_decay
@@ -69,9 +72,9 @@ class Net():
     else:
       raise ValueError('Unknown input type %s' % name)
 
-  def set_units_and_layers(self, units=[128], layers=1):
-    self.num_layers = layers
-    self.num_units = units
+  def set_units_and_layers(self, n_units=[128], n_layers=1):
+    self.num_layers = n_layers
+    self.num_units = n_units
 
 
   def set_cell_fn(self, name='gru'):

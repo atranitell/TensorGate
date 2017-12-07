@@ -39,13 +39,7 @@ class trafficflow():
     self.net.set_initializer_fn('orthogonal')
     self.net.set_activation_fn('relu')
     self.net.set_cell_fn('gru')
-
     self.net.set_units_and_layers([256, 256], 2)
-
-    # self.net.set_weight_decay(0.0001)
-    # self.net.set_batch_norm(0.9)
-    # self.net.set_activation_fn('relu')
-    # self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -72,7 +66,7 @@ class trafficflow():
     self.data.label(num_classes=1, span=1)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.001) #0.0001 for basic rnn
+    self.lr[0].fixed(learning_rate=0.001)  # 0.0001 for basic rnn
 
     self.optimizer = [params.Optimizer()]
     self.optimizer[0].sgd()

@@ -108,7 +108,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
+  parser.add_argument('-name', type=str, dest='name', default='kinvae.pair')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)

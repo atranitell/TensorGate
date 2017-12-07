@@ -82,9 +82,9 @@ class kinvae_pair():
     self.phase = 'test'
     self.data = params.Data(
         batchsize=100,
-        entry_path="../_datasets/kinface2/test_1_1.txt",
+        entry_path="../_datasets/kinface2/test_1_fs.txt",
         shuffle=False,
-        total_num=400,
+        total_num=100,
         loader='load_triple_image_with_cond',
         reader_thread=1)
     self.data.add_image(self.image)
