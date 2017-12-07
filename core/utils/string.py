@@ -43,7 +43,10 @@ def print_members(obj):
       if type(item[1]) in common_type and item[0].find('__') < 0:
         res.append('%s: %s' % item)
       elif type(item[1]) == list:
-        [print_members(sub) for sub in item[1]]
+        if type(item[1][0]) in common_type:
+          res.append('%s: %s' % item)
+        else:
+          [print_members(sub) for sub in item[1]]
       else:
         print_members(item[1])
     if len(res):
