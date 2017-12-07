@@ -4,6 +4,8 @@
     Updated: 2017-11-23
 """
 import tensorflow as tf
+import tensorflow.contrib.rnn as rnn
+import tensorflow.contrib.layers as layers
 
 
 class Net():
@@ -17,6 +19,8 @@ class Net():
     self.batch_norm_epsilon = None
     self.batch_norm_scale = None
     self.activation_fn = None
+    self.initializer_fn = None
+    self.cell_fn = None
 
   def set_weight_decay(self, weight_decay=0.0001):
     self.weight_decay = weight_decay
@@ -48,6 +52,41 @@ class Net():
       self.activation_fn = tf.nn.tanh
     else:
       raise ValueError('Unknown activation fn [%s]' % name)
+
+  def set_initializer_fn(self, name='xavier'):
+    """
+    """
+    if name is 'zeros':
+      self.initializer_fn = tf.zeros_initializer
+    elif name is 'orthogonal':
+      self.initializer_fn = tf.orthogonal_initializer
+    elif name is 'normal':
+      self.initializer_fn = tf.truncated_normal_initializer
+    elif name is 'xavier':
+      self.initializer_fn = layers.xavier_initializer
+    elif name is 'uniform':
+      self.initializer_fn = tf.random_uniform_initializer
+    else:
+      raise ValueError('Unknown input type %s' % name)
+
+  def set_units_and_layers(self, units=[128], layers=1):
+    self.num_layers = layers
+    self.num_units = units
+
+
+  def set_cell_fn(self, name='gru'):
+    """ choose different rnn cell
+    """
+    if name is 'rnn':
+      self.cell_fn = rnn.BasicRNNCell
+    elif name is 'gru':
+      self.cell_fn = rnn.GRUCell
+    elif name is 'basic_lstm':
+      self.cell_fn = rnn.BasicLSTMCell
+    elif name is 'lstm':
+      self.cell_fn = rnn.LSTMCell
+    else:
+      raise ValueError('Unknown input type %s' % name)
 
   def set_z_dim(self, z_dim):
     """ USE FOR GAN/VAE, z vector """

@@ -11,7 +11,7 @@ class trafficflow():
   def __init__(self):
 
     self.name = 'trafficflow'
-    self.target = 'cnn.regression'
+    self.target = 'rnn.regression'
     self.data_dir = '../_datasets/TrafficNet'
     self.phase = 'train'
     self.output_dir = None
@@ -34,13 +34,18 @@ class trafficflow():
 
     self.set_phase(self.phase)
 
-    # self.net = params.Net('simplenet')
-    # self.net = params.Net('vgg_16')
-    self.net = params.Net('lightnet')
-    self.net.set_weight_decay(0.0005)
-    # self.net.set_batch_norm(use_batch_norm=False)
-    # self.net.set_activation_fn('relu')
+    self.net = params.Net('rnn')
     self.net.set_dropout_keep(0.5)
+    self.net.set_initializer_fn('orthogonal')
+    self.net.set_activation_fn('relu')
+    self.net.set_cell_fn('gru')
+
+    self.net.set_units_and_layers([256, 256], 2)
+
+    # self.net.set_weight_decay(0.0001)
+    # self.net.set_batch_norm(0.9)
+    # self.net.set_activation_fn('relu')
+    # self.net.set_dropout_keep(0.5)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -57,7 +62,7 @@ class trafficflow():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=16,
+        batchsize=32,
         entry_path="../_datasets/TrafficNet/data_112_train.txt",
         shuffle=True,
         total_num=13661,
@@ -67,7 +72,7 @@ class trafficflow():
     self.data.label(num_classes=1, span=1)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.001)
+    self.lr[0].fixed(learning_rate=0.001) #0.0001 for basic rnn
 
     self.optimizer = [params.Optimizer()]
     self.optimizer[0].sgd()

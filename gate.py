@@ -64,6 +64,9 @@ class Gate():
       from issue.cnn.regression import regression as App
     elif self.config.target == 'cnn.pairwise':
       from issue.cnn.pairwise import pairwise as App
+    # For RNN
+    elif self.config.target == 'rnn.regression':
+      from issue.rnn.regression import regression as App
     # For GAN
     elif self.config.target == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
@@ -105,7 +108,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='kinvae.pair')
+  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
