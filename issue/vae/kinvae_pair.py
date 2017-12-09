@@ -180,6 +180,7 @@ class KIN_VAE_PAIR(context.Context):
               name_list=['_cf', '_c1', '_p1', '_p2'])
           [fw.write(_line + b'\r\n') for _line in _info]
       fw.close()
+      return step
 
   def test(self):
     """ we need acquire threshold from validation first """
@@ -190,24 +191,29 @@ class KIN_VAE_PAIR(context.Context):
       self._exit_()
 
     # define for multi-test
-    def _pipline(kin):
+    def _pipline(kin=None):
+      """ for process different kinship """
       self._enter_('test')
-      if kin is not 'all':
+
+      if kin is not None:
         old = self.config.data.entry_path
         self.config.data.entry_path = old.replace('test_', 'test_' + kin + '_')
         self.config.data.total_num = 100
+
       test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
-      self._val_or_test(test_dir)
+      step = self._val_or_test(test_dir)
       val_err, val_thed, test_err = Error().get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, True)
-      logger.test('val_error_%s:%f, thred_%s:%f, test_error_%s:%f' %
-                  (kin, val_err, kin, val_thed, kin, test_err))
+
+      app = '_%s' % kin if kin is not None else ''
+      keys = ['val_error' + app, 'thred' + app, 'test_error' + app]
+      vals = [val_err, val_thed, test_err]
+      logger.test(logger.iters(int(step - 1), keys, vals))
+
       self._exit_()
 
-    # for all test data
-    _pipline('all')
-    # divide for 4-kin
+    _pipline()
     for kin in ['fs', 'fd', 'md', 'ms']:
       with tf.Graph().as_default():
         _pipline(kin)
