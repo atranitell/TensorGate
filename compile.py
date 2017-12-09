@@ -1,48 +1,59 @@
 # -*- coding: utf-8 -*-
+""" A tootls compile py to pyc and mv all py to another folder
+  Updater: 17-12-09
+  Author: Kai JIN
+"""
 import os
+import shutil
 import py_compile
 
-DIR_BIN = '_bin'
+DIR_BIN = '../_bin'
+DIR_SRC = '../_src'
+
+EXCLUDE_ROOT = ['_', '.git', '.vscode']
+EXCLUDE_FILE = ['compile.py']
 
 
-def removeDir(dirPath):
-  if not os.path.isdir(dirPath):
-    return
-  files = os.listdir(dirPath)
-  for file in files:
-    filePath = os.path.join(dirPath, file)
-    if os.path.isfile(filePath):
-      os.remove(filePath)
-    elif os.path.isdir(filePath):
-      removeDir(filePath)
-  os.rmdir(dirPath)
+def is_include(root, exclude):
+  """ sub is a list """
+  for sub in exclude:
+    if sub in root:
+      return True
+
+
+def mkdir(path):
+  """ remove old and create new """
+  if os.path.exists(path):
+    shutil.rmtree(path)
+  os.mkdir(path)
 
 
 def process(root, fname):
-  src = os.path.join(root, fname)
-  dst = src.replace('./', DIR_BIN + '/') + 'c'
-  py_compile.compile(src, cfile=dst, optimize=2)
+  """ compile and move """
+  path = os.path.join(root, fname)
+  dst_bin = path.replace('./', DIR_BIN + '/') + 'c'
+  dst_src = path.replace('./', DIR_SRC + '/')
+  if not os.path.exists(os.path.dirname(dst_src)):
+    os.makedirs(os.path.dirname(dst_src))
+  shutil.copy(path, dst_src)
+  py_compile.compile(path, cfile=dst_bin, optimize=2)
 
 
-def compile():
-  # remove old
-  if os.path.exists(DIR_BIN):
-    removeDir(DIR_BIN)
-  if not os.path.exists(DIR_BIN):
-    os.mkdir(DIR_BIN)
-
-  for _i in os.walk('./'):
-    fold = _i[0]
-    if '_' in fold or '.git' in fold or '.vscode' in fold:
+def traverse():
+  """ traverse tree """
+  mkdir(DIR_BIN)
+  mkdir(DIR_SRC)
+  for paths in os.walk('./'):
+    root = paths[0]
+    if is_include(root, EXCLUDE_ROOT):
       continue
-    print(fold)
-    for fname in _i[2]:
-      if fname == 'compile.py':
+    print(root)
+    for fname in paths[2]:
+      if is_include(fname, EXCLUDE_FILE):
         continue
-      ext = fname.split('.')
-      if len(ext) > 1 and ext[1] == 'py':
-        process(fold, fname)
+      if os.path.splitext(fname)[1] == '.py':
+        process(root, fname)
 
 
 if __name__ == '__main__':
-  compile()
+  traverse()
