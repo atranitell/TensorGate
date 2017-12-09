@@ -3,7 +3,6 @@
     Author: Kai JIN
     Updated: 2017/11/19
 """
-
 import os
 import sys
 import argparse
@@ -13,15 +12,8 @@ from datetime import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-# showing the avaliable devices
-# from tensorflow.python.client import device_lib as _device_lib
-# for x in _device_lib.list_local_devices():
-#   print(x)
-
 # allocate GPU to sepcify device
-gpu_cluster = ['0', '1', '2', '3']
-gpu_id = '0' if len(sys.argv) < 2 else sys.argv[1]
-os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
+os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 
 from config import factory
 from core.utils import filesystem
@@ -89,10 +81,10 @@ class Gate():
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
 
-    """Init"""
+    # init
     app = App(self.config)
 
-    """For Task"""
+    # for task
     if self.config.phase == 'train':
       app.train()
     elif self.config.phase == 'test':
