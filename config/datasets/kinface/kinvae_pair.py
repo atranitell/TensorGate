@@ -24,16 +24,6 @@ class kinvae_pair():
         val_invl=200,
         max_iter=999999)
 
-    self.image = params.Image(
-        channels=3,
-        frames=1,
-        raw_height=64,
-        raw_width=64,
-        output_height=64,
-        output_width=64,
-        preprocessing_method='vae.kinship',
-        gray=False)
-
     self.set_phase(self.phase)
 
     self.net = params.Net('kin_vae')
@@ -51,6 +41,18 @@ class kinvae_pair():
     else:
       raise ValueError('Unknown phase [%s]' % phase)
 
+  @staticmethod
+  def default_image():
+    return params.Image(
+        channels=3,
+        frames=1,
+        raw_height=64,
+        raw_width=64,
+        output_height=64,
+        output_width=64,
+        preprocessing_method='vae.kinship',
+        gray=False)
+
   def _train(self):
     """ just train phase has 'lr', 'optimizer'.
     """
@@ -61,10 +63,10 @@ class kinvae_pair():
         shuffle=True,
         total_num=1600,
         loader='load_triple_image_with_cond')
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
+    self.data.set_label(num_classes=4)
 
     self.lr = [params.LearningRate(),
                params.LearningRate(),
@@ -87,9 +89,9 @@ class kinvae_pair():
         total_num=400,
         loader='load_triple_image_with_cond',
         reader_thread=1)
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
     self.data.set_label(num_classes=4)
 
   def _val(self):
@@ -101,7 +103,7 @@ class kinvae_pair():
         total_num=1600,
         loader='load_triple_image_with_cond',
         reader_thread=1)
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
-    self.data.add_image(self.image)
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
+    self.data.add_image(self.default_image())
     self.data.set_label(num_classes=4)

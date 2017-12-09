@@ -132,7 +132,7 @@ class KIN_VAE_PAIR(context.Context):
         keys=['E', 'D', 'G', 'R'],
         values=[E_loss, D_loss, G_loss, R_loss],
         func_test=self.test,
-        func_val=self.val)
+        func_val=None)
 
     # monitor session
     with tf.train.MonitoredTrainingSession(
@@ -149,66 +149,65 @@ class KIN_VAE_PAIR(context.Context):
 
   def _val_or_test(self, dstdir):
     """ COMMON FOR TRAIN AND VAL """
-
     # considering output train image
     data, info, path = loads(self.config)
     c1_real, p1_real, p2_real = tf.unstack(data, axis=1)
     label, cond = tf.unstack(info, axis=1)
     path1, path2, path3 = tf.unstack(path, axis=1)
+    batchsize = self.data.batchsize
+    num_iter = int(self.data.total_num / batchsize)
 
     # encode image to a vector
     c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real, cond)
     p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, cond, True)
-
-    # resample from the re-parameterzation
-    # without std
-    c1_z = c1_mu
-    c1_fake = tf.clip_by_value(self._generator(c1_z, cond), 1e-8, 1 - 1e-8)
-
-    # loss
+    c1_fake = tf.clip_by_value(self._generator(c1_mu, cond), 1e-8, 1 - 1e-8)
     R_loss, loss = self._loss_metric(feat_c1, feat_p2, label)
 
-    # saver
     saver = tf.train.Saver()
-    batchsize = self.data.batchsize
-    num_iter = int(self.data.total_num / batchsize)
-
     with tf.Session() as sess:
-      # load snapshot from filepath
       step = self.snapshot.restore(sess, saver)
       info = utils.string.concat(batchsize, [path1, path2, path3, label, loss])
-      output = [c1_fake, p1_real, p2_real, info, feat_c1, feat_p2, label]
-      # img_dir = utils.filesystem.mkdir(dstdir + step)
-
-      with open(dstdir + '%s.txt' % step, 'wb') as fw:
-        with context.QueueContext(sess):
-          for i in range(num_iter):
-            # running session
-            _c1, _p1, _p2, _info, _x, _y, _label = sess.run(output)
-            # to compute PCA
-            self._write_feat_to_npy(i, _x, _y, _label)
-            # save all iamges to folder
-            # utils.image.saveall(img_dir, _fake, _path)
-            _step = str(step).zfill(8) # + '_' + str(i)
-            utils.image.save_batch(_c1, batchsize, dstdir, _step + '_c1')
-            utils.image.save_batch(_p1, batchsize, dstdir, _step + '_p1')
-            utils.image.save_batch(_p2, batchsize, dstdir, _step + '_p2')
-            # write to file
-            [fw.write(_line + b'\r\n') for _line in _info]
+      output = [c1_fake, c1_real, p1_real, p2_real,
+                info, feat_c1, feat_p2, label]
+      fw = open(dstdir + '%s.txt' % step, 'wb')
+      with context.QueueContext(sess):
+        for i in range(num_iter):
+          _cf, _c1, _p1, _p2, _info, _x, _y, _label = sess.run(output)
+          self._write_feat_to_npy(i, _x, _y, _label)
+          utils.image.save_batchs(
+              image_list=[_cf, _c1, _p1, _p2],
+              batchsize=batchsize, dstdir=dstdir, step=step,
+              name_list=['_cf', '_c1', '_p1', '_p2'])
+          [fw.write(_line + b'\r\n') for _line in _info]
+      fw.close()
 
   def test(self):
-    self._enter_('test')
-    test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
-    self._val_or_test(test_dir)
-    val_err, val_thed, test_err = Error().get_all_result(
-        self.val_x, self.val_y, self.val_l,
-        self.test_x, self.test_y, self.test_l, True)
-    logger.test('val error:%f, thred:%f, test error:%f' %
-                (val_err, val_thed, test_err))
-    self._exit_()
+    """ we need acquire threshold from validation first """
+    with tf.Graph().as_default():
+      self._enter_('val')
+      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
+      self._val_or_test(val_dir)
+      self._exit_()
 
-  def val(self):
-    self._enter_('val')
-    val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
-    self._val_or_test(val_dir)
-    self._exit_()
+    # define for multi-test
+    def _pipline(kin):
+      self._enter_('test')
+      if kin is not 'all':
+        old = self.config.data.entry_path
+        self.config.data.entry_path = old.replace('test_', 'test_' + kin + '_')
+        self.config.data.total_num = 100
+      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
+      self._val_or_test(test_dir)
+      val_err, val_thed, test_err = Error().get_all_result(
+          self.val_x, self.val_y, self.val_l,
+          self.test_x, self.test_y, self.test_l, True)
+      logger.test('val_error_%s:%f, thred_%s:%f, test_error_%s:%f' %
+                  (kin, val_err, kin, val_thed, kin, test_err))
+      self._exit_()
+
+    # for all test data
+    _pipline('all')
+    # divide for 4-kin
+    for kin in ['fs', 'fd', 'md', 'ms']:
+      with tf.Graph().as_default():
+        _pipline(kin)

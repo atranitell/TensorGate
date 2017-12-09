@@ -45,7 +45,15 @@ def save_images(images, size, path):
     return img
   return save(merge_images(images, size), path)
 
+
 def save_batch(images, batchsize, dstdir, name):
   L = int(math.sqrt(batchsize))
   path = utils.path.join(dstdir, name, 'png')
   save_images(images, [L, L], path)
+
+
+def save_batchs(image_list, batchsize, dstdir, step, name_list):
+  L = int(math.sqrt(batchsize))
+  for i, image in enumerate(image_list):
+    path = utils.path.join_step(dstdir, step, 'png', name_list[i])
+    save_images(image, [L, L], path)

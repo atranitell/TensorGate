@@ -8,7 +8,7 @@ from datetime import datetime
 
 def mkdir(path, raise_path_exits=False):
   """
-  Return: path
+  Return: path if mkdir or path has existed
   """
   if not os.path.exists(path):
     os.mkdir(path)
