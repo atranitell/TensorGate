@@ -54,19 +54,19 @@ class mnist():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=32,
+        batchsize=64,
         entry_path="../_datasets/mnist/train.txt",
         shuffle=True,
         total_num=55000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=10)
+    self.data.set_label(num_classes=10)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.1)
+    self.lr[0].set_fixed(learning_rate=0.01)
 
     self.optimizer = [params.Optimizer()]
-    self.optimizer[0].adam(beta1=0.9)
+    self.optimizer[0].set_momentum()
 
   def _test(self):
     self.phase = 'test'
@@ -77,9 +77,4 @@ class mnist():
         total_num=10000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=10)
-
-
-
-
-
+    self.data.set_label(num_classes=10)

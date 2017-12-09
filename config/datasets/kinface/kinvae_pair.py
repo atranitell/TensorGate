@@ -57,7 +57,7 @@ class kinvae_pair():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=32,
-        entry_path="../_datasets/kinface2/train_1_1.txt",
+        entry_path="../_datasets/kinface2/train_1.txt",
         shuffle=True,
         total_num=1600,
         loader='load_triple_image_with_cond')
@@ -69,34 +69,34 @@ class kinvae_pair():
     self.lr = [params.LearningRate(),
                params.LearningRate(),
                params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.00001)
-    self.lr[1].fixed(learning_rate=0.0001)
+    self.lr[0].set_fixed(learning_rate=0.00001)
+    self.lr[1].set_fixed(learning_rate=0.00005)
 
     self.optimizer = [params.Optimizer(),
                       params.Optimizer(),
                       params.Optimizer()]
-    self.optimizer[0].adam(0.5)
-    self.optimizer[1].adam(0.5)
+    self.optimizer[0].set_adam(0.5)
+    self.optimizer[1].set_adam(0.5)
 
   def _test(self):
     self.phase = 'test'
     self.data = params.Data(
         batchsize=100,
-        entry_path="../_datasets/kinface2/test_1_fs.txt",
+        entry_path="../_datasets/kinface2/test_1.txt",
         shuffle=False,
-        total_num=100,
+        total_num=400,
         loader='load_triple_image_with_cond',
         reader_thread=1)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.set_label(num_classes=4)
 
   def _val(self):
     self.phase = 'val'
     self.data = params.Data(
         batchsize=100,
-        entry_path="../_datasets/kinface2/train_1_1.txt",
+        entry_path="../_datasets/kinface2/train_1.txt",
         shuffle=False,
         total_num=1600,
         loader='load_triple_image_with_cond',
@@ -104,4 +104,4 @@ class kinvae_pair():
     self.data.add_image(self.image)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.set_label(num_classes=4)

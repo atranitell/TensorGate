@@ -60,13 +60,13 @@ class mnist_regression():
         total_num=55000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=1, span=10, scale=True)
+    self.data.set_label(num_classes=1, span=10, scale=True)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.001)
+    self.lr[0].set_fixed(learning_rate=0.001)
 
     self.optimizer = [params.Optimizer()]
-    self.optimizer[0].adam(beta1=0.9)
+    self.optimizer[0].set_adam(beta1=0.9)
 
   def _test(self):
     self.phase = 'test'
@@ -77,4 +77,4 @@ class mnist_regression():
         total_num=10000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
-    self.data.label(num_classes=1, span=10, scale=True)
+    self.data.set_label(num_classes=1, span=10, scale=True)

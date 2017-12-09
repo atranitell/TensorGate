@@ -63,17 +63,17 @@ class kinvae():
         loader='load_pair_image_from_text')
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.set_label(num_classes=4)
 
     self.lr = [params.LearningRate(),
                params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.001)
-    self.lr[1].fixed(learning_rate=0.001)
+    self.lr[0].set_fixed(learning_rate=0.001)
+    self.lr[1].set_fixed(learning_rate=0.001)
 
     self.optimizer = [params.Optimizer(),
                       params.Optimizer()]
-    self.optimizer[0].adam(beta1=0.5)
-    self.optimizer[1].adam(beta1=0.5)
+    self.optimizer[0].set_adam(beta1=0.5)
+    self.optimizer[1].set_adam(beta1=0.5)
 
   def _test(self):
     self.phase = 'test'
@@ -86,7 +86,7 @@ class kinvae():
         reader_thread=1)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.set_label(num_classes=4)
 
   def _val(self):
     self.phase = 'val'
@@ -99,4 +99,4 @@ class kinvae():
         reader_thread=1)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=4)
+    self.data.set_label(num_classes=4)

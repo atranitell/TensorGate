@@ -67,13 +67,13 @@ class kinface():
     self.data.add_image(self.image)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=1)
+    self.data.set_label(num_classes=1)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].fixed(learning_rate=0.01)
+    self.lr[0].set_fixed(learning_rate=0.01)
 
     self.optimizer = [params.Optimizer()]
-    self.optimizer[0].sgd()
+    self.optimizer[0].set_sgd()
 
   def _test(self):
     self.phase = 'test'
@@ -86,7 +86,7 @@ class kinface():
         reader_thread=1)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=1)
+    self.data.set_label(num_classes=1)
 
   def _val(self):
     self.phase = 'val'
@@ -99,4 +99,4 @@ class kinface():
         reader_thread=1)
     self.data.add_image(self.image)
     self.data.add_image(self.image)
-    self.data.label(num_classes=1)
+    self.data.set_label(num_classes=1)

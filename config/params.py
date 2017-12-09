@@ -76,7 +76,6 @@ class Net():
     self.num_layers = n_layers
     self.num_units = n_units
 
-
   def set_cell_fn(self, name='gru'):
     """ choose different rnn cell
     """
@@ -123,16 +122,16 @@ class LearningRate():
   def _decay_steps(total_num, batchsize, decay_epochs):
     return int(total_num / batchsize * decay_epochs)
 
-  def fixed(self, learning_rate=0.1):
+  def set_fixed(self, learning_rate=0.1):
     """ a constant learning rate type
     """
     self.name = 'fixed'
     self.learning_rate = learning_rate
 
-  def exponential(self, total_num, batchsize,
-                  learning_rate=0.1,
-                  decay_epochs=30,
-                  decay_rate=0.1):
+  def set_exponential(self, total_num, batchsize,
+                      learning_rate=0.1,
+                      decay_epochs=30,
+                      decay_rate=0.1):
     """ decayed_learning_rate = learning_rate *
           decay_rate ^ (global_step / decay_steps)
     """
@@ -141,17 +140,17 @@ class LearningRate():
     self.decay_steps = self._decay_steps(total_num, batchsize, decay_epochs)
     self.decay_rate = decay_rate
 
-  def polynomial(self, total_num, batchsize,
-                 learning_rate=0.1,
-                 decay_epochs=30,
-                 end_learning_rate=0.00001):
+  def set_polynomial(self, total_num, batchsize,
+                     learning_rate=0.1,
+                     decay_epochs=30,
+                     end_learning_rate=0.00001):
     self.name = 'polynomial'
     self.learning_rate = learning_rate
     self.decay_steps = self._decay_steps(total_num, batchsize, decay_epochs)
     self.end_learning_rate = end_learning_rate
 
-  def vstep(self, values=[0.1, 0.01, 0.001, 0.0001],
-            boundaries=[10000, 50000, 100000]):
+  def set_vstep(self, values=[0.1, 0.01, 0.001, 0.0001],
+                boundaries=[10000, 50000, 100000]):
     """ boundaries: [iter1, iter2]
         values: [lr1, lr2, lr3]
     """
@@ -160,10 +159,10 @@ class LearningRate():
     self.boundaries = boundaries
     self.values = values
 
-  def natural_exp(self, total_num, batchsize,
-                  learning_rate=0.1,
-                  decay_rate=0.1,
-                  decay_epochs=30):
+  def set_natural_exp(self, total_num, batchsize,
+                      learning_rate=0.1,
+                      decay_rate=0.1,
+                      decay_epochs=30):
     self.name = 'natural_exp'
     self.learning_rate = learning_rate
     self.decay_rate = decay_rate
@@ -175,43 +174,43 @@ class Optimizer():
   def __init__(self):
     pass
 
-  def adam(self, beta1=0.9,
-           beta2=0.999,
-           epsilon=1e-8):
+  def set_adam(self, beta1=0.9,
+               beta2=0.999,
+               epsilon=1e-8):
     self.name = 'adam'
     self.beta1 = beta1
     self.beta2 = beta2
     self.epsilon = epsilon
 
-  def sgd(self):
+  def set_sgd(self):
     self.name = 'sgd'
 
-  def adagrad(self, initial_accumulator_value=0.1):
+  def set_adagrad(self, initial_accumulator_value=0.1):
     self.name = 'adagrad'
     self.initial_accumulator_value = initial_accumulator_value
 
-  def adadelta(self, epsilon=1e-8,
-               rho=0.95):
+  def set_adadelta(self, epsilon=1e-8,
+                   rho=0.95):
     self.name = 'adadelta'
     self.epsilon = epsilon
     self.rho = rho
 
-  def ftrl(self, learning_rate_power=-0.5,
-           initial_accumulator_value=0.1,
-           l1=0.0, l2=0.0):
+  def set_ftrl(self, learning_rate_power=-0.5,
+               initial_accumulator_value=0.1,
+               l1=0.0, l2=0.0):
     self.name = 'ftrl'
     self.learning_rate_power = learning_rate_power
     self.initial_accumulator_value = initial_accumulator_value
     self.l1 = l1
     self.l2 = l2
 
-  def momentum(self, momentum=0.9):
+  def set_momentum(self, momentum=0.9):
     self.name = 'momentum'
     self.momentum = momentum
 
-  def rmsprop(self, decay=0.9,
-              momentum=0.0,
-              epsilon=1e-10):
+  def set_rmsprop(self, decay=0.9,
+                  momentum=0.0,
+                  epsilon=1e-10):
     self.name = 'rmsprop'
     self.decay = decay
     self.momentum = momentum
@@ -242,11 +241,11 @@ class Data():
     if type(image_config) is type(Image()):
       self.configs.append(image_config)
 
-  def label(self,
-            num_classes=None,
-            span=None,
-            one_hot=False,
-            scale=False):
+  def set_label(self,
+                num_classes=None,
+                span=None,
+                one_hot=False,
+                scale=False):
     """ 
     num_classes: net output dim, for regression, the value is 1
     span(range): label span: (0, range)
