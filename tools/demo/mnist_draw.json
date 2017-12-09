@@ -1,0 +1,49 @@
+{
+    "figure": {
+        "title": "MNIST",
+        "type": "basic_line_chart",
+        "xlabel": "iter",
+        "ylabel": "index",
+        "ymax": 1,
+        "ymin": 0,
+        "save_fig": "demo/mnist.jpg"
+    },
+    "data": [
+        {
+            "legend": "test error",
+            "path": "demo/mnist.171209102004.log",
+            "phase": "[TST]",
+            "key": "error",
+            "invl": 1,
+            "smooth": 1,
+            "show": true
+        },
+        {
+            "legend": "test loss",
+            "path": "demo/mnist.171209102004.log",
+            "phase": "[TST]",
+            "key": "loss",
+            "invl": 1,
+            "smooth": 1,
+            "show": true
+        },
+        {
+            "legend": "train error",
+            "path": "demo/mnist.171209102004.log",
+            "phase": "[TRN]",
+            "key": "error",
+            "invl": 1,
+            "smooth": 1,
+            "show": true
+        },
+        {
+            "legend": "train loss",
+            "path": "demo/mnist.171209102004.log",
+            "phase": "[TRN]",
+            "key": "loss",
+            "invl": 1,
+            "smooth": 1,
+            "show": true
+        }
+    ]
+}
