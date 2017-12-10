@@ -7,18 +7,12 @@
   it will need find a best margin in validation test.
   And then use margin to divide the test dataset.
 """
-import os
 import tensorflow as tf
 from core.database.factory import loads
-from core.network.factory import network
 from core.loss import cosine
-from core.solver import updater
-from core.solver import variables
 from core import utils
 from core.utils.logger import logger
 from issue import context
-
-
 from config.datasets.kinface.kinface_utils import Error
 import numpy as np
 
@@ -102,5 +96,4 @@ class cosine_metric(context.Context):
         keys = ['val_error' + app, 'thred' + app, 'test_error' + app]
         vals = [val_err, val_thed, test_err]
         logger.test(logger.iters(0, keys, vals))
-
         self._exit_()
