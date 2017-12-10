@@ -92,7 +92,8 @@ class Error():
     """ A pipline for processing the data
     """
     if use_PCA:
-      self.pca = sklearn.decomposition.pca.PCA(399)
+      self.pca = sklearn.decomposition.pca.PCA(
+          n_components=200, svd_solver='full')
       val_x, val_y, test_x, test_y = self._pca_process(
           val_x, val_y, test_x, test_y)
 

@@ -234,12 +234,20 @@ class Data():
     self.reader_thread = reader_thread
     self.min_queue_num = min_queue_num
     # for each data attri to allocate a config
-    self.configs = []
+    self.configs = None
 
   def add_image(self, image_config):
     """ add a data attribution to configs  """
+    if self.configs == None:
+      self.configs = []
     if type(image_config) is type(Image()):
       self.configs.append(image_config)
+
+  def add_numpy(self, numpy_config):
+    if self.configs == None:
+      self.configs = []
+    if type(numpy_config) is type(Numpy()):
+      self.configs.append(numpy_config)
 
   def set_label(self,
                 num_classes=None,
@@ -277,3 +285,9 @@ class Image():
     self.output_width = output_width
     self.preprocessing_method = preprocessing_method
     self.gray = gray
+
+
+class Numpy():
+
+  def __init__(self, shape=None):
+    self.shape = shape

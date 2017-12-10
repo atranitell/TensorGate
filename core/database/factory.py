@@ -11,7 +11,8 @@ loader_maps = {
     'load_image_from_text': data_loader.load_image_from_text,
     'load_pair_image_from_text': data_loader.load_pair_image_from_text,
     'load_npy_from_text': data_loader.load_npy_from_text,
-    'load_triple_image_with_cond': data_loader.load_triple_image_with_cond
+    'load_triple_image_with_cond': data_loader.load_triple_image_with_cond,
+    'load_pair_npy_from_text': data_loader.load_pair_npy_from_text
 }
 
 

@@ -73,7 +73,7 @@ def load_pair_image_from_text(config):
   image2 = _load_image(path2, config.data.configs[1], config.phase)
 
   return data_prefetch.generate_batch(
-      [image1, image2], label, path1, config.data)
+      [image1, image2], label, [path1, path2], config.data)
 
 
 def load_triple_image_with_cond(config):
@@ -112,24 +112,51 @@ def load_npy_from_text(config):
   """
   res, count = data_entry.parse_from_text(
       config.data.entry_path, (str, float), (True, False))
-
-  imgcfg = config.data.configs[0]
+  cfg = config.data.configs[0]
 
   files = tf.convert_to_tensor(res[0], dtype=tf.string)
   labels = tf.convert_to_tensor(res[1], dtype=tf.float32)
   filename, label = tf.train.slice_input_producer(
       [files, labels], shuffle=config.data.shuffle)
 
-  def load(filepath, height, width, channels):
+  def load(filepath):
     """ load image from npy file. """
     file_path_abs = str(filepath, encoding='utf-8')
     data = np.load(file_path_abs)
-    data = np.float32(np.reshape(data, [height, width, channels]))
+    data = np.float32(np.reshape(data, data.shape))
     return data
 
-  param_in = [filename, imgcfg.raw_height, imgcfg.raw_width, imgcfg.channels]
-  content = tf.py_func(load, param_in, tf.float32)
-  content = tf.reshape(
-      content, [imgcfg.raw_height, imgcfg.raw_width, imgcfg.channels])
+  content = tf.py_func(load, [filename], tf.float32)
+  content = tf.reshape(content, cfg.shape)
 
   return data_prefetch.generate_batch(content, label, filename, config.data)
+
+
+def load_pair_npy_from_text(config):
+  """
+  """
+  res, count = data_entry.parse_from_text(
+      config.data.entry_path, (str, str, float), (True, True, False))
+  cfg = config.data.configs[0]
+
+  files1 = tf.convert_to_tensor(res[0], dtype=tf.string)
+  files2 = tf.convert_to_tensor(res[1], dtype=tf.string)
+  labels = tf.convert_to_tensor(res[2], dtype=tf.float32)
+  fname1, fname2, label = tf.train.slice_input_producer(
+      [files1, files2, labels], shuffle=config.data.shuffle)
+
+  def load(filepath):
+    """ load image from npy file. """
+    file_path_abs = str(filepath, encoding='utf-8')
+    data = np.load(file_path_abs)
+    data = np.float32(np.reshape(data, data.shape))
+    return data
+
+  content1 = tf.py_func(load, [fname1], tf.float32)
+  content1 = tf.reshape(content1, cfg.shape)
+
+  content2 = tf.py_func(load, [fname2], tf.float32)
+  content2 = tf.reshape(content2, cfg.shape)
+
+  return data_prefetch.generate_batch(
+      [content1, content2], label, [fname1, fname2], config.data)
