@@ -19,6 +19,7 @@ from core.network.nets.nasnet import nasnet
 from core.network.cnns import lightnet
 from core.network.cnns import lightnet64
 from core.network.cnns import simplenet
+from core.network.cnns import mlp
 
 
 def CifarNet(X, config, is_train):
@@ -257,4 +258,8 @@ def SimpleNet(X, config, is_train):
   net = simplenet.simplenet(
       X, num_classes=config.data.num_classes,
       is_training=is_train)
+  return net, None
+
+def MLP(X, config, is_train):
+  net = mlp.mlp(X, num_classes=config.data.num_classes)
   return net, None

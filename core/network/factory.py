@@ -34,7 +34,8 @@ networks_map = {
     'nasnet_large': cnn.NasNet,
     'lightnet': cnn.LightNet,
     'lightnet64': cnn.LightNet64,
-    'simplenet': cnn.SimpleNet
+    'simplenet': cnn.SimpleNet,
+    'mlp': cnn.MLP
 }
 
 
