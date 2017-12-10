@@ -77,6 +77,9 @@ class Gate():
       from issue.vae.kinvae import KIN_VAE as App
     elif self.config.target == 'vae.kinvae.pair':
       from issue.vae.kinvae_pair import KIN_VAE_PAIR as App
+    # For ML
+    elif self.config.target == 'ml.cosine.metric':
+      from issue.ml.cosine_metric import cosine_metric as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
@@ -100,7 +103,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='kinvae.pair')
+  parser.add_argument('-name', type=str, dest='name', default='kinface_npy')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
