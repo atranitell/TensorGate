@@ -10,7 +10,7 @@ class mnist():
   def __init__(self):
 
     self.name = 'mnist'
-    self.target = 'cnn.classification'
+    self.target = 'ml.active.sampler' #'cnn.classification'
     self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -19,9 +19,9 @@ class mnist():
     self.log = params.Log(
         print_invl=20,
         save_summaries_invl=10,
-        save_model_invl=100,
-        test_invl=100,
-        val_invl=100,
+        save_model_invl=500,
+        test_invl=500,
+        val_invl=500,
         max_iter=999999)
 
     self.image = params.Image(
@@ -54,16 +54,16 @@ class mnist():
     """
     self.phase = 'train'
     self.data = params.Data(
-        batchsize=64,
-        entry_path="../_datasets/mnist/train.txt",
+        batchsize=32,
+        entry_path="../_datasets/mnist/train_u1.txt",
         shuffle=True,
-        total_num=55000,
+        total_num=5000,
         loader='load_image_from_text')
     self.data.add_image(self.image)
     self.data.set_label(num_classes=10)
 
     self.lr = [params.LearningRate()]
-    self.lr[0].set_fixed(learning_rate=0.01)
+    self.lr[0].set_fixed(learning_rate=0.001)
 
     self.optimizer = [params.Optimizer()]
     self.optimizer[0].set_momentum()

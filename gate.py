@@ -80,6 +80,8 @@ class Gate():
     # For ML
     elif self.config.target == 'ml.cosine.metric':
       from issue.ml.cosine_metric import cosine_metric as App
+    elif self.config.target == 'ml.active.sampler':
+      from issue.ml.active_sampler import active_sampler as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
@@ -103,7 +105,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='kinface_npy')
+  parser.add_argument('-name', type=str, dest='name', default='mnist')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
