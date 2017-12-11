@@ -19,7 +19,7 @@ config_map = {
     'kinvae': kinvae.kinvae,
     'kinvae.pair': kinvae_pair.kinvae_pair,
     'kinface': kinface.kinface,
-    'kinface_npy': kinface_npy.kinface_npy,
+    'kinface.npy': kinface_npy.kinface_npy,
     'trafficflow': trafficflow.trafficflow
 }
 
