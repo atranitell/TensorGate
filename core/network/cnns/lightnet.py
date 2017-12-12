@@ -33,8 +33,8 @@ def lightnet_argscope(weight_decay,
                  weights_initializer=layers.xavier_initializer(),
                  biases_initializer=tf.constant_initializer(0.1),
                  activation_fn=tf.nn.relu,
-                 normalizer_fn=None,  # layers.batch_norm,
-                 #  normalizer_params=batch_norm_params,
+                 normalizer_fn=layers.batch_norm,
+                 normalizer_params=batch_norm_params,
                  padding='SAME'):
     with arg_scope([layers.batch_norm], **batch_norm_params):
       with arg_scope([layers.max_pool2d, layers.avg_pool2d], padding='SAME') as arg_sc:
