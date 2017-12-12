@@ -8,6 +8,7 @@ import json
 import math
 import re
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plticker
 
 
 def draw_basic_line_chart(config):
@@ -71,6 +72,125 @@ def draw_basic_line_chart(config):
 
   # plt show
   plt.show()
+
+
+def draw_roc(config):
+  """ 
+  1. legend
+  2. path: path to log
+  3. phase: '[TRN]', '[TST]', '[VAL]'
+  4. type: 'loss', 'err', 'mae', etc.
+  5. invl: default to 1
+  6. y_min, y_max, x_min, x_max: default to None
+  7. smooth: default to 1, average with multi-points.
+  8. show: default to true, to draw on the figure.
+  """
+  # initail param
+  plt.close('all')
+  fig, ax = plt.subplots()
+
+  cfg_fig = config['figure']
+  cfg_data = config['data']
+
+  def fill(key, default, cfg=cfg_fig):
+    return cfg[key] if key in cfg else default
+
+  # step1: parse data
+  for dt in cfg_data:
+    # control showing on figure
+    if dt['show'] is False:
+      continue
+    # parse data from file
+    roc = parse_roc(dt['path'], dt['roc'])
+    FPR, TPR = zip(*roc)
+    auc = compute_auc(FPR, TPR)
+    print(dt['path'] + ' AUC: %f' % auc)
+    plt.plot(FPR, TPR, label=fill('legend', None, dt), alpha=0.8)
+
+  # additional line
+  plt.plot([0, 1], [0, 1], 'k--', alpha=0.2)
+  plt.plot([0, 1], [1, 0], 'k--', alpha=0.2)
+
+  # step2: config figure
+  loc = plticker.MultipleLocator(base=0.1)
+  ax.xaxis.set_major_locator(loc)
+  ax.yaxis.set_major_locator(loc)
+  ax.grid(which='major', axis='both', linestyle='-')
+
+  # label
+  plt.title(fill('title', 'Line chart'))
+  plt.xlabel(fill('xlabel', 'False Positive Rate'))
+  plt.ylabel(fill('ylabel', 'True Positive Rate'))
+
+  # lim
+  plt.xlim(xmin=fill('xmin', 0))
+  plt.xlim(xmax=fill('xmax', 1))
+  plt.ylim(ymin=fill('ymin', 0))
+  plt.ylim(ymax=fill('ymax', 1))
+
+  # show legend
+  plt.legend(loc=1)
+
+  # save
+  if 'save_fig' in cfg_fig:
+    plt.savefig(cfg_fig['save_fig'])
+
+  # plt show
+  plt.show()
+
+
+def parse_roc(filepath, roc):
+  """
+  """
+  result = []
+  with open(filepath) as fp:
+    for line in fp:
+      label = int(line.split(' ')[roc['n_label']])
+      pred = float(line.split(' ')[roc['n_pred']])
+      result.append((pred, label))
+
+  size = len(result)
+  roc_result = []
+  for i in range(size):
+    res = compute_roc(result, i, roc)
+    roc_result.append(res)
+  roc_result.sort()
+  return roc_result
+
+
+def compute_roc(result, n_positive, roc):
+  """ result should be sorted first
+  """
+  result.sort()
+  TP, FP, FN, TN = 0., 0., 0., 0.
+  for idx, item in enumerate(result):
+    if idx < n_positive:
+      # prediction real
+      if item[1] == roc['positive_label']:
+        TP += 1.
+      elif item[1] == roc['negtive_label']:
+        FP += 1.
+    else:
+      # prediction false
+      if item[1] == roc['positive_label']:
+        FN += 1.
+      elif item[1] == roc['negtive_label']:
+        TN += 1.
+  FPR = FP / (FP + TN)
+  TPR = TP / (TP + FN)
+  return FPR, TPR
+
+
+def compute_auc(FPR, TPR):
+  """
+  """
+  auc = 0.
+  prev_x = 0
+  for item in zip(FPR, TPR):
+    if item[0] != prev_x:
+      auc += (item[0] - prev_x) * item[1]
+      prev_x = item[0]
+  return auc
 
 
 def parse_bigram(filepath, phase, key):
@@ -192,6 +312,8 @@ def interface(args):
   config = parse_json(args.file)
   if config['figure']['type'] == 'basic_line_chart':
     draw_basic_line_chart(config)
+  elif config['figure']['type'] == 'roc':
+    draw_roc(config)
   else:
     raise ValueError('Unknown input type.')
 
