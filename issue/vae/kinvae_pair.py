@@ -209,7 +209,7 @@ class KIN_VAE_PAIR(context.Context):
       app = '_%s' % kin if kin is not None else ''
       keys = ['val_error' + app, 'thred' + app, 'test_error' + app]
       vals = [val_err, val_thed, test_err]
-      logger.test(logger.iters(int(step - 1), keys, vals))
+      logger.test(logger.iters(int(step) - 1, keys, vals))
 
       self._exit_()
 
