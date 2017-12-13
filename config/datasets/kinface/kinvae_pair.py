@@ -19,9 +19,9 @@ class kinvae_pair():
     self.log = params.Log(
         print_invl=20,
         save_summaries_invl=10,
-        save_model_invl=200,
-        test_invl=200,
-        val_invl=200,
+        save_model_invl=500,
+        test_invl=500,
+        val_invl=500,
         max_iter=999999)
 
     self.set_phase(self.phase)
@@ -62,7 +62,8 @@ class kinvae_pair():
         entry_path="../_datasets/kinface2/train_1.txt",
         shuffle=True,
         total_num=1600,
-        loader='load_triple_image_with_cond')
+        loader='load_triple_image_with_cond',
+        reader_thread=32)
     self.data.add_image(self.default_image())
     self.data.add_image(self.default_image())
     self.data.add_image(self.default_image())
