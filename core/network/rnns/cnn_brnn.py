@@ -13,24 +13,35 @@ def conv2d(x, filters, ksize, stride, name="conv2d"):
       filters=filters,
       kernel_size=ksize,
       strides=stride,
-      padding='VALID',
+      padding='SAME',
       use_bias=False,
-      kernel_initializer=layers.xavier_initializer(),
+      kernel_initializer=tf.truncated_normal_initializer(stddev=0.02),
       kernel_regularizer=layers.l2_regularizer(0.0001),
       name=name)
 
 
+def fc(x, filters, name):
+  return layers.fully_connected(
+      x, filters,
+      biases_initializer=None,
+      weights_initializer=tf.truncated_normal_initializer(stddev=0.02),
+      weights_regularizer=None,
+      activation_fn=None,
+      scope=name)
+
+
 def simplenet(x, is_training, scope='simplenet', reuse=None):
   with tf.variable_scope(scope, reuse=reuse):
-    x = tf.reshape(x, x.get_shape().as_list() + [1])
+    x = tf.reshape(x, [-1, 28, 28, 1])
     net = tf.nn.relu(conv2d(x, 64, (7, 7), (2, 2), name='conv1'))
     net = tf.nn.relu(conv2d(net, 128, (5, 5), (2, 2), name='conv2'))
     net = tf.nn.relu(conv2d(net, 256, (4, 4), (2, 2), name='conv3'))
     net = tf.nn.relu(conv2d(net, 256, (4, 4), (2, 2), name='conv4'))
-    net = conv2d(net, 512, (4, 4), (2, 2), name='conv5')
+    net = conv2d(net, 512, (2, 2), (1, 1), name='conv5')
     net = layers.dropout(net, keep_prob=0.5, is_training=is_training)
     net = tf.reduce_mean(net, [1, 2])
     net = layers.flatten(net)
+    # net = fc(net, 1, 'fc1')
     return net
 
 
@@ -38,14 +49,15 @@ def cnn_brnn(inputs, config, is_training, scope='cnn_brnn'):
   """ x should have shape (batchsize, H, W, C)
   """
   with tf.variable_scope(scope):
-    input_list = tf.unstack(inputs, axis=3)
+    logit, net = basic_rnn(inputs, config, is_training)
     input_feats = []
-    for idx, x in enumerate(input_list):
+    for idx, x in enumerate(net):
       if idx == 0:
-        net = simplenet(x, is_training, reuse=False)
+        out = simplenet(x, is_training, reuse=False)
       else:
-        net = simplenet(x, is_training, reuse=True)
-      input_feats.append(net)
+        out = simplenet(x, is_training, reuse=True)
+      input_feats.append(out)
     input_feats = tf.transpose(tf.convert_to_tensor(input_feats), [1, 2, 0])
-    logit, net = basic_rnn(input_feats, config, is_training)
-    return logit, net
+    net = layers.flatten(input_feats)
+    net = fc(net, 1, 'fc1')
+    return net, None
