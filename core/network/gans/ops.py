@@ -31,8 +31,8 @@ def conv2d(x, filters, ksize, stride, name="conv2d"):
       filters=filters,
       kernel_size=ksize,
       strides=stride,
-      padding='SAME',
-      kernel_initializer=layers.xavier_initializer(),
+      padding='VALID',
+      kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
       name=name)
 
 
@@ -42,8 +42,8 @@ def deconv2d(x, filters, ksize, stride, name="deconv2d"):
       filters=filters,
       kernel_size=ksize,
       strides=stride,
-      padding='SAME',
-      kernel_initializer=layers.xavier_initializer(),
+      padding='VALID',
+      kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
       name=name)
 
 
@@ -56,5 +56,5 @@ def linear(x, output_size, scope="linear"):
       inputs=x,
       num_outputs=output_size,
       activation_fn=None,
-      weights_initializer=layers.xavier_initializer(),
+      weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
       scope=scope)
