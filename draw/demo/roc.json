@@ -1,0 +1,43 @@
+{
+  "figure": {
+    "title": "ROC DEMO",
+    "type": "roc",
+    "save_fig": "demo/roc/roc.jpg"
+  },
+  "data": [
+    {
+      "legend": "d1",
+      "path": "demo/roc/d1.txt",
+      "idx": [
+        {
+          "pos": 5,
+          "int": false,
+          "attr": "logit"
+        },
+        {
+          "pos": 4,
+          "int": true,
+          "attr": "label"
+        }
+      ],
+      "show": true
+    },
+    {
+      "legend": "d2",
+      "path": "demo/roc/d2.txt",
+      "idx": [
+        {
+          "pos": 5,
+          "int": false,
+          "attr": "logit"
+        },
+        {
+          "pos": 4,
+          "int": true,
+          "attr": "label"
+        }
+      ],
+      "show": true
+    }
+  ]
+}

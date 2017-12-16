@@ -1,0 +1,27 @@
+{
+  "figure": {
+    "title": "TREND DEMO",
+    "type": "trend",
+    "ymin": 0.4,
+    "ymax": 1.0,
+    "save_fig": "demo/trend/trend.jpg"
+  },
+  "data": [
+    {
+      "path": "demo/trend/30001_clip2.txt",
+      "idx": [
+        {
+          "pos": 2,
+          "int": false,
+          "attr": "label"
+        },
+        {
+          "pos": 3,
+          "int": false,
+          "attr": "logit"
+        }
+      ],
+      "show": true
+    }
+  ]
+}
