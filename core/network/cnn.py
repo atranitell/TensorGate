@@ -91,7 +91,6 @@ def Inception_v1(X, config, is_train):
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
-      prediction_fn=tf.nn.softmax,
       spatial_squeeze=True,
       global_pool=False)
   return net, argscope
@@ -105,7 +104,6 @@ def Inception_v2(X, config, is_train):
       dropout_keep_prob=config.net.dropout_keep,
       min_depth=16,
       depth_multiplier=1.0,
-      prediction_fn=tf.nn.softmax,
       spatial_squeeze=True,
       global_pool=False)
   return net, argscope
@@ -119,7 +117,6 @@ def Inception_v3(X, config, is_train):
       dropout_keep_prob=config.net.dropout_keep,
       min_depth=16,
       depth_multiplier=1.0,
-      prediction_fn=tf.nn.softmax,
       spatial_squeeze=True,
       global_pool=False)
   return net, argscope
