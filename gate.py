@@ -56,9 +56,6 @@ class Gate():
       from issue.cnn.regression import regression as App
     elif self.config.target == 'cnn.pairwise':
       from issue.cnn.pairwise import pairwise as App
-    # For RNN
-    elif self.config.target == 'rnn.regression':
-      from issue.rnn.regression import regression as App
     # For GAN
     elif self.config.target == 'gan.dcgan':
       from issue.gan.dcgan import DCGAN as App
@@ -73,8 +70,6 @@ class Gate():
       from issue.vae.cvae import CVAE as App
     elif self.config.target == 'vae.cvae.gan':
       from issue.vae.cvae_gan import CVAE_GAN as App
-    elif self.config.target == 'vae.kinvae':
-      from issue.vae.kinvae import KIN_VAE as App
     elif self.config.target == 'vae.kinvae.pair':
       from issue.vae.kinvae_pair import KIN_VAE_PAIR as App
     # For ML
@@ -82,6 +77,8 @@ class Gate():
       from issue.ml.cosine_metric import cosine_metric as App
     elif self.config.target == 'ml.active.sampler':
       from issue.ml.active_sampler import active_sampler as App
+    elif self.config.target == 'ml.trafficflow':
+      from issue.ml.trafficflow import trafficflow as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)
@@ -105,7 +102,7 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='mnist')
+  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
   args, _ = parser.parse_known_args()
 
   task.initilize(args.name)
