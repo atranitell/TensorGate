@@ -33,7 +33,7 @@ def all():
 def print_trainable_list():
   logger.sys('TRAINABLE LIST:')
   for var in tf.trainable_variables():
-    logger.sys(str(var))
+    logger.net(str(var))
 
 
 def print_global_list():
@@ -45,13 +45,13 @@ def print_global_list():
 def print_grads_list(grads):
   logger.sys('Gradients will be trained as list:')
   for grad, var in grads:
-    logger.sys(str(grad))
+    logger.net(str(grad))
 
 
 def print_restore_list(restore_vars):
   logger.sys('RESTORE LIST:')
   for var in restore_vars:
-    logger.sys(str(var))
+    logger.net(str(var))
 
 
 def print_vars(var_list):
