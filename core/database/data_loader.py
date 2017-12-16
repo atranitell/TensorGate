@@ -132,6 +132,33 @@ def load_npy_from_text(config):
   return data_prefetch.generate_batch(content, label, filename, config.data)
 
 
+def load_npy_from_text_with_cond(config):
+  """
+  """
+  res, count = data_entry.parse_from_text(
+      config.data.entry_path, (str, float, float), (True, False, False))
+  cfg = config.data.configs[0]
+
+  files = tf.convert_to_tensor(res[0], dtype=tf.string)
+  labels = tf.convert_to_tensor(res[1], dtype=tf.float32)
+  conds = tf.convert_to_tensor(res[2], dtype=tf.float32)
+  filename, label, cond = tf.train.slice_input_producer(
+      [files, labels, conds], shuffle=config.data.shuffle)
+
+  def load(filepath):
+    """ load image from npy file. """
+    file_path_abs = str(filepath, encoding='utf-8')
+    data = np.load(file_path_abs)
+    data = np.float32(np.reshape(data, data.shape))
+    return data
+
+  content = tf.py_func(load, [filename], tf.float32)
+  content = tf.reshape(content, cfg.shape)
+
+  return data_prefetch.generate_batch(content, [label, cond],
+                                      filename, config.data)
+
+
 def load_pair_npy_from_text(config):
   """
   """
