@@ -11,7 +11,7 @@ class trafficflow():
   def __init__(self):
 
     self.name = 'trafficflow'
-    self.target = 'rnn.regression'
+    self.target = 'ml.trafficflow'
     self.data_dir = '../_datasets/TrafficNet'
     self.phase = 'train'
     self.output_dir = None
@@ -20,7 +20,7 @@ class trafficflow():
     self.log = params.Log(
         print_invl=20,
         save_summaries_invl=20,
-        save_model_invl=1000,
+        save_model_invl=500,
         test_invl=1000,
         val_invl=1000,
         max_iter=999999)
@@ -34,7 +34,10 @@ class trafficflow():
 
     self.set_phase(self.phase)
 
-    self.net = params.Net('brnn')
+    self.net = params.Net('resnet_v2_101')
+    self.net.set_dropout_keep(0.8)
+    self.net.set_weight_decay(0.0001)
+    self.net.set_batch_norm(0.997)
     self.net.set_initializer_fn('orthogonal')
     self.net.set_activation_fn('relu')
     self.net.set_cell_fn('lstm')
@@ -58,11 +61,11 @@ class trafficflow():
         batchsize=32,
         entry_path="../_datasets/TrafficNet/data_112_train.txt",
         shuffle=True,
-        total_num=13641,
-        loader='load_npy_from_text',
-        reader_thread=32)
+        total_num=21930,
+        loader='load_npy_from_text_with_cond',
+        reader_thread=64)
     self.data.add_numpy(params.Numpy([112, 112, 10]))
-    self.data.set_label(num_classes=1, span=1)
+    self.data.set_label(num_classes=1, span=1000, scale=True)
 
     self.lr = [params.LearningRate()]
     self.lr[0].set_fixed(learning_rate=0.0002)
@@ -76,8 +79,8 @@ class trafficflow():
         batchsize=50,
         entry_path="../_datasets/TrafficNet/data_112_test.txt",
         shuffle=False,
-        total_num=3329,
-        loader='load_npy_from_text',
-        reader_thread=1)
+        total_num=20791,
+        loader='load_npy_from_text_with_cond',
+        reader_thread=64)
     self.data.add_numpy(params.Numpy([112, 112, 10]))
-    self.data.set_label(num_classes=1, span=1)
+    self.data.set_label(num_classes=1, span=1000, scale=True)
