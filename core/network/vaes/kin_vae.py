@@ -7,44 +7,44 @@ from tensorflow.contrib import layers
 from core.network.gans.ops import *
 
 
-N = 4
+def conv(inputs, num, kernel, stride, is_training, name,
+         with_bn=True, with_activation=True):
+  net = conv2d(inputs, num, (kernel, kernel),
+               (stride, stride), name=name, padding='VALID')
+  if with_bn:
+    net = bn(net, is_training=is_training, scope='bn_' + name)
+  if with_activation:
+    net = lrelu(net)
+  return net
+
+
+def deconv(inputs, num, kernel, stride, is_training, name,
+           with_bn=True, with_activation=True):
+  net = deconv2d(inputs, num, (kernel, kernel),
+                 (stride, stride), name=name, padding='VALID')
+  if with_bn:
+    net = bn(net, is_training=is_training, scope='bn_' + name)
+  if with_activation:
+    net = lrelu(net)
+  return net
 
 
 def encoder(x, y, y_dim, z_dim, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):
     # condition
-    y = tf.one_hot(y, depth=y_dim, on_value=1)
-    y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
-    x = conv_cond_concat(x, y)
-    # input 3x64x64
-    net = conv2d(x, 32 * N, (3, 3), (1, 1), name='conv1')
-    net = lrelu(net, name='en_conv1')
-    # input 64x32x32
-    net = conv2d(net, 64 * N, (5, 5), (2, 2), name='conv2')
-    net = lrelu(bn(net, is_training=is_training, scope='en_bn2'))
-    # input 128x16x16
-    net = conv2d(net, 64 * N, (3, 3), (1, 1), name='conv3')
-    net = lrelu(bn(net, is_training=is_training, scope='en_bn3'))
-    # input 256x8x8
-    net = conv2d(net, 128 * N, (5, 5), (2, 2), name='conv4')
-    net = lrelu(bn(net, is_training=is_training, scope='en_bn4'))
-    # input 256x4x4
-    net = conv2d(net, 128 * N, (3, 3), (1, 1), name='conv5')
-    net = lrelu(bn(net, is_training=is_training, scope='en_bn5'))
-    # input 256x2x2
-    net = conv2d(net, 256 * N, (5, 5), (2, 2), name='conv6')
-    net = tf.reduce_mean(net, [1, 2])
-    # net = lrelu(bn(net, is_training=is_training, scope='en_bn6'))
-    # input 512x1x1
-    net = layers.flatten(net)
-    # net = lrelu(bn(net, is_training=is_training, scope='en_bn7'))
-    # output gaussian distribution
-    gaussian_params = linear(net, 2 * z_dim, scope='en_fc8')
-    # The mean parameter is unconstrained
+    #y = tf.one_hot(y, depth=y_dim, on_value=1)
+    #y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
+    #x = conv_cond_concat(x, y)
+    # network
+    net = conv(x, 128, 3, 1, is_training, 'conv1', False)
+    net = conv(net, 128, 5, 2, is_training, 'conv2')
+    net = conv(net, 256, 5, 2, is_training, 'conv3')
+    net = conv(net, 512, 5, 2, is_training, 'conv4')
+    net = layers.flatten(tf.reduce_mean(net, [1, 2]))
+    # output
+    gaussian_params = linear(net, 2 * z_dim, scope='fc1')
     mean = gaussian_params[:, :z_dim]
-    # The standard deviation must be positive. Parametrize with a softplus and
-    # add a small epsilon for numerical stability
-    stddev = 1e-6 + tf.nn.softplus(gaussian_params[:, z_dim:])
+    stddev = 1e-8 + tf.nn.softplus(gaussian_params[:, z_dim:])
     return mean, stddev, net
 
 
@@ -53,32 +53,18 @@ def generator(z, y, is_training=True, reuse=None):
     # merge noise and label
     y = tf.to_float(tf.reshape(y, [-1, 1]))
     z = tf.concat([z, y], 1)
-    # input z_dim
-    net = linear(z, 512 * 1 * 1, scope='de_fc1')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn1'))
+    # reshape to 2d
+    net = linear(z, 512 * 1 * 1, scope='fc1')
+    net = lrelu(bn(net, is_training=is_training, scope='bn_fc1'))
     net = tf.reshape(net, [-1, 1, 1, 512])
-    # input 512*1*1
-    net = deconv2d(net, 128 * N, (3, 3), (1, 1), name='de_dc2')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn2'))
-    # input 256*2*2
-    net = deconv2d(net, 128 * N, (5, 5), (2, 2), name='de_dc3')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn3'))
-    # input 256*4*4
-    net = deconv2d(net, 64 * N, (3, 3), (1, 1), name='de_dc4')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn4'))
-    # input 128*8*8
-    net = deconv2d(net, 64 * N, (5, 5), (2, 2), name='de_dc5')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn5'))
-    # input 128*16*16
-    net = deconv2d(net, 32 * N, (5, 5), (1, 1), name='de_dc6')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn6'))
-    # input 128*16*16
-    net = deconv2d(net, 32 * N, (5, 5), (2, 2), name='de_dc7')
-    net = lrelu(bn(net, is_training=is_training, scope='de_bn7'))
-    # input 64*32*32
-    logit = deconv2d(net, 3, (4, 4), (1, 1), name='de_dc8')
-    # input 1*64*64
-    logit = tf.nn.sigmoid(logit)
+    # network
+    net = deconv(net, 512, 5, 1, is_training, 'deconv1')
+    net = deconv(net, 256, 5, 2, is_training, 'deconv2')
+    net = deconv(net, 128, 5, 2, is_training, 'deconv3')
+    net = deconv(net, 128, 5, 2, is_training, 'deconv4')
+    net = deconv(net, 3, 4, 1, is_training, 'logit', False, False)
+    # output
+    logit = tf.nn.sigmoid(net)
     return logit
 
 
@@ -88,26 +74,10 @@ def discriminator(x, y, y_dim, is_training, reuse=None):
     y = tf.one_hot(y, depth=y_dim, on_value=1)
     y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
     x = conv_cond_concat(x, y)
-    # input 1x64x64
-    net = conv2d(x, 32 * N, (3, 3), (1, 1), name='conv1')
-    # input 64x32x32
-    net = conv2d(net, 64 * N, (5, 5), (2, 2), name='conv2')
-    net = lrelu(bn(net, is_training=is_training, scope='d_bn2'))
-    # input 128x16x16
-    net = conv2d(net, 64 * N, (3, 3), (1, 1), name='conv3')
-    net = lrelu(bn(net, is_training=is_training, scope='d_bn3'))
-    # input 256x8x8
-    net = conv2d(net, 128 * N, (5, 5), (2, 2), name='conv4')
-    net = lrelu(bn(net, is_training=is_training, scope='d_bn4'))
-    # input 256x4x4
-    net = conv2d(net, 128 * N, (3, 3), (1, 1), name='conv5')
-    net = lrelu(bn(net, is_training=is_training, scope='d_bn5'))
-    # input 256x2x2
-    net = conv2d(net, 256 * N, (5, 5), (2, 2), name='conv6')
-    net = tf.reduce_mean(net, [1, 2])
-    # input 512x1x1
-    net = layers.flatten(net)
-    # logit = linear(net, 1, scope='fc7')
-    # input 1024
-    # logit = tf.nn.sigmoid(net)
-    return net, net
+    # network
+    net = conv(x, 128, 3, 1, is_training, 'conv1', False)
+    net = conv(net, 128, 5, 2, is_training, 'conv2')
+    net = conv(net, 256, 5, 2, is_training, 'conv3')
+    net = conv(net, 512, 5, 2, is_training, 'conv4')
+    net = layers.flatten(tf.reduce_mean(net, [1, 2]))
+    return net, None
