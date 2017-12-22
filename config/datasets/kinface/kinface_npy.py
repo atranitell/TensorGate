@@ -35,22 +35,24 @@ class kinface_npy():
     self.phase = 'test'
     self.data = params.Data(
         batchsize=100,
-        entry_path="../_datasets/kinface2/test_1_facenet_webface.txt",
+        entry_path="../_datasets/kinface2/test_1_LBP.txt",
         shuffle=False,
         total_num=400,
-        loader='load_pair_npy_from_text',
+        loader='load_npy',
         reader_thread=1)
-    self.data.add_numpy(params.Numpy([1792]))
+    self.data.add_numpy(params.Numpy([3776]))
+    self.data.set_entry_attr((str, str, int), (True, True, False))
     self.data.set_label(num_classes=1)
 
   def _val(self):
     self.phase = 'val'
     self.data = params.Data(
         batchsize=100,
-        entry_path="../_datasets/kinface2/train_1_facenet_webface.txt",
+        entry_path="../_datasets/kinface2/train_1_LBP.txt",
         shuffle=False,
         total_num=1600,
-        loader='load_pair_npy_from_text',
+        loader='load_npy',
         reader_thread=1)
-    self.data.add_numpy(params.Numpy([1792]))
+    self.data.add_numpy(params.Numpy([3776]))
+    self.data.set_entry_attr((str, str, int), (True, True, False))
     self.data.set_label(num_classes=1)
