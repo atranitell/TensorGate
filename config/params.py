@@ -227,14 +227,22 @@ class Data():
                reader_thread=8,
                min_queue_num=128):
     self.batchsize = batchsize
-    self.entry_path = entry_path
     self.shuffle = shuffle
     self.total_num = total_num
     self.loader = loader
+    self.entry_path = entry_path
     self.reader_thread = reader_thread
     self.min_queue_num = min_queue_num
-    # for each data attri to allocate a config
     self.configs = None
+
+  def set_entry_attr(self, entry_dtype=None,
+                    entry_check=None):
+    """ 
+      entry_dtype: a tuple showing the item type
+      entry_check: a tuple describes a file path
+    """
+    self.entry_dtype = entry_dtype
+    self.entry_check = entry_check
 
   def add_image(self, image_config):
     """ add a data attribution to configs  """
