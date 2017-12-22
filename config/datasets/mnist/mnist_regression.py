@@ -55,11 +55,12 @@ class mnist_regression():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=32,
-        entry_path="_datasets/mnist/train.txt",
+        entry_path="../_datasets/mnist/train.txt",
         shuffle=True,
         total_num=55000,
-        loader='load_image_from_text')
+        loader='load_image')
     self.data.add_image(self.image)
+    self.data.set_entry_attr((str, int), (True, False))
     self.data.set_label(num_classes=1, span=10, scale=True)
 
     self.lr = [params.LearningRate()]
@@ -72,9 +73,11 @@ class mnist_regression():
     self.phase = 'test'
     self.data = params.Data(
         batchsize=50,
-        entry_path="_datasets/mnist/test.txt",
-        shuffle=True,
+        entry_path="../_datasets/mnist/test.txt",
+        shuffle=False,
         total_num=10000,
-        loader='load_image_from_text')
+        loader='load_image',
+        reader_thread=1)
     self.data.add_image(self.image)
+    self.data.set_entry_attr((str, int), (True, False))
     self.data.set_label(num_classes=1, span=10, scale=True)

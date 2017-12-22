@@ -10,7 +10,7 @@ class mnist():
   def __init__(self):
 
     self.name = 'mnist'
-    self.target = 'ml.active.sampler' #'cnn.classification'
+    self.target = 'cnn.classification' # 'ml.active.sampler'
     self.data_dir = '../_datasets/mnist'
     self.phase = 'train'
     self.output_dir = None
@@ -55,11 +55,12 @@ class mnist():
     self.phase = 'train'
     self.data = params.Data(
         batchsize=32,
-        entry_path="../_datasets/mnist/train_u1.txt",
+        entry_path="../_datasets/mnist/train.txt",
         shuffle=True,
-        total_num=5000,
-        loader='load_image_from_text')
+        total_num=55000,
+        loader='load_image')
     self.data.add_image(self.image)
+    self.data.set_entry_attr((str, int), (True, False))
     self.data.set_label(num_classes=10)
 
     self.lr = [params.LearningRate()]
@@ -73,8 +74,10 @@ class mnist():
     self.data = params.Data(
         batchsize=50,
         entry_path="../_datasets/mnist/test.txt",
-        shuffle=True,
+        shuffle=False,
         total_num=10000,
-        loader='load_image_from_text')
+        loader='load_image',
+        reader_thread=1)
     self.data.add_image(self.image)
+    self.data.set_entry_attr((str, int), (True, False))
     self.data.set_label(num_classes=10)

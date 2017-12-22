@@ -58,8 +58,9 @@ class mnist_gan():
         entry_path="../_datasets/mnist/train.txt",
         shuffle=True,
         total_num=55000,
-        loader='load_image_from_text')
+        loader='load_image')
     self.data.add_image(self.image)
+    self.data.set_entry_attr((str, int), (True, False))
     self.data.set_label(num_classes=10)
 
     self.lr = [params.LearningRate(),
