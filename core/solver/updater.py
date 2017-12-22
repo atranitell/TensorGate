@@ -45,8 +45,8 @@ def default(config, loss, global_step, var_list=None, index=0):
   train_op = grad_op
 
   # add
-  # add_grad_to_summary(grads, True)
-  # add_weight_to_summary()
+  add_grad_to_summary(grads, True, True)
+  add_weight_to_summary(True, True)
 
   return train_op
 
