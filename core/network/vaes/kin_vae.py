@@ -32,9 +32,9 @@ def deconv(inputs, num, kernel, stride, is_training, name,
 def encoder(x, y, y_dim, z_dim, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):
     # condition
-    #y = tf.one_hot(y, depth=y_dim, on_value=1)
-    #y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
-    #x = conv_cond_concat(x, y)
+    # y = tf.one_hot(y, depth=y_dim, on_value=1)
+    # y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
+    # x = conv_cond_concat(x, y)
     # network
     net = conv(x, 128, 3, 1, is_training, 'conv1', False)
     net = conv(net, 128, 5, 2, is_training, 'conv2')
