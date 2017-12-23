@@ -69,9 +69,6 @@ class cosine_metric(context.Context):
 
   def test(self):
     """ """
-    # SIUTATION1: validation->test*n
-    # for 5 fold, every fold running a validation
-    #   and 1 full-set test, 4-separate test.
     for fold in ['1', '2', '3', '4', '5']:
       self._enter_('val')
       self.config.data.entry_path = self.config.data.entry_path.replace(
@@ -80,20 +77,17 @@ class cosine_metric(context.Context):
       self._run(output, self.config)
       self._exit_()
 
-      for kin in ['', '_fs', '_fd', '_md', '_ms']:
-        self._enter_('test')
-        self.config.data.entry_path = self.config.data.entry_path.replace(
-            'test_1', 'test' + kin + '_' + fold)
-        self.config.data.total_num = 100 if kin is not '' else 400
-        output = self.config.output_dir + '/test_' + fold + kin
-        self._run(output, self.config)
+      self._enter_('test')
+      self.config.data.entry_path = self.config.data.entry_path.replace(
+          'test_1', 'test' + '_' + fold)
+      output = self.config.output_dir + '/test_' + fold
+      self._run(output, self.config)
 
-        val_err, val_thed, test_err = Error().get_all_result(
-            self.val_x, self.val_y, self.val_l,
-            self.test_x, self.test_y, self.test_l, True)
+      val_err, val_thed, test_err = Error().get_all_result(
+          self.val_x, self.val_y, self.val_l,
+          self.test_x, self.test_y, self.test_l, True)
 
-        app = '%s_%s' % (kin, fold)
-        keys = ['val_error' + app, 'thred' + app, 'test_error' + app]
-        vals = [val_err, val_thed, test_err]
-        logger.test(logger.iters(0, keys, vals))
-        self._exit_()
+      keys = ['val_error_' + fold, 'thred_' + fold, 'test_error_' + fold]
+      vals = [val_err, val_thed, test_err]
+      logger.test(logger.iters(0, keys, vals))
+      self._exit_()
