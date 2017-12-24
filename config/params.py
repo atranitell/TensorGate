@@ -244,6 +244,10 @@ class Data():
     self.entry_dtype = entry_dtype
     self.entry_check = entry_check
 
+  def set_image(self, image_config_list):
+    """Direct Set Image Attr"""
+    self.configs = image_config_list
+
   def add_image(self, image_config):
     """ add a data attribution to configs  """
     if self.configs == None:
