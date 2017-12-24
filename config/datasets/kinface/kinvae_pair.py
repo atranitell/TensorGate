@@ -45,10 +45,10 @@ class kinface_base():
         gray=False)
 
   def default_data_attr(self):
-    self.data.add_image(self.default_image())
-    self.data.add_image(self.default_image())
-    self.data.add_image(self.default_image())
-    self.data.add_image(self.default_image())
+    self.data.set_image([self.default_image(),
+                         self.default_image(),
+                         self.default_image(),
+                         self.default_image()])
     self.data.set_entry_attr(
         entry_dtype=(str, str, str, str, int, int),
         entry_check=(True, True, True, True, False, False))
@@ -72,7 +72,7 @@ class kinvae1_pair(kinface_base):
   def __init__(self):
 
     self.name = 'kinvae1.pair'
-    self.target = 'vae.kinvae.pair'
+    self.target = 'vae.kinvae.bidirect'
     self.data_dir = '../_datasets/kinface1'
     self.phase = 'train'
     self.output_dir = None
@@ -115,6 +115,82 @@ class kinvae1_pair(kinface_base):
         loader='load_image',
         reader_thread=1)
     self.default_data_attr()
+
+
+class kinvae1_pair2(kinvae1_pair):
+
+  def __init__(self):
+    kinvae1_pair.__init__(self)
+    self.name = 'kinvae1.pair2'
+
+  def _train(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_2.txt"
+
+  def _val(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/test_2.txt"
+
+  def _test(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_2.txt"
+
+
+class kinvae1_pair3(kinvae1_pair):
+
+  def __init__(self):
+    kinvae1_pair.__init__(self)
+    self.name = 'kinvae1.pair3'
+
+  def _train(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_3.txt"
+
+  def _val(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/test_3.txt"
+
+  def _test(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_3.txt"
+
+
+class kinvae1_pair4(kinvae1_pair):
+
+  def __init__(self):
+    kinvae1_pair.__init__(self)
+    self.name = 'kinvae1.pair4'
+
+  def _train(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_4.txt"
+
+  def _val(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/test_4.txt"
+
+  def _test(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_4.txt"
+
+
+class kinvae1_pair5(kinvae1_pair):
+
+  def __init__(self):
+    kinvae1_pair.__init__(self)
+    self.name = 'kinvae1.pair5'
+
+  def _train(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_5.txt"
+
+  def _val(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/test_5.txt"
+
+  def _test(self):
+    kinvae1_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface1/train_5.txt"
 
 
 class kinvae2_pair(kinface_base):
@@ -165,3 +241,79 @@ class kinvae2_pair(kinface_base):
         loader='load_image',
         reader_thread=1)
     self.default_data_attr()
+
+
+class kinvae2_pair2(kinvae2_pair):
+
+  def __init__(self):
+    kinvae2_pair.__init__(self)
+    self.name = 'kinvae2.pair2'
+
+  def _train(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_2.txt"
+
+  def _val(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/test_2.txt"
+
+  def _test(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_2.txt"
+
+
+class kinvae2_pair3(kinvae2_pair):
+
+  def __init__(self):
+    kinvae2_pair.__init__(self)
+    self.name = 'kinvae2.pair3'
+
+  def _train(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_3.txt"
+
+  def _val(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/test_3.txt"
+
+  def _test(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_3.txt"
+
+
+class kinvae2_pair4(kinvae2_pair):
+
+  def __init__(self):
+    kinvae2_pair.__init__(self)
+    self.name = 'kinvae2.pair4'
+
+  def _train(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_4.txt"
+
+  def _val(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/test_4.txt"
+
+  def _test(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_4.txt"
+
+
+class kinvae2_pair5(kinvae2_pair):
+
+  def __init__(self):
+    kinvae2_pair.__init__(self)
+    self.name = 'kinvae2.pair5'
+
+  def _train(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_5.txt"
+
+  def _val(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/test_5.txt"
+
+  def _test(self):
+    kinvae2_pair._train(self)
+    self.data.entry_path = "../_datasets/kinface2/train_5.txt"
