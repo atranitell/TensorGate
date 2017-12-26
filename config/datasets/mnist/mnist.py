@@ -7,7 +7,7 @@ from config import params
 
 class mnist():
 
-  def __init__(self):
+  def __init__(self, extra):
 
     self.name = 'mnist'
     self.target = 'cnn.classification' # 'ml.active.sampler'

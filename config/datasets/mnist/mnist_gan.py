@@ -7,7 +7,7 @@ from config import params
 
 class mnist_gan():
 
-  def __init__(self):
+  def __init__(self, extra):
 
     self.name = 'mnist'
     self.target = 'vae.cvae'

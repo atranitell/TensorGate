@@ -8,7 +8,7 @@ from config import params
 
 class trafficflow():
 
-  def __init__(self):
+  def __init__(self, extra):
 
     self.name = 'trafficflow'
     self.target = 'ml.trafficflow'

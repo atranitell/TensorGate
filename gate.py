@@ -30,9 +30,9 @@ class Gate():
     self.config = None
     self.pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
 
-  def initilize(self, name):
+  def initilize(self, name, extra=None):
     # 0. load config params, default of 'train'
-    config = factory.get(name)
+    config = factory.get(name, extra)
 
     # 1. setting output dir
     if config.output_dir is None:
@@ -70,11 +70,9 @@ class Gate():
       from issue.vae.cvae import CVAE as App
     elif self.config.target == 'vae.cvae.gan':
       from issue.vae.cvae_gan import CVAE_GAN as App
-    elif self.config.target == 'vae.kinvae.pair':
-      from issue.vae.kinvae_pair import KIN_VAE_PAIR as App
+    elif self.config.target.find('kinvae') == 0:
+      from issue.kinface.kinface import select as App
     # For ML
-    elif self.config.target == 'ml.cosine.metric':
-      from issue.ml.cosine_metric import cosine_metric as App
     elif self.config.target == 'ml.active.sampler':
       from issue.ml.active_sampler import active_sampler as App
     elif self.config.target == 'ml.trafficflow':
@@ -102,8 +100,9 @@ task = Gate()
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name', default='trafficflow')
+  parser.add_argument('-name', type=str, dest='name')
+  parser.add_argument('-extra', type=str, dest='extra', default=None)
   args, _ = parser.parse_known_args()
 
-  task.initilize(args.name)
+  task.initilize(args.name, args.extra)
   task.run()
