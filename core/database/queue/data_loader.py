@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """ Updated: 2017/3/28
 """
-
-import os
+import random
 import numpy as np
 import tensorflow as tf
-
 from core.database import data_entry
-from core.database import data_prefetch
+from core.database.queue import data_prefetch
 from core.database.preprocessing.factory import preprocessing
 
 

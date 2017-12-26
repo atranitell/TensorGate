@@ -3,7 +3,6 @@
     Author: Kai JIN
     Updated: 2017-08-28
 """
-
 import tensorflow as tf
 
 
