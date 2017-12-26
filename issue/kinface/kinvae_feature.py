@@ -8,7 +8,7 @@
   And then use margin to divide the test dataset.
 """
 import tensorflow as tf
-from core.database.factory import loads
+# from core.database.factory import loads
 from core.loss import cosine
 from core import utils
 from core.utils.logger import logger
@@ -17,7 +17,7 @@ from config.datasets.kinface.kinface_utils import Error
 import numpy as np
 
 
-class cosine_metric(context.Context):
+class KINVAE_FEATURE(context.Context):
 
   def __init__(self, config):
     # if directly use input data as features

@@ -29,9 +29,8 @@ def deconv(inputs, num, kernel, stride, is_training, name,
   return net
 
 
-def encoder(x, y, y_dim, z_dim, is_training=True, reuse=None):
-  with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):
-    # condition
+def encoder(x, z_dim, is_training=True, reuse=None):
+  with tf.variable_scope("KIN_VAE/encoder", reuse=reuse):    # condition
     # y = tf.one_hot(y, depth=y_dim, on_value=1)
     # y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
     # x = conv_cond_concat(x, y)
@@ -80,4 +79,4 @@ def discriminator(x, y, y_dim, is_training, reuse=None):
     net = conv(net, 256, 5, 2, is_training, 'conv3')
     net = conv(net, 512, 5, 2, is_training, 'conv4')
     net = layers.flatten(tf.reduce_mean(net, [1, 2]))
-    return net, None
+    return net

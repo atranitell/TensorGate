@@ -16,15 +16,15 @@ from config.datasets.kinface.kinface_utils import Error
 import numpy as np
 
 
-class KIN_VAE_PAIR(context.Context):
-  """ """
+class KINVAE_BIDIRECT(context.Context):
+  """ 1E - 2G - 1D
+  """
 
   def __init__(self, config):
     context.Context.__init__(self, config)
 
-  def _encoder(self, x, cond, reuse=None):
-    return kin_vae.encoder(x, cond, self.data.num_classes,
-                           self.config.net.z_dim, self.is_train, reuse)
+  def _encoder(self, x, reuse=None):
+    return kin_vae.encoder(x, self.config.net.z_dim, self.is_train, reuse)
 
   def _generator(self, z, cond, reuse=None):
     return kin_vae.generator(z, cond, self.is_train, reuse)
@@ -32,6 +32,11 @@ class KIN_VAE_PAIR(context.Context):
   def _discriminator(self, x, cond, reuse=None):
     return kin_vae.discriminator(x, cond, self.data.num_classes,
                                  self.is_train, reuse)
+
+  def _network(self, c1_real, p2_real):
+    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
+    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
+    return feat_c1, feat_p2
 
   def _loss_vae(self, real, fake, mu, sigma):
     """
@@ -85,27 +90,50 @@ class KIN_VAE_PAIR(context.Context):
     self._enter_('train')
 
     # get data pipeline
-    data, info, path = loads(self.config)
-    c1_real, p1_real, p2_real = tf.unstack(data, axis=1)
+    data, info, _ = loads(self.config)
+    c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
     label, cond = tf.unstack(info, axis=1)
-    path1, path2, path3 = tf.unstack(path, axis=1)
 
     # encode image to a vector
-    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real, cond)
-    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, cond, True)
+    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
+    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
 
-    # resample from the re-parameterzation
-    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-    c1_fake = tf.clip_by_value(self._generator(c1_z, cond), 1e-8, 1 - 1e-8)
+    # children to parent
+    with tf.variable_scope('net1'):
+      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+      c1_z = self._generator(c1_z, cond)
+      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+
+    # parent to children
+    with tf.variable_scope('net2'):
+      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+      p2_z = self._generator(p2_z, cond)
+      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
 
     # discriminator
-    D_c1_fake, D_net_c1 = self._discriminator(c1_fake, cond, reuse=False)
-    D_p1_real, D_net_p1 = self._discriminator(p1_real, cond, reuse=True)
+    D_c1_fake = self._discriminator(c1_fake, cond, reuse=False)
+    D_p1_real = self._discriminator(p1_real, cond, reuse=True)
 
-    # loss
-    R_loss, R_loss_batch = self._loss_metric(feat_c1, feat_p2, label)
-    E_loss = self._loss_vae(p1_real, c1_fake, c1_mu, c1_sigma)
-    D_loss, G_loss = self._loss_gan(D_c1_fake, D_p1_real)
+    D_p2_fake = self._discriminator(p2_fake, cond, reuse=True)
+    D_c2_real = self._discriminator(c2_real, cond, reuse=True)
+
+    # loss for encoder
+    R1_loss, _ = self._loss_metric(feat_c1, feat_p2, label)
+    R2_loss, _ = self._loss_metric(D_c2_real, D_p1_real, label)
+    R3_loss, _ = self._loss_metric(D_c1_fake, D_p2_fake, label)
+    R_loss = R1_loss + R2_loss + R3_loss
+
+    # loss for genertor
+    E1_loss = self._loss_vae(p1_real, c1_fake, c1_mu, c1_sigma)
+    E2_loss = self._loss_vae(c2_real, p2_fake, p2_mu, p2_sigma)
+    E_loss = E1_loss + E2_loss
+
+    # loss for discriminator
+    D1_loss, G1_loss = self._loss_gan(D_c1_fake, D_p1_real)
+    D2_loss, G2_loss = self._loss_gan(D_p2_fake, D_c2_real)
+    D_loss = D1_loss + D2_loss
+    G_loss = G1_loss + G2_loss
+
     loss = E_loss + D_loss + G_loss + R_loss
 
     # # allocate two optimizer
@@ -151,33 +179,30 @@ class KIN_VAE_PAIR(context.Context):
     """ COMMON FOR TRAIN AND VAL """
     # considering output train image
     data, info, path = loads(self.config)
-    c1_real, p1_real, p2_real = tf.unstack(data, axis=1)
+    c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
+    c1_path, p1_path, c2_path, p2_path = tf.unstack(path, axis=1)
     label, cond = tf.unstack(info, axis=1)
-    path1, path2, path3 = tf.unstack(path, axis=1)
-    batchsize = self.data.batchsize
-    num_iter = int(self.data.total_num / batchsize)
 
     # encode image to a vector
-    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real, cond)
-    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, cond, True)
-    c1_fake = tf.clip_by_value(self._generator(c1_mu, cond), 1e-8, 1 - 1e-8)
-    R_loss, loss = self._loss_metric(feat_c1, feat_p2, label)
+    feat_c1, feat_p2 = self._network(c1_real, p2_real)
+    R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
 
     saver = tf.train.Saver()
     with tf.Session() as sess:
       step = self.snapshot.restore(sess, saver)
-      info = utils.string.concat(batchsize, [path1, path2, path3, label, loss])
-      output = [c1_fake, c1_real, p1_real, p2_real,
-                info, feat_c1, feat_p2, label]
+      info = utils.string.concat(
+          self.data.batchsize,
+          [c1_path, p1_path, c2_path, p2_path, label, loss])
+      output = [info, feat_c1, feat_p2, label]
       fw = open(dstdir + '%s.txt' % step, 'wb')
       with context.QueueContext(sess):
-        for i in range(num_iter):
-          _cf, _c1, _p1, _p2, _info, _x, _y, _label = sess.run(output)
+        for i in range(int(self.data.total_num / self.data.batchsize)):
+          _info, _x, _y, _label = sess.run(output)
+          # utils.image.save_batchs(
+          #     image_list=[_cf, _c1, _p1, _p2],
+          #     batchsize=batchsize, dstdir=dstdir, step=step,
+          #     name_list=['_cf', '_c1', '_p1', '_p2'])
           self._write_feat_to_npy(i, _x, _y, _label)
-          utils.image.save_batchs(
-              image_list=[_cf, _c1, _p1, _p2],
-              batchsize=batchsize, dstdir=dstdir, step=step,
-              name_list=['_cf', '_c1', '_p1', '_p2'])
           [fw.write(_line + b'\r\n') for _line in _info]
       fw.close()
       return step
@@ -190,30 +215,14 @@ class KIN_VAE_PAIR(context.Context):
       self._val_or_test(val_dir)
       self._exit_()
 
-    # define for multi-test
-    def _pipline(kin=None):
-      """ for process different kinship """
+    with tf.Graph().as_default():
       self._enter_('test')
-
-      if kin is not None:
-        old = self.config.data.entry_path
-        self.config.data.entry_path = old.replace('test_', 'test_' + kin + '_')
-        self.config.data.total_num = 100
-
       test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
       step = self._val_or_test(test_dir)
       val_err, val_thed, test_err = Error().get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, True)
-
-      app = '_%s' % kin if kin is not None else ''
-      keys = ['val_error' + app, 'thred' + app, 'test_error' + app]
+      keys = ['val_error', 'thred', 'test_error']
       vals = [val_err, val_thed, test_err]
       logger.test(logger.iters(int(step) - 1, keys, vals))
-
       self._exit_()
-
-    _pipline()
-    for kin in ['fs', 'fd', 'md', 'ms']:
-      with tf.Graph().as_default():
-        _pipline(kin)

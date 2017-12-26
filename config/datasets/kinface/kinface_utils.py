@@ -20,8 +20,8 @@ class Error():
     with open(filepath) as fp:
       for line in fp:
         r = line.split(' ')
-        labels.append(int(r[3]))
-        dists.append(float(r[4]))
+        labels.append(int(r[4]))
+        dists.append(float(r[5]))
     return np.array(dists), np.array(labels)
 
   def get_result_from_file(self, filepath, threshold=None):
@@ -58,7 +58,7 @@ class Error():
 
     val_err, val_thed = self.get_val_result(val_x, val_y, val_labels)
     test_err, test_thed = self.get_val_result(test_x, test_y, test_labels)
-    return val_err, val_thed, test_err
+    return val_err, test_thed, test_err
 
   def _get_cosine_dist(self, feat1, feat2):
     """ feat [N, M]
