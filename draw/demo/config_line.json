@@ -1,0 +1,24 @@
+{
+  "info": {
+    "dir": "demo/line",
+    "display": true
+  },
+  "figure": {
+    "title": null,
+    "type": "basic_line_chart_template",
+    "xlabel": "iter",
+    "ylabel": "error",
+    "save_fig": null
+  },
+  "data": [
+    {
+      "legend": null,
+      "path": null,
+      "phase": "[TST]",
+      "key": "error",
+      "invl": 1,
+      "smooth": 1,
+      "show": true
+    }
+  ]
+}

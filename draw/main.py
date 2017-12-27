@@ -6,6 +6,7 @@ import argparse
 import _line
 import _roc
 import _trend
+import _config
 import utils
 
 
@@ -14,6 +15,8 @@ def interface(args):
   config = utils.parse_json(args.file)
   if config['figure']['type'] == 'basic_line_chart':
     _line.draw_basic_line_chart(config)
+  elif config['figure']['type'] == 'basic_line_chart_template':
+    _config.gen_line_config(config)
   elif config['figure']['type'] == 'roc':
     _roc.draw_roc(config)
   elif config['figure']['type'] == 'trend':

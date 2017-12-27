@@ -77,3 +77,9 @@ def parse_json(filepath):
   with open(filepath, 'r') as fp:
     config = json.load(fp)
   return config
+
+def save_json(dicts, filepath):
+  """ save config to json file
+  """
+  with open(filepath, 'w') as fp:
+    json.dump(dicts, fp)
