@@ -8,7 +8,9 @@ from config.datasets.mnist import mnist_gan
 from config.datasets.mnist import mnist_regression
 from config.datasets.kinface import kinvae_pair
 from config.datasets.kinface import kinface_npy
+from config.datasets.kinface import kinface
 from config.datasets.trafficflow import trafficflow
+from config.datasets.lfw import lfw
 
 config_map = {
     'mnist': mnist.mnist,
@@ -17,7 +19,9 @@ config_map = {
     'kinvae1.pair': kinvae_pair.kinvae1_pair,
     'kinvae2.pair': kinvae_pair.kinvae2_pair,
     'kinface.npy': kinface_npy.kinface_npy,
-    'trafficflow': trafficflow.trafficflow
+    'lfw': lfw.lfw,
+    'trafficflow': trafficflow.trafficflow,
+    'kinface': kinface.Kinface
 }
 
 
