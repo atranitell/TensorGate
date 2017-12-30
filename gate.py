@@ -77,6 +77,8 @@ class Gate():
       from issue.ml.active_sampler import active_sampler as App
     elif self.config.target == 'ml.trafficflow':
       from issue.ml.trafficflow import trafficflow as App
+    elif self.config.target == 'ml.extract_feature':
+      from issue.ml.extract_feature import EXTRACT_FEATURE as App
     # Unkown
     else:
       raise ValueError('Unknown target [%s]' % self.config.target)

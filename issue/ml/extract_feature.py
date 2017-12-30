@@ -1,11 +1,10 @@
-""" Machine Learning for Kinface
-  the model to directly use features from .npy file
-  to acquire a similarity metric.
-  It will not include any train parts.
-
-  For most cosine metric algorithms,
-  it will need find a best margin in validation test.
-  And then use margin to divide the test dataset.
+""" Machine Learning for EXTRACT FEATURE
+  the inputs protocal should be:
+  image-path-1
+  image-path-2
+  ...
+  And the batchsize should be set to 1
+  Reader Thread Number = 1
 """
 import tensorflow as tf
 from core.network.cnns.inception_resnet_v1 import inference
