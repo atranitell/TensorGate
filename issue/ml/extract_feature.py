@@ -29,19 +29,13 @@ class EXTRACT_FEATURE(context.Context):
     _, end_points = inference(x, 1.0, False)
     target = end_points['PreLogitsFlatten']
 
-    # total_num
-    total_num = self.config.data.total_num
-    batchsize = self.config.data.batchsize
-    num_iter = int(total_num / batchsize)
-
     # setting session running info
-    feats = []
-    names = []
+    feats, names = [], []
     saver = tf.train.Saver()
     with tf.Session() as sess:
       step = self.snapshot.restore(sess, saver)
       with context.QueueContext(sess):
-        for i in range(num_iter):
+        for i in range(self.epoch_iter):
           _x, _p = sess.run([target, path])
           feats.append(_x[0])
           names.append(_p)
