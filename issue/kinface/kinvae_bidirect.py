@@ -11,8 +11,6 @@ from core.loss import cosine
 from core import utils
 from core.utils.logger import logger
 from issue import context
-
-from config.datasets.kinface.kinface_utils import Error
 import numpy as np
 
 
@@ -70,7 +68,7 @@ class KINVAE_BIDIRECT(context.Context):
 
   def _loss_metric(self, feat_x, feat_y, label):
     return cosine.get_loss(feat_x, feat_y, label,
-                           self.data.batchsize,
+                           self.batchsize,
                            is_training=self.is_train)
 
   def _write_feat_to_npy(self, idx, x, y, label):
@@ -190,20 +188,20 @@ class KINVAE_BIDIRECT(context.Context):
     saver = tf.train.Saver()
     with tf.Session() as sess:
       step = self.snapshot.restore(sess, saver)
+     
       info = utils.string.concat(
-          self.data.batchsize,
+          self.batchsize,
           [c1_path, p1_path, c2_path, p2_path, label, loss])
+      
       output = [info, feat_c1, feat_p2, label]
       fw = open(dstdir + '%s.txt' % step, 'wb')
+      
       with context.QueueContext(sess):
-        for i in range(int(self.data.total_num / self.data.batchsize)):
+        for i in range(self.epoch_iter):
           _info, _x, _y, _label = sess.run(output)
-          # utils.image.save_batchs(
-          #     image_list=[_cf, _c1, _p1, _p2],
-          #     batchsize=batchsize, dstdir=dstdir, step=step,
-          #     name_list=['_cf', '_c1', '_p1', '_p2'])
           self._write_feat_to_npy(i, _x, _y, _label)
           [fw.write(_line + b'\r\n') for _line in _info]
+      
       fw.close()
       return step
 
@@ -211,15 +209,15 @@ class KINVAE_BIDIRECT(context.Context):
     """ we need acquire threshold from validation first """
     with tf.Graph().as_default():
       self._enter_('val')
-      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
+      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val_2/')
       self._val_or_test(val_dir)
       self._exit_()
 
     with tf.Graph().as_default():
       self._enter_('test')
-      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
+      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test_2/')
       step = self._val_or_test(test_dir)
-      val_err, val_thed, test_err = Error().get_all_result(
+      val_err, val_thed, test_err = utils.similarity.get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, True)
       keys = ['val_error', 'thred', 'test_error']

@@ -6,7 +6,9 @@ from core.database.factory import loads
 from core.solver import updater
 from core.solver import variables
 from issue import context
+from core import utils
 from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
+import numpy as np
 
 
 class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
@@ -15,6 +17,9 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
 
   def __init__(self, config):
     KINVAE_BIDIRECT.__init__(self, config)
+    self.is_save_images = False
+    self.is_save_all_images = False
+    self.is_save_feats = False
 
   def train(self):
     # set phase
@@ -107,3 +112,73 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
       # running
       while not sess.should_stop():
         sess.run(train_op)
+
+  def _val_or_test(self, dstdir):
+    """ COMMON FOR TRAIN AND VAL """
+    # considering output train image
+    data, info, path = loads(self.config)
+    c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
+    c1_path, p1_path, c2_path, p2_path = tf.unstack(path, axis=1)
+    label, cond = tf.unstack(info, axis=1)
+
+    # encode image to a vector
+    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
+    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
+
+    with tf.variable_scope('net1'):
+      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+      c1_z = self._generator(c1_z, cond)
+      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+
+    # parent to children
+    with tf.variable_scope('net2'):
+      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+      p2_z = self._generator(p2_z, cond)
+      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
+
+    R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
+
+    utils.filesystem.mkdir(dstdir + '/c1/')
+    utils.filesystem.mkdir(dstdir + '/p2/')
+    saver = tf.train.Saver()
+    c1_zs, p2_zs = 0, 0
+
+    with tf.Session() as sess:
+      step = self.snapshot.restore(sess, saver)
+      
+      info = utils.string.concat(
+          self.data.batchsize,
+          [c1_path, p1_path, c2_path, p2_path, label, loss])
+      
+      output = [c1_fake, p2_fake, c1_path, p2_path,
+                c1_real, c2_real, p1_real, p2_real,
+                info, feat_c1, feat_p2, label]
+      
+      fw = open(dstdir + '%s.txt' % step, 'wb')
+      with context.QueueContext(sess):
+        for i in range(self.epoch_iter):
+          _c1, _p2, _c1p, _p2p, _c1r, _c2r, _p1r, _p2r, _info, _x, _y, _label = sess.run(
+              output)
+          self._write_feat_to_npy(i, _x, _y, _label)
+          [fw.write(_line + b'\r\n') for _line in _info]
+
+          if self.is_save_all_images:
+            utils.image.saveall(dstdir + '/c1/', _c1, _c1p)
+            utils.image.saveall(dstdir + '/p2/', _p2, _p2p)
+
+          if self.is_save_all_images:
+            utils.image.save_batchs(
+                image_list=[_c1, _p2, _c1r, _c2r, _p1r, _p2r],
+                batchsize=self.data.batchsize, dstdir=dstdir, step=step,
+                name_list=['_c1', '_p2', '_c1r', '_c2r', '_p1r', '_p2r'])
+          
+          if self.is_save_feats:
+            c1_zs = _x if type(c1_zs) == int else np.row_stack((c1_zs, _x))
+            p2_zs = _y if type(p2_zs) == int else np.row_stack((p2_zs, _y))
+
+      fw.close()
+      if self.is_save_feats:
+        np.save(dstdir + '/' + step + '_c1.npy', c1_zs)
+        np.save(dstdir + '/' + step + '_p2.npy', p2_zs)
+
+      return step

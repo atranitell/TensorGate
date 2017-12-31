@@ -11,8 +11,6 @@ from core.loss import cosine
 from core import utils
 from core.utils.logger import logger
 from issue import context
-
-from config.datasets.kinface.kinface_utils import Error
 import numpy as np
 
 
@@ -202,7 +200,7 @@ class LFW(context.Context):
       self._enter_('test')
       test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
       step = self._val_or_test(test_dir)
-      val_err, val_thed, test_err = Error().get_all_result(
+      val_err, val_thed, test_err = utils.similarity.get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, True)
       keys = ['val_error', 'thred', 'test_error']
