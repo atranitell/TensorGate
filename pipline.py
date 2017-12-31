@@ -1,18 +1,43 @@
-"""
+""" a pipline for processing task
 """
 import os
 import argparse
+import json
 
-tasklist = {
-    '1': ['kinvae1.pair', 'kinvae1.pair2', 'kinvae1.pair3', 'kinvae1.pair4', 'kinvae1.pair5'],
-    '2': ['kinvae2.pair', 'kinvae2.pair2', 'kinvae2.pair3', 'kinvae2.pair4', 'kinvae2.pair5']
-}
+
+def run(filepath, gpu):
+  """ data format should be like this:
+  [ { "task": "kinface.vae",
+      "extra": {
+        "name": "kinface2.vae",
+        "target": "kinvae.encoder",
+        "train": {"entry_path": "train_1.txt"},
+        "test": {"entry_path": "test_1.txt"},
+        "val": {"entry_path": "train_1.txt"}}},
+    { "task": "kinface.vae",
+      "extra": {
+        "name": "kinface2.vae",
+        "target": "kinvae.encoder",
+        "train": {"entry_path": "train_2.txt"},
+        "test": {"entry_path": "test_2.txt"},
+        "val": {"entry_path": "train_2.txt"}}}]
+  """
+  with open(filepath) as fp:
+    content = json.load(fp)
+
+  random_file = '_df8192jkfjsDF.json'
+  for item in content:
+    with open(random_file, 'w') as fw:
+      json.dump(item['extra'], fw)
+    cmd = 'python gate.py %s -name=%s -extra=%s' % (
+        gpu, item['task'], random_file)
+    os.system(cmd)
+    os.remove(random_file)
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('-name', type=str, dest='name')
+  parser.add_argument('-file', type=str, dest='file')
   parser.add_argument('-gpu', type=str, dest='gpu')
   args, _ = parser.parse_known_args()
-
-  for name in tasklist[args.name]:
-    os.system('python gate.py %s -name=%s' % (args.gpu, name))
+  run(args.file, args.gpu)
