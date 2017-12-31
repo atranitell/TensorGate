@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-""" Public base for CNN task
+""" Public base for All task
     updated: 2017/11/24
 """
 import time
-import tensorflow as tf
+import shutil
 import numpy as np
-
+import tensorflow as tf
+from datetime import datetime
 from core.utils.logger import logger
 from core.solver.snapshot import Snapshot
 from core.solver.summary import Summary
 from core.solver import variables
 from core.utils.string import print_members
+from core.utils import filesystem
+from tools import checkpoint
+
+OUTPUTS = filesystem.mkdir('../_outputs/')
 
 
 class Context():
@@ -19,11 +24,25 @@ class Context():
 
   def __init__(self, config):
     self.config = config
-    self.phase = config.phase
-    self.data = config.data
-    self.summary = Summary(config)
-    self.snapshot = Snapshot(config)
+    self._initialize()
+    #-- inner variables --#
+    self.phase = None
+    self.data = None
+    self.summary = Summary(self.config)
+    self.snapshot = Snapshot(self.config)
     print_members(self.config)
+
+  def _initialize(self):
+    pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
+    # 1. setting output dir
+    if self.config.output_dir is None:
+      self.config.output_dir = filesystem.mkdir(
+          OUTPUTS + self.config.name + '.' + self.config.target + '.' + pid)
+
+    # 2. setting logger location
+    logger.init(self.config.name + '.' + pid, self.config.output_dir)
+    logger.info('Initilized logger successful.')
+    logger.info('Current model in %s' % self.config.output_dir)
 
   def _enter_(self, phase):
     self.prephase = self.phase
@@ -32,6 +51,8 @@ class Context():
     self.data = self.config.data
 
   def _exit_(self):
+    if self.prephase is None:
+      return
     self.phase = self.prephase
     self.config.set_phase(self.phase)
     self.data = self.config.data
@@ -39,6 +60,26 @@ class Context():
   @property
   def is_train(self):
     return True if self.phase == 'train' else False
+
+  @property
+  def batchsize(self):
+    return self.config.data.batchsize
+
+  @property
+  def epoch_iter(self):
+    return int(self.config.data.total_num / self.config.data.batchsize)
+
+  def pipline(self):
+    """ traverse all checkpoints """
+    ckpt_path = self.config.output_dir + '/checkpoint'
+    ckpt_path_bk = ckpt_path + '.bk'
+    shutil.copy(ckpt_path, ckpt_path_bk)
+    model_list = checkpoint.get_checkpoint_model_items(ckpt_path)
+    for item in model_list[1:]:
+      model_list[0] = item
+      checkpoint.write_checkpoint_model_items(ckpt_path, model_list)
+      self.test()
+    shutil.copy(ckpt_path_bk, ckpt_path)
 
 
 class Running_Hook(tf.train.SessionRunHook):
