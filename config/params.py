@@ -248,6 +248,10 @@ class Data():
     """Direct Set Image Attr"""
     self.configs = image_config_list
 
+  def set_numpy(self, numpy_config_list):
+    """Direct Set Numpy Attr"""
+    self.configs = numpy_config_list
+
   def add_image(self, image_config):
     """ add a data attribution to configs  """
     if self.configs == None:
@@ -303,3 +307,9 @@ class Numpy():
 
   def __init__(self, shape=None):
     self.shape = shape
+
+
+class Phase():
+
+  def __init__(self, name):
+    self.name = name

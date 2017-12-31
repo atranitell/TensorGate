@@ -3,25 +3,19 @@
     Author: Kai JIN
     Updated: 2017-11-23
 """
-from config.datasets.mnist import mnist
-from config.datasets.mnist import mnist_gan
-from config.datasets.mnist import mnist_regression
-from config.datasets.kinface import kinvae_pair
-from config.datasets.kinface import kinface_npy
-from config.datasets.kinface import kinface
-from config.datasets.trafficflow import trafficflow
-from config.datasets.lfw import lfw
+from config.dataset import mnist
+from config.dataset import kinface
+from config.dataset import lfw
+from config.dataset import trafficflow
 
 config_map = {
-    'mnist': mnist.mnist,
-    'mnist.gan': mnist_gan.mnist_gan,
-    'mnist.regression': mnist_regression.mnist_regression,
-    'kinvae1.pair': kinvae_pair.kinvae1_pair,
-    'kinvae2.pair': kinvae_pair.kinvae2_pair,
-    'kinface.npy': kinface_npy.kinface_npy,
-    'lfw': lfw.lfw,
-    'trafficflow': trafficflow.trafficflow,
-    'kinface': kinface.Kinface
+    'mnist': mnist.MNIST,
+    'mnist.gan': mnist.MNISTGAN,
+    'mnist.regression': mnist.MNISTRegression,
+    'kinface.vae': kinface.KinfaceVAE,
+    'kinface.npy': kinface.KinfaceNPY,
+    'lfw': lfw.LFW,
+    'trafficflow': trafficflow.TrafficFlow
 }
 
 
