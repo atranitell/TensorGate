@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-""" updated: 2017/11/22
+""" Conditional GAN
+    updated: 2017/11/22
 """
 import tensorflow as tf
 from core.database.factory import loads
@@ -11,10 +12,11 @@ from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 import numpy as np
 
 
-class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
-  """ 1E - 2G - 2D
-    C -> G(C) <---> P
-    P -> G(P) <---> C
+class KINVAE_BIDIRECT11(KINVAE_BIDIRECT):
+  """ 1E - 1G
+      no cosine loss
+      no discrimintor error
+      CCPP
   """
 
   def __init__(self, config):
@@ -37,53 +39,31 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
 
     # children to parent
-    with tf.variable_scope('net1'):
-      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-      c1_z = self._generator(c1_z, cond)
-      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+    c1_z = self._generator(c1_z, cond)
+    c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
 
     # parent to children
-    with tf.variable_scope('net2'):
-      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
-      p2_z = self._generator(p2_z, cond)
-      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
-
-    # discriminator
-    with tf.variable_scope('net1'):
-      D_c1_fake = self._discriminator(c1_fake, cond)
-      D_p1_real = self._discriminator(p1_real, cond, reuse=True)
-
-    with tf.variable_scope('net2'):
-      D_p2_fake = self._discriminator(p2_fake, cond)
-      D_c2_real = self._discriminator(c2_real, cond, reuse=True)
-
-    # loss for encoder
-    R_loss, _ = self._loss_metric(feat_c1, feat_p2, label)
+    p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+    p2_z = self._generator(p2_z, cond, True)
+    p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
 
     # loss for genertor
-    E1_loss = self._loss_vae(p1_real, c1_fake, c1_mu, c1_sigma)
-    E2_loss = self._loss_vae(c2_real, p2_fake, p2_mu, p2_sigma)
+    E1_loss = self._loss_vae(c1_real, c1_fake, c1_mu, c1_sigma)
+    E2_loss = self._loss_vae(p2_real, p2_fake, p2_mu, p2_sigma)
     E_loss = E1_loss + E2_loss
 
-    # loss for discriminator
-    D1_loss, G1_loss = self._loss_gan(D_c1_fake, D_p1_real)
-    D2_loss, G2_loss = self._loss_gan(D_p2_fake, D_c2_real)
-    D_loss = D1_loss + D2_loss
-    G_loss = G1_loss + G2_loss
-
-    loss = E_loss + D_loss + G_loss + R_loss
+    loss = E_loss
 
     # # allocate two optimizer
     global_step = tf.train.create_global_step()
 
     var_e = variables.select_vars('encoder')
     var_g = variables.select_vars('generator')
-    var_d = variables.select_vars('discriminator')
 
     op1 = updater.default(self.config, loss, global_step, var_e, 0)
     op2 = updater.default(self.config, loss, None, var_g, 1)
-    op3 = updater.default(self.config, loss, None, var_d, 0)
-    train_op = tf.group(op1, op2, op3)
+    train_op = tf.group(op1, op2)
 
     # update at the same time
     saver = tf.train.Saver(var_list=variables.all())
@@ -94,8 +74,8 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     self.add_hook(context.Running_Hook(
         config=self.config.log,
         step=global_step,
-        keys=['E', 'D', 'G', 'R'],
-        values=[E_loss, D_loss, G_loss, R_loss],
+        keys=['E'],
+        values=[E_loss],
         func_test=self.test,
         func_val=None))
 
@@ -116,16 +96,13 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
     p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
 
-    with tf.variable_scope('net1'):
-      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-      c1_z = self._generator(c1_z, cond)
-      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+    c1_z = self._generator(c1_z, cond)
+    c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
 
-    # parent to children
-    with tf.variable_scope('net2'):
-      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
-      p2_z = self._generator(p2_z, cond)
-      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
+    p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+    p2_z = self._generator(p2_z, cond, True)
+    p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
 
     R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
 

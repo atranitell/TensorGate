@@ -37,25 +37,17 @@ class KINVAE_ENCODER(KINVAE_BIDIRECT):
     saver = tf.train.Saver(var_list=variables.all())
 
     # hooks
-    snapshot_hook = self.snapshot.init()
-    summary_hook = self.summary.init()
-    running_hook = context.Running_Hook(
+    self.add_hook(self.snapshot.init())
+    self.add_hook(self.summary.init())
+    self.add_hook(context.Running_Hook(
         config=self.config.log,
         step=global_step,
         keys=['R'],
         values=[loss],
         func_test=self.test,
-        func_val=None)
+        func_val=None))
 
-    # monitor session
-    with tf.train.MonitoredTrainingSession(
-            hooks=[running_hook, snapshot_hook, summary_hook],
-            save_checkpoint_secs=None,
-            save_summaries_steps=None) as sess:
-
-      # restore model
+    with context.DefaultSession(self.hooks) as sess:
       self.snapshot.restore(sess, saver)
-
-      # running
       while not sess.should_stop():
         sess.run(train_op)

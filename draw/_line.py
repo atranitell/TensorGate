@@ -39,11 +39,22 @@ def draw_basic_line_chart(config):
     # smooth curve
     if dt['smooth'] > 1:
       res[dt['key']] = utils.smooth(res[dt['key']], dt['smooth'])
-    plt.plot(res['iter'], res[dt['key']],
-             label=fill('legend', None, dt), alpha=0.8)
+
+    # draw plot
+    style = fill('style', '-', dt)
+    label = fill('legend', None, dt)
+    color = fill('color', None, dt)
+    alpha = fill('alpha', 0.8, dt)
+
+    plt.plot(res['iter'], res[dt['key']], style,
+             color=color, label=label, alpha=alpha)
+             
     # save data
     if 'save_data' in dt:
-      utils.write_to_text(res, ['iter', dt['key']], dt['save'])
+      _max_v, _max_i = find_max_value(res[dt['key']], res['iter'])
+      print('file:%s, iter:%d, max:%f' % (dt['path'], _max_i, _max_v))
+      save_path = dt['path'].split('.log')[0] + '_sum.txt'
+      utils.write_to_text(res, ['iter', dt['key']], save_path)
 
   # step2: config figure
   plt.grid()
@@ -69,3 +80,13 @@ def draw_basic_line_chart(config):
   # plt show
   plt.show()
 
+
+def find_max_value(entries, steps, min_iter=0):
+  max_entry = 0
+  max_iter = 0
+  for entry in zip(steps, entries):
+    if entry[0] >= min_iter:
+      if max_entry < entry[1]:
+        max_entry = entry[1]
+        max_iter = entry[0]
+  return max_entry, max_iter

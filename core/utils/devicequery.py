@@ -5,6 +5,15 @@
 from tensorflow.python.client import device_lib as _device_lib
 
 
-def showing_avaliable_device():
-  for x in _device_lib.list_local_devices():
-    print(x)
+class DeviceQuery():
+  """ output the device info
+  """
+
+  def showing_avaliable_device(self):
+    """ showing the available device.
+    """
+    for x in _device_lib.list_local_devices():
+      print(x)
+
+
+deviceQuery = DeviceQuery()

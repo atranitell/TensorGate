@@ -7,14 +7,17 @@ from core.solver import updater
 from core.solver import variables
 from issue import context
 from core import utils
+from core.loss import cosine
 from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 import numpy as np
 
 
-class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
-  """ 1E - 2G - 2D
-    C -> G(C) <---> P
-    P -> G(P) <---> C
+class KINVAE_BIDIRECT7(KINVAE_BIDIRECT):
+  """ 1E - 1G - 1D
+    C1 -> G(C1) <---> P1
+    P2 -> G(P2) <---> C2
+    cosine-loss: P1-P2(-)
+    cosine-loss: C2-C1(-)
   """
 
   def __init__(self, config):
@@ -22,6 +25,13 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     self.is_save_all_images = False
     self.is_save_batch_images = True
     self.is_save_feats = True
+
+  def _loss_metric(self, img_x, img_y, label):
+    feat_x = tf.layers.flatten(img_x)
+    feat_y = tf.layers.flatten(img_y)
+    return cosine.get_loss(feat_x, feat_y, label,
+                           self.batchsize,
+                           is_training=self.is_train)
 
   def train(self):
     # set phase
@@ -37,28 +47,25 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
 
     # children to parent
-    with tf.variable_scope('net1'):
-      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-      c1_z = self._generator(c1_z, cond)
-      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+    c1_z = self._generator(c1_z, cond)
+    c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
 
     # parent to children
-    with tf.variable_scope('net2'):
-      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
-      p2_z = self._generator(p2_z, cond)
-      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
+    p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+    p2_z = self._generator(p2_z, cond, True)
+    p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
 
     # discriminator
-    with tf.variable_scope('net1'):
-      D_c1_fake = self._discriminator(c1_fake, cond)
-      D_p1_real = self._discriminator(p1_real, cond, reuse=True)
+    D_c1_fake = self._discriminator(c1_fake, cond)
+    D_p1_real = self._discriminator(p1_real, cond, reuse=True)
+    D_p2_fake = self._discriminator(p2_fake, cond, reuse=True)
+    D_c2_real = self._discriminator(c2_real, cond, reuse=True)
 
-    with tf.variable_scope('net2'):
-      D_p2_fake = self._discriminator(p2_fake, cond)
-      D_c2_real = self._discriminator(c2_real, cond, reuse=True)
-
-    # loss for encoder
-    R_loss, _ = self._loss_metric(feat_c1, feat_p2, label)
+    # loss for distance
+    R1_loss, _ = self._loss_metric(c1_fake, p2_real, label)
+    R2_loss, _ = self._loss_metric(p2_fake, c1_real, label)
+    R_loss = R1_loss + R2_loss
 
     # loss for genertor
     E1_loss = self._loss_vae(p1_real, c1_fake, c1_mu, c1_sigma)
@@ -116,16 +123,13 @@ class KINVAE_BIDIRECT2(KINVAE_BIDIRECT):
     c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
     p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
 
-    with tf.variable_scope('net1'):
-      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-      c1_z = self._generator(c1_z, cond)
-      c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+    c1_z = self._generator(c1_z, cond)
+    c1_fake = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
 
-    # parent to children
-    with tf.variable_scope('net2'):
-      p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
-      p2_z = self._generator(p2_z, cond)
-      p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
+    p2_z = p2_mu + p2_sigma * tf.random_normal(tf.shape(p2_mu))
+    p2_z = self._generator(p2_z, cond, True)
+    p2_fake = tf.clip_by_value(p2_z, 1e-8, 1 - 1e-8)
 
     R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
 

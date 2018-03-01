@@ -10,7 +10,7 @@ from core.utils.logger import logger
 def configure_optimizer(config, learning_rate):
   """Configures the optimizer used for training.
   Args:
-    config: config['train']['optimizer']
+    config: config.train.optimizer
     learning_rate: A scalar or `Tensor` learning rate.
   Returns:
     An instance of an optimizer.
@@ -58,6 +58,19 @@ def configure_optimizer(config, learning_rate):
         decay=config.decay,
         momentum=config.momentum,
         epsilon=config.epsilon)
+
+  elif config.name == 'proximal':
+    optimizer = tf.train.ProximalGradientDescentOptimizer(
+        learning_rate,
+        l1_regularization_strength=config.l1_regularization_strength,
+        l2_regularization_strength=config.l2_regularization_strength)
+
+  elif config.name == 'proximal_adagrad':
+    optimizer = tf.train.ProximalAdagradOptimizer(
+        learning_rate,
+        initial_accumulator_value=config.initial_accumulator_value,
+        l1_regularization_strength=config.l1_regularization_strength,
+        l2_regularization_strength=config.l2_regularization_strength)
 
   elif config.name == 'sgd':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)

@@ -236,7 +236,7 @@ class Data():
     self.configs = None
 
   def set_entry_attr(self, entry_dtype=None,
-                    entry_check=None):
+                     entry_check=None):
     """ 
       entry_dtype: a tuple showing the item type
       entry_check: a tuple describes a file path
@@ -248,10 +248,6 @@ class Data():
     """Direct Set Image Attr"""
     self.configs = image_config_list
 
-  def set_numpy(self, numpy_config_list):
-    """Direct Set Numpy Attr"""
-    self.configs = numpy_config_list
-
   def add_image(self, image_config):
     """ add a data attribution to configs  """
     if self.configs == None:
@@ -259,11 +255,25 @@ class Data():
     if type(image_config) is type(Image()):
       self.configs.append(image_config)
 
+  def set_numpy(self, numpy_config_list):
+    """Direct Set Numpy Attr"""
+    self.configs = numpy_config_list
+
   def add_numpy(self, numpy_config):
     if self.configs == None:
       self.configs = []
     if type(numpy_config) is type(Numpy()):
       self.configs.append(numpy_config)
+
+  def set_audio(self, audio_config_list):
+    """Direct Set Audio Attr"""
+    self.configs = audio_config_list
+
+  def add_audio(self, audio_config):
+    if self.configs == None:
+      self.configs = []
+    if type(audio_config) is type(Audio()):
+      self.configs.append(audio_config)
 
   def set_label(self,
                 num_classes=None,
@@ -313,3 +323,9 @@ class Phase():
 
   def __init__(self, name):
     self.name = name
+
+
+class Audio():
+
+  def __init__(self):
+    pass

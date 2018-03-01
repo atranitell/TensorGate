@@ -1,0 +1,31 @@
+""" Global Environments
+"""
+from core.utils.filesystem import filesystem
+
+
+class Env():
+
+  def __init__(self):
+    # setting output file
+    self._OUTPUT = filesystem.mkdir('../_outputs')
+    self._DATASET = '../_datasets'
+
+    # logger config
+    self._LOG_DATE = True
+    self._LOG_SYS = False
+    self._LOG_TRAIN = True
+    self._LOG_TEST = True
+    self._LOG_VAL = True
+    self._LOG_NET = True
+    self._LOG_WARN = True
+    self._LOG_INFO = True
+    self._LOG_ERR = True
+
+    # compile config - processing *.py files
+    self._COMPILE_DIR_BIN = '../_bin'  # output dir of binary file
+    self._COMPILE_DIR_SRC = '../_src'  # output dir of code source
+    self._COMPILE_EXCLUDE_ROOT = ['_', '.git', '.vscode']  # skip folders
+    self._COMPILE_EXCLUDE_FILE = ['compile.py']  # skip files
+
+
+env = Env()

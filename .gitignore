@@ -95,3 +95,6 @@ ENV/
 # for mac
 .DS_Store
 .vscode
+
+# for projects
+_data

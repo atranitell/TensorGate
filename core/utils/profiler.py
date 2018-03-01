@@ -3,7 +3,6 @@
     Author: Kai JIN
     Update: 17/11/22
 """
-
 import sys
 import tensorflow as tf
 from tensorflow import profiler
@@ -21,7 +20,7 @@ class Profiler():
 
   @staticmethod
   def parameters():
-    """
+    """ parameters
     """
     param_stats = profiler.profile(
         graph=tf.get_default_graph(),
@@ -31,7 +30,7 @@ class Profiler():
 
   @staticmethod
   def flops():
-    """
+    """ flops
     """
     param_stats = tf.profiler.profile(
         graph=tf.get_default_graph(),
@@ -41,7 +40,7 @@ class Profiler():
 
   @staticmethod
   def time_memory(path, sess, train_op):
-    """
+    """ time_memory
     """
     builder = tf.profiler.ProfileOptionBuilder
     opts = builder(builder.time_and_memory()).order_by('micros').build()

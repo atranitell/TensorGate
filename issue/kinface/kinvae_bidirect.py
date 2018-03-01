@@ -116,10 +116,7 @@ class KINVAE_BIDIRECT(context.Context):
     D_c2_real = self._discriminator(c2_real, cond, reuse=True)
 
     # loss for encoder
-    R1_loss, _ = self._loss_metric(feat_c1, feat_p2, label)
-    R2_loss, _ = self._loss_metric(D_c2_real, D_p1_real, label)
-    R3_loss, _ = self._loss_metric(D_c1_fake, D_p2_fake, label)
-    R_loss = R1_loss + R2_loss + R3_loss
+    R_loss, _ = self._loss_metric(feat_c1, feat_p2, label)
 
     # loss for genertor
     E1_loss = self._loss_vae(p1_real, c1_fake, c1_mu, c1_sigma)
@@ -150,26 +147,18 @@ class KINVAE_BIDIRECT(context.Context):
     saver = tf.train.Saver(var_list=variables.all())
 
     # hooks
-    snapshot_hook = self.snapshot.init()
-    summary_hook = self.summary.init()
-    running_hook = context.Running_Hook(
+    self.add_hook(self.snapshot.init())
+    self.add_hook(self.summary.init())
+    self.add_hook(context.Running_Hook(
         config=self.config.log,
         step=global_step,
         keys=['E', 'D', 'G', 'R'],
         values=[E_loss, D_loss, G_loss, R_loss],
         func_test=self.test,
-        func_val=None)
+        func_val=None))
 
-    # monitor session
-    with tf.train.MonitoredTrainingSession(
-            hooks=[running_hook, snapshot_hook, summary_hook],
-            save_checkpoint_secs=None,
-            save_summaries_steps=None) as sess:
-
-      # restore model
+    with context.DefaultSession(self.hooks) as sess:
       self.snapshot.restore(sess, saver)
-
-      # running
       while not sess.should_stop():
         sess.run(train_op)
 
@@ -186,40 +175,47 @@ class KINVAE_BIDIRECT(context.Context):
     R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
 
     saver = tf.train.Saver()
-    with tf.Session() as sess:
+    c1_zs, p2_zs = 0, 0
+
+    with context.DefaultSession() as sess:
       step = self.snapshot.restore(sess, saver)
-     
+
       info = utils.string.concat(
           self.batchsize,
           [c1_path, p1_path, c2_path, p2_path, label, loss])
-      
+
       output = [info, feat_c1, feat_p2, label]
       fw = open(dstdir + '%s.txt' % step, 'wb')
-      
+
       with context.QueueContext(sess):
         for i in range(self.epoch_iter):
           _info, _x, _y, _label = sess.run(output)
           self._write_feat_to_npy(i, _x, _y, _label)
           [fw.write(_line + b'\r\n') for _line in _info]
-      
+          c1_zs = _x if type(c1_zs) == int else np.row_stack((c1_zs, _x))
+          p2_zs = _y if type(p2_zs) == int else np.row_stack((p2_zs, _y))
+
       fw.close()
+      np.save(dstdir + '/' + step + '_c1.npy', c1_zs)
+      np.save(dstdir + '/' + step + '_p2.npy', p2_zs)
+
       return step
 
   def test(self):
     """ we need acquire threshold from validation first """
     with tf.Graph().as_default():
       self._enter_('val')
-      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val_2/')
+      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
       self._val_or_test(val_dir)
       self._exit_()
 
     with tf.Graph().as_default():
       self._enter_('test')
-      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test_2/')
+      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
       step = self._val_or_test(test_dir)
       val_err, val_thed, test_err = utils.similarity.get_all_result(
           self.val_x, self.val_y, self.val_l,
-          self.test_x, self.test_y, self.test_l, True)
+          self.test_x, self.test_y, self.test_l, False)
       keys = ['val_error', 'thred', 'test_error']
       vals = [val_err, val_thed, test_err]
       logger.test(logger.iters(int(step) - 1, keys, vals))

@@ -12,7 +12,7 @@ class LFW(base.DatasetBase):
     base.DatasetBase.__init__(self, extra)
 
     self.name = 'lfw'
-    self.target = 'kinvae.bidirect2'
+    self.target = 'lfw.vae'
     self.data_dir = '../_datasets/lfw'
     self.task = 'train'
     self.output_dir = None

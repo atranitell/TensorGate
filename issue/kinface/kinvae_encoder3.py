@@ -2,6 +2,7 @@
 """ updated: 2017/11/22
 """
 import tensorflow as tf
+from tensorflow.contrib import layers
 from core.database.factory import loads
 from core.solver import updater
 from core.solver import variables
@@ -9,18 +10,26 @@ from issue import context
 from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 
 
-class KINVAE_ENCODER2(KINVAE_BIDIRECT):
-  """ """
+class KINVAE_ENCODER3(KINVAE_BIDIRECT):
+  """
+  1CNN + FC 
+  """
 
   def __init__(self, config):
     KINVAE_BIDIRECT.__init__(self, config)
 
+  def fc(self, x):
+    return layers.fully_connected(
+        x, 512,
+        activation_fn=None,
+        weights_initializer=tf.truncated_normal_initializer(stddev=0.01))
+
   def _network(self, c1_real, p2_real):
-    with tf.variable_scope('net1'):
-      c1_mu, c1_sigma, c1_feat = self._encoder(c1_real)
-    with tf.variable_scope('net2'):
-      p2_mu, p2_sigma, p2_feat = self._encoder(p2_real)
-    return c1_feat, p2_feat
+    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
+    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
+    feat_c1 = self.fc(feat_c1)
+    feat_p2 = self.fc(feat_p2)
+    return feat_c1, feat_p2
 
   def train(self):
     """ """

@@ -6,12 +6,7 @@
 import os
 import shutil
 import py_compile
-
-DIR_BIN = '../_bin'
-DIR_SRC = '../_src'
-
-EXCLUDE_ROOT = ['_', '.git', '.vscode']
-EXCLUDE_FILE = ['compile.py']
+from core.env import env
 
 
 def is_include(root, exclude):
@@ -31,8 +26,8 @@ def mkdir(path):
 def process(root, fname):
   """ compile and move """
   path = os.path.join(root, fname)
-  dst_bin = path.replace('./', DIR_BIN + '/') + 'c'
-  dst_src = path.replace('./', DIR_SRC + '/')
+  dst_bin = path.replace('./', env._COMPILE_DIR_BIN + '/') + 'c'
+  dst_src = path.replace('./', env._COMPILE_DIR_SRC + '/')
   if not os.path.exists(os.path.dirname(dst_src)):
     os.makedirs(os.path.dirname(dst_src))
   shutil.copy(path, dst_src)
@@ -41,15 +36,15 @@ def process(root, fname):
 
 def traverse():
   """ traverse tree """
-  mkdir(DIR_BIN)
-  mkdir(DIR_SRC)
+  mkdir(env._COMPILE_DIR_BIN)
+  mkdir(env._COMPILE_DIR_SRC)
   for paths in os.walk('./'):
     root = paths[0]
-    if is_include(root, EXCLUDE_ROOT):
+    if is_include(root, env._COMPILE_EXCLUDE_ROOT):
       continue
     print(root)
     for fname in paths[2]:
-      if is_include(fname, EXCLUDE_FILE):
+      if is_include(fname, env._COMPILE_EXCLUDE_FILE):
         continue
       if os.path.splitext(fname)[1] == '.py':
         process(root, fname)

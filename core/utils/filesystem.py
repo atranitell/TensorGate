@@ -6,14 +6,20 @@ import shutil
 from datetime import datetime
 
 
-def mkdir(path, raise_path_exits=False):
+class Filesystem():
+  """ filesystem related operation
   """
-  Return: path if mkdir or path has existed
-  """
-  if not os.path.exists(path):
-    os.mkdir(path)
-  else:
-    if raise_path_exits:
-      raise ValueError('Path %s has existed.' % path)
-  return path
 
+  def mkdir(self, path, raise_path_exits=False):
+    """
+    Return: path if mkdir or path has existed
+    """
+    if not os.path.exists(path):
+      os.mkdir(path)
+    else:
+      if raise_path_exits:
+        raise ValueError('Path %s has existed.' % path)
+    return path
+
+
+filesystem = Filesystem()

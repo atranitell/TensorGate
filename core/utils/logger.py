@@ -4,25 +4,28 @@
 import os
 import logging
 from datetime import datetime
+from core.env import env
 
 
 class Logger():
+  """ logger helper
+  """
 
   def __init__(self):
     self.logger = logging.getLogger('TensorGate')
     self.logger.setLevel(logging.DEBUG)
-    self._DATE = True
-    self._SYS = False
-    self._TRAIN = True
-    self._TEST = True
-    self._VAL = True
-    self._NET = True
-    self._WARN = True
-    self._INFO = True
-    self._ERR = True
+    self._DATE = env._LOG_DATE
+    self._SYS = env._LOG_SYS
+    self._TRAIN = env._LOG_TRAIN
+    self._TEST = env._LOG_TEST
+    self._VAL = env._LOG_VAL
+    self._NET = env._LOG_NET
+    self._WARN = env._LOG_WARN
+    self._INFO = env._LOG_INFO
+    self._ERR = env._LOG_ERR
 
   def init(self, name, output_dir):
-    """
+    """ initilize the logger
     """
     logger_path = os.path.join(output_dir, name + '.log')
     self.set_filestream(logger_path)
