@@ -2,14 +2,14 @@
 """ Author: Kai JIN
     Updated: 2018-02-05
 """
-from config import params
-from config import base
+from core.data import database
+from core.data import data_params as params
 
 
-class AVEC2014_AUDIO(base.DatasetBase):
+class AVEC2014_AUDIO(database.DatasetBase):
 
   def __init__(self, extra):
-    base.DatasetBase.__init__(self, extra)
+    database.DatasetBase.__init__(self, extra)
     r = self._read_config_file
 
     """ base """

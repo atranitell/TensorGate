@@ -17,7 +17,6 @@ def configure_optimizer(config, learning_rate):
   Raises:
     ValueError: if opt.optimizer is not recognized.
   """
-
   logger.info('Routine will use %s optimizer.' % config.name)
 
   if config.name == 'adadelta':

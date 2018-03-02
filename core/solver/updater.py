@@ -7,6 +7,7 @@ import tensorflow as tf
 from core.utils.logger import logger
 from core.solver.optimizer import configure_optimizer
 from core.solver.learning_rate import configure_lr
+from core.env import env
 
 
 def default(config, loss, global_step, var_list=None, index=0):
@@ -22,14 +23,12 @@ def default(config, loss, global_step, var_list=None, index=0):
   index: a flag to pinpoint setting. For single updater, the value is 0.
   """
   # default to train all variables in the network.
-  if var_list == None:
+  if var_list is None:
     var_list = tf.trainable_variables()
 
   # configure learning rate
   lr = configure_lr(config.lr[index],
-                    tf.train.get_global_step(),
-                    config.data.batchsize,
-                    config.data.total_num)
+                    tf.train.get_global_step())
   tf.summary.scalar('train/lr', lr)
 
   # configure optimizer
@@ -45,13 +44,21 @@ def default(config, loss, global_step, var_list=None, index=0):
   train_op = grad_op
 
   # add
-  add_grad_to_summary(grads, True, True)
-  add_weight_to_summary(True, True)
+  add_grad_to_summary(grads, env._SUMMARY_GRAD_STAT, env._SUMMARY_GRAD_HIST)
+  add_weight_to_summary(env._SUMMARY_WEIGHT_STAT, env._SUMMARY_WEIGHT_HIST)
+
+  # info
+  logger.sys('Updater has been initialized.')
 
   return train_op
 
 
 def add_grad_to_summary(grads, grad_summary=True, grad_hist=False):
+  """ save grad info
+  """
+  if grad_summary is False and grad_hist is False:
+    logger.sys('GRAD has not been recorded.')
+    return
   with tf.name_scope('grads'):
     for grad, var in grads:
       prefix = var.op.name
@@ -66,6 +73,11 @@ def add_grad_to_summary(grads, grad_summary=True, grad_hist=False):
 
 
 def add_weight_to_summary(weight_summary=True, weight_hist=False):
+  """ save weight info
+  """
+  if weight_summary is False and weight_hist is False:
+    logger.sys('WEIGHT has not been recorded.')
+    return
   with tf.name_scope('weights'):
     for weight in tf.trainable_variables():
       prefix = weight.op.name

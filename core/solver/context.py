@@ -7,15 +7,17 @@ import shutil
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
+
 from core.utils.logger import logger
 from core.solver.snapshot import Snapshot
 from core.solver.summary import Summary
-from core.solver import variables
-from core.utils.string import print_members
-from core.utils import filesystem
-from tools import checkpoint
 
-OUTPUTS = filesystem.mkdir('../_outputs/')
+from core.utils.string import string
+from core.utils.filesystem import filesystem
+from core.utils.checkpoint import checkpoint
+from core.utils.variables import variables
+
+from core.env import env
 
 
 class Context():
@@ -30,7 +32,7 @@ class Context():
     self.data = None
     self.summary = Summary(self.config)
     self.snapshot = Snapshot(self.config)
-    print_members(self.config)
+    string.print_members(self.config)
     #-- hooks --#
     self.hooks = []
 
@@ -39,7 +41,8 @@ class Context():
     # 1. setting output dir
     if self.config.output_dir is None:
       self.config.output_dir = filesystem.mkdir(
-          OUTPUTS + self.config.name + '.' + self.config.target + '.' + pid)
+          env._OUTPUT + self.config.name + '.' +
+          self.config.target + '.' + pid)
 
     # 2. setting logger location
     logger.init(self.config.name + '.' + pid, self.config.output_dir)

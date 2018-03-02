@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """ updated: 2017/11/22
 """
+import numpy as np
 import tensorflow as tf
-from tensorflow.contrib import layers
-from core.database.factory import loads
+from core.data.factory import loads
 from core.solver import updater
-from core.solver import variables
-from issue import context
+from core.solver import context
+from core.utils.variables import variables
+from core.utils.filesystem import filesystem
+from core.utils.string import string
+from core.utils.image import image
 from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 
 

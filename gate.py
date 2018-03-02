@@ -23,34 +23,26 @@ def run(name, extra):
   """Target"""
   # For CNN
   if config.target == 'cnn.classification':
-    from issue.cnn.classification import classification as App
+    from example.cnn.classification import classification as App
   elif config.target == 'cnn.regression':
-    from issue.cnn.regression import regression as App
-  elif config.target == 'cnn.pairwise':
-    from issue.cnn.pairwise import pairwise as App
+    from example.cnn.regression import regression as App
+  # For functions
+  elif config.target == 'extract_feature':
+    from example.extract_feature import EXTRACT_FEATURE as App
   # For GAN
   elif config.target == 'gan.dcgan':
-    from issue.gan.dcgan import DCGAN as App
+    from example.gan.dcgan import DCGAN as App
   elif config.target == 'gan.cgan':
-    from issue.gan.cgan import CGAN as App
+    from example.gan.cgan import CGAN as App
   elif config.target == 'gan.cwgan':
-    from issue.gan.cwgan import CWGAN as App
+    from example.gan.cwgan import CWGAN as App
   elif config.target == 'gan.acgan':
-    from issue.gan.acgan import ACGAN as App
-  # For VAE
-  elif config.target == 'vae.cvae':
-    from issue.vae.cvae import CVAE as App
-  elif config.target == 'vae.cvae.gan':
-    from issue.vae.cvae_gan import CVAE_GAN as App
+    from example.gan.acgan import ACGAN as App
+  # For ISSUE
   elif config.target.find('kinvae') == 0:
     from issue.kinface.kinface import select as App
-  # For ML
-  elif config.target == 'ml.active.sampler':
-    from issue.ml.active_sampler import active_sampler as App
-  elif config.target == 'ml.trafficflow':
-    from issue.ml.trafficflow import trafficflow as App
-  elif config.target == 'ml.extract_feature':
-    from issue.ml.extract_feature import EXTRACT_FEATURE as App
+  elif config.target == 'trafficflow':
+    from issue.trafficnet import trafficflow as App
   # Unkown
   else:
     raise ValueError('Unknown target [%s]' % config.target)

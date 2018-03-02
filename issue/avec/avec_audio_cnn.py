@@ -3,14 +3,15 @@
     updated: 2018/02/05
 """
 import tensorflow as tf
-from core.database.factory import loads
+from core.data.factory import loads
 from core.network.factory import network
 from core.loss import l2
 from core.solver import updater
-from core.solver import variables
-from core import utils
+from core.solver import context
 from core.utils.logger import logger
-from issue import context
+from core.utils.string import string
+from core.utils.variables import variables
+from core.utils.filesystem import filesystem
 
 
 class AVEC_AUDIO_CNN(context.Context):
@@ -71,37 +72,36 @@ class AVEC_AUDIO_CNN(context.Context):
     self._enter_('test')
 
     # create a folder to save
-    test_dir=utils.filesystem.mkdir(self.config.output_dir + '/test/')
+    test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
 
     # get data pipeline
-    data, label, path=loads(self.config)
+    data, label, path = loads(self.config)
     # total_num
-    total_num=self.data.total_num
-    batchsize=self.data.batchsize
+    total_num = self.data.total_num
+    batchsize = self.data.batchsize
 
     # get network
-    logit, net=self._net(data)
+    logit, net = self._net(data)
     # get loss
-    loss, mae, rmse=self._loss(logit, label)
+    loss, mae, rmse = self._loss(logit, label)
 
     # get saver
-    saver=tf.train.Saver()
+    saver = tf.train.Saver()
     with context.DefaultSession() as sess:
       # get latest checkpoint
-      global_step=self.snapshot.restore(sess, saver)
+      global_step = self.snapshot.restore(sess, saver)
 
       # output to file
-      info=utils.string.concat(
-          batchsize, [path, label, logit * self.data.range])
+      info = string.concat(batchsize, [path, label, logit * self.data.range])
       with open(test_dir + '%s.txt' % global_step, 'wb') as fw:
         with context.QueueContext(sess):
           # Initial some variables
-          num_iter=int(total_num / batchsize)
-          mean_loss, mean_mae, mean_rmse=0, 0, 0
+          num_iter = int(total_num / batchsize)
+          mean_loss, mean_mae, mean_rmse = 0, 0, 0
 
           for _ in range(num_iter):
             # running session to acuqire value
-            _loss, _mae, _rmse, _info=sess.run([loss, mae, rmse, info])
+            _loss, _mae, _rmse, _info = sess.run([loss, mae, rmse, info])
             mean_loss += _loss
             mean_mae += _mae
             mean_rmse += _rmse
@@ -109,13 +109,13 @@ class AVEC_AUDIO_CNN(context.Context):
             [fw.write(_line + b'\r\n') for _line in _info]
 
           # statistic
-          mean_loss=1.0 * mean_loss / num_iter
-          mean_mae=1.0 * mean_mae / num_iter
-          mean_rmse=1.0 * mean_rmse / num_iter
+          mean_loss = 1.0 * mean_loss / num_iter
+          mean_mae = 1.0 * mean_mae / num_iter
+          mean_rmse = 1.0 * mean_rmse / num_iter
 
       # display results on screen
-      keys=['total sample', 'num batch', 'loss', 'mae', 'rmse']
-      vals=[total_num, num_iter, mean_loss, mean_mae, mean_rmse]
+      keys = ['total sample', 'num batch', 'loss', 'mae', 'rmse']
+      vals = [total_num, num_iter, mean_loss, mean_mae, mean_rmse]
       logger.test(logger.iters(int(global_step), keys, vals))
 
       # write to summary

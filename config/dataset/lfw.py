@@ -2,14 +2,14 @@
 """ Author: Kai JIN
     Updated: 2017-11-23
 """
-from config import params
-from config import base
+from core.data import database
+from core.data import data_params as params
 
 
-class LFW(base.DatasetBase):
+class LFW(database.DatasetBase):
 
   def __init__(self, extra):
-    base.DatasetBase.__init__(self, extra)
+    database.DatasetBase.__init__(self, extra)
 
     self.name = 'lfw'
     self.target = 'lfw.vae'

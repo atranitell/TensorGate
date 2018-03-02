@@ -3,10 +3,10 @@
 """
 import tensorflow as tf
 from tensorflow.contrib import layers
-from core.database.factory import loads
+from core.data.factory import loads
 from core.solver import updater
-from core.solver import variables
-from issue import context
+from core.solver import context
+from core.utils.variables import variables
 from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 
 

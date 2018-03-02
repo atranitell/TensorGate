@@ -2,14 +2,16 @@
 """ Conditional GAN
     updated: 2017/11/22
 """
-import tensorflow as tf
-from core.database.factory import loads
-from core.solver import updater
-from core.solver import variables
-from issue import context
-from core import utils
-from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 import numpy as np
+import tensorflow as tf
+from core.data.factory import loads
+from core.solver import updater
+from core.solver import context
+from core.utils.variables import variables
+from core.utils.filesystem import filesystem
+from core.utils.string import string
+from core.utils.image import image
+from issue.kinface.kinvae_bidirect import KINVAE_BIDIRECT
 
 
 class KINVAE_BIDIRECT11(KINVAE_BIDIRECT):
@@ -111,10 +113,10 @@ class KINVAE_BIDIRECT11(KINVAE_BIDIRECT):
 
     with context.DefaultSession() as sess:
       step = self.snapshot.restore(sess, saver)
-      utils.filesystem.mkdir(dstdir + '/' + step + '_c1')
-      utils.filesystem.mkdir(dstdir + '/' + step + '_p2')
+      filesystem.mkdir(dstdir + '/' + step + '_c1')
+      filesystem.mkdir(dstdir + '/' + step + '_p2')
 
-      info = utils.string.concat(
+      info = string.concat(
           self.data.batchsize,
           [c1_path, p1_path, c2_path, p2_path, label, loss])
 
@@ -131,13 +133,13 @@ class KINVAE_BIDIRECT11(KINVAE_BIDIRECT):
           [fw.write(_line + b'\r\n') for _line in _info]
 
           if self.is_save_all_images:
-            utils.image.saveall(dstdir + '/' + step + '_c1', _c1, _c1p)
-            utils.image.saveall(dstdir + '/' + step + '_p2', _p2, _p2p)
+            image.save_multi(dstdir + '/' + step + '_c1', _c1, _c1p)
+            image.save_multi(dstdir + '/' + step + '_p2', _p2, _p2p)
 
           if self.is_save_batch_images:
-            utils.image.save_batchs(
-                image_list=[_c1, _p2, _c1r, _c2r, _p1r, _p2r],
-                batchsize=self.data.batchsize, dstdir=dstdir, step=step,
+            image.save_batchs_to_one(
+                imgs_list=[_c1, _p2, _c1r, _c2r, _p1r, _p2r],
+                batchsize=self.data.batchsize, dst=dstdir, step=step,
                 name_list=['_c1', '_p2', '_c1r', '_c2r', '_p1r', '_p2r'])
 
           if self.is_save_feats:

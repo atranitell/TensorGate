@@ -7,16 +7,18 @@
   it will need find a best margin in validation test.
   And then use margin to divide the test dataset.
 """
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 from tensorflow.contrib import layers
-from core.database.factory import loads
-from core import utils
+from core.data.factory import loads
 from core.loss import cosine
 from core.solver import updater
-from core.solver import variables
+from core.solver import context
+from core.utils import similarity
+from core.utils.variables import variables
+from core.utils.filesystem import filesystem
 from core.utils.logger import logger
-from issue import context
+from core.utils.string import string
 
 
 class KINVAE_FEATURE(context.Context):
@@ -112,7 +114,7 @@ class KINVAE_FEATURE(context.Context):
     x1, x2 = self._network(x1, x2)
     loss, loss_batch = cosine.get_loss(x1, x2, label, self.batchsize, False)
     # write records
-    info = utils.string.concat(
+    info = string.concat(
         self.batchsize, [path1, path1, path2, label, loss_batch])
 
     # setting session running info
@@ -133,16 +135,16 @@ class KINVAE_FEATURE(context.Context):
     """ """
     with tf.Graph().as_default():
       self._enter_('val')
-      dst_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
+      dst_dir = filesystem.mkdir(self.config.output_dir + '/val/')
       self._val_or_test(dst_dir)
       self._exit_()
 
     with tf.Graph().as_default():
       self._enter_('test')
-      dst_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
+      dst_dir = filesystem.mkdir(self.config.output_dir + '/test/')
       step = self._val_or_test(dst_dir)
 
-      val_err, val_thed, test_err = utils.similarity.get_all_result(
+      val_err, val_thed, test_err = similarity.get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, False)
 

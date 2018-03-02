@@ -2,14 +2,14 @@
 """ Author: Kai JIN
     Updated: 2017-11-23
 """
-from config import params
-from config import base
+from core.data import database
+from core.data import data_params as params
 
 
-class MNIST(base.DatasetBase):
+class MNIST(database.DatasetBase):
 
   def __init__(self, extra):
-    base.DatasetBase.__init__(self, extra)
+    database.DatasetBase.__init__(self, extra)
     r = self._read_config_file
 
     """ base """
@@ -78,7 +78,7 @@ class MNIST(base.DatasetBase):
 class MNISTRegression(MNIST):
 
   def __init__(self, extra):
-    mnist.__init__(self, extra)
+    MNIST.__init__(self, extra)
     self.target = 'cnn.regression'
 
   def set_data_attr(self, data):
@@ -97,13 +97,13 @@ class MNISTRegression(MNIST):
     return data
 
 
-class MNISTGAN(base.DatasetBase):
+class MNISTGAN(database.DatasetBase):
 
   def __init__(self, extra):
-    base.DatasetBase.__init__(self, extra)
+    database.DatasetBase.__init__(self, extra)
 
     self.name = 'mnist'
-    self.target = 'vae.cvae'
+    self.target = 'gan.acgan'
     self.data_dir = '../_datasets/mnist'
     self.task = 'train'
     self.output_dir = None

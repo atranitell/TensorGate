@@ -2,13 +2,11 @@
 """ updated: 2017/11/22
 """
 import tensorflow as tf
-from core.database.factory import loads
+from core.data.factory import loads
 from core.solver import updater
-from core.solver import variables
-from issue import context
-from core import utils
+from core.solver import context
+from core.utils.variables import variables
 from issue.kinface.kinvae_bidirect2 import KINVAE_BIDIRECT2
-import numpy as np
 
 
 class KINVAE_BIDIRECT4(KINVAE_BIDIRECT2):

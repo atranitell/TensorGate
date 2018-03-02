@@ -2,16 +2,18 @@
 """ Conditional GAN
     updated: 2017/11/22
 """
-import tensorflow as tf
-from core.database.factory import loads
-from core.network.vaes import kin_vae
-from core.solver import updater
-from core.solver import variables
-from core.loss import cosine
-from core import utils
-from core.utils.logger import logger
-from issue import context
 import numpy as np
+import tensorflow as tf
+from core.data.factory import loads
+from core.network.vae import kin_vae
+from core.loss import cosine
+from core.solver import updater
+from core.solver import context
+from core.utils import similarity
+from core.utils.variables import variables
+from core.utils.filesystem import filesystem
+from core.utils.string import string
+from core.utils.logger import logger
 
 
 class KINVAE_BIDIRECT(context.Context):
@@ -180,7 +182,7 @@ class KINVAE_BIDIRECT(context.Context):
     with context.DefaultSession() as sess:
       step = self.snapshot.restore(sess, saver)
 
-      info = utils.string.concat(
+      info = string.concat(
           self.batchsize,
           [c1_path, p1_path, c2_path, p2_path, label, loss])
 
@@ -205,15 +207,15 @@ class KINVAE_BIDIRECT(context.Context):
     """ we need acquire threshold from validation first """
     with tf.Graph().as_default():
       self._enter_('val')
-      val_dir = utils.filesystem.mkdir(self.config.output_dir + '/val/')
+      val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
       self._val_or_test(val_dir)
       self._exit_()
 
     with tf.Graph().as_default():
       self._enter_('test')
-      test_dir = utils.filesystem.mkdir(self.config.output_dir + '/test/')
+      test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
       step = self._val_or_test(test_dir)
-      val_err, val_thed, test_err = utils.similarity.get_all_result(
+      val_err, val_thed, test_err = similarity.get_all_result(
           self.val_x, self.val_y, self.val_l,
           self.test_x, self.test_y, self.test_l, False)
       keys = ['val_error', 'thred', 'test_error']
