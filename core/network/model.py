@@ -25,33 +25,24 @@ from core.network.custom import simplenet
 from core.network.custom import mlp
 from core.network.custom import audionet
 
+
 #------------------------------------------------------------
 # SLIM AREA : for tensorflow slim model
 #------------------------------------------------------------
 
 
-def CifarNet(X, config, is_train):
-  """ CifarNet """
-  argscope = cifarnet.cifarnet_arg_scope(
-      config.net.weight_decay)
-  net = cifarnet.cifarnet(
+def _cifarnet(X, config, is_train):
+  return cifarnet.cifarnet(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep)
-  return net, argscope
 
 
-def ResNet(X, config, is_train):
-  """ ResNet v1/v2 """
-  if 'v2' in config.net.name:
-    resnet_scope_fn = resnet_v2.resnet_arg_scope
-  else:
-    resnet_scope_fn = resnet_v1.resnet_arg_scope
-  argscope = resnet_scope_fn(
-      weight_decay=config.net.weight_decay,
-      batch_norm_decay=config.net.batch_norm_decay,
-      batch_norm_epsilon=config.net.batch_norm_epsilon,
-      batch_norm_scale=config.net.batch_norm_scale)
+def _cifarnet_scope(config):
+  return cifarnet.cifarnet_arg_scope(config.net.weight_decay)
+
+
+def _resnet(X, config, is_train):
   net_fn_map = {
       'resnet_v2_50': resnet_v2.resnet_v2_50,
       'resnet_v2_101': resnet_v2.resnet_v2_101,
@@ -68,22 +59,41 @@ def ResNet(X, config, is_train):
       global_pool=True,
       output_stride=None,
       spatial_squeeze=True)
-  return net, argscope
+  return net
 
 
-def AlexNet(X, config, is_train):
-  """ AlexNet """
-  argscope = alexnet.alexnet_v2_arg_scope(
-      config.net.weight_decay)
-  net = alexnet.alexnet_v2(
+def _resnet_scope(config):
+  if 'v2' in config.net.name:
+    resnet_scope_fn = resnet_v2.resnet_arg_scope
+  else:
+    resnet_scope_fn = resnet_v1.resnet_arg_scope
+  argscope = resnet_scope_fn(
+      weight_decay=config.net.weight_decay,
+      batch_norm_decay=config.net.batch_norm_decay,
+      batch_norm_epsilon=config.net.batch_norm_epsilon,
+      batch_norm_scale=config.net.batch_norm_scale)
+  return argscope
+
+
+def _alexnet(X, config, is_train):
+  return alexnet.alexnet_v2(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep)
-  return net, argscope
 
 
-def Inception_scope(config, argscope_fn):
-  return argscope_fn(
+def _alexnet_scope(config):
+  return alexnet.alexnet_v2_arg_scope(config.net.weight_decay)
+
+
+def _inception_scope(config):
+  arg_scope_fn = {
+      'inception_v1': inception.inception_v1_arg_scope,
+      'inception_v2': inception.inception_v2_arg_scope,
+      'inception_v3': inception.inception_v3_arg_scope,
+      'inception_v4': inception.inception_v4_arg_scope
+  }
+  return arg_scope_fn[config.net.name](
       weight_decay=config.net.weight_decay,
       use_batch_norm=config.net.use_batch_norm,
       batch_norm_decay=config.net.batch_norm_decay,
@@ -91,33 +101,17 @@ def Inception_scope(config, argscope_fn):
       activation_fn=config.net.activation_fn)
 
 
-def Inception_v1(X, config, is_train):
-  argscope = Inception_scope(config, inception.inception_v1_arg_scope)
-  net = inception.inception_v1(
+def _inception_v1(X, config, is_train):
+  return inception.inception_v1(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       spatial_squeeze=True,
       global_pool=False)
-  return net, argscope
 
 
-def Inception_v2(X, config, is_train):
-  argscope = Inception_scope(config, inception.inception_v2_arg_scope)
-  net = inception.inception_v2(
-      X, num_classes=config.data.num_classes,
-      is_training=is_train,
-      dropout_keep_prob=config.net.dropout_keep,
-      min_depth=16,
-      depth_multiplier=1.0,
-      spatial_squeeze=True,
-      global_pool=False)
-  return net, argscope
-
-
-def Inception_v3(X, config, is_train):
-  argscope = Inception_scope(config, inception.inception_v3_arg_scope)
-  net = inception.inception_v3(
+def _inception_v2(X, config, is_train):
+  return inception.inception_v2(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
@@ -125,36 +119,49 @@ def Inception_v3(X, config, is_train):
       depth_multiplier=1.0,
       spatial_squeeze=True,
       global_pool=False)
-  return net, argscope
 
 
-def Inception_v4(X, config, is_train):
-  argscope = Inception_scope(config, inception.inception_v4_arg_scope)
-  net = inception.inception_v4(
+def _inception_v3(X, config, is_train):
+  return inception.inception_v3(
+      X, num_classes=config.data.num_classes,
+      is_training=is_train,
+      dropout_keep_prob=config.net.dropout_keep,
+      min_depth=16,
+      depth_multiplier=1.0,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _inception_v4(X, config, is_train):
+  return inception.inception_v4(
       X, num_classes=config.data.num_classes + 1,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       create_aux_logits=True)
-  return net, argscope
 
 
-def Inception_Resnet_v2(X, config, is_train):
-  argscope = inception.inception_resnet_v2_arg_scope(
+def _inception_resnet_v2_scope(config):
+  return inception.inception_resnet_v2_arg_scope(
       weight_decay=config.net.weight_decay,
       batch_norm_decay=config.net.batch_norm_decay,
       batch_norm_epsilon=config.net.batch_norm_epsilon,
       activation_fn=config.net.activation_fn)
-  net = inception.inception_resnet_v2(
+
+
+def _inception_resnet_v2(X, config, is_train):
+  return inception.inception_resnet_v2(
       X, num_classes=config.data.num_classes + 1,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       create_aux_logits=True,
       activation_fn=config.net.activation_fn)
-  return net, argscope
 
 
-def VGG(X, config, is_train):
-  argscope = vgg.vgg_arg_scope(config.net.weight_decay)
+def _vgg_scope(config):
+  return vgg.vgg_arg_scope(config.net.weight_decay)
+
+
+def _vgg(X, config, is_train):
   net_fn_map = {
       'vgg_a': vgg.vgg_a,
       'vgg_16': vgg.vgg_16,
@@ -162,44 +169,50 @@ def VGG(X, config, is_train):
       'vgg_d': vgg.vgg_d,
       'vgg_e': vgg.vgg_e
   }
-  net = net_fn_map[config.net.name](
+  return net_fn_map[config.net.name](
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       spatial_squeeze=True,
       fc_conv_padding='VALID',
       global_pool=False)
-  return net, argscope
 
 
-def LeNet(X, config, is_train):
-  argscope = lenet.lenet_arg_scope(config.net.weight_decay)
-  net = lenet.lenet(
+def _lenet_scope(config):
+  return lenet.lenet_arg_scope(config.net.weight_decay)
+
+
+def _lenet(X, config, is_train):
+  return lenet.lenet(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       prediction_fn=tf.nn.softmax)
-  return net, argscope
 
 
-def Overfeat(X, config, is_train):
-  argscope = overfeat.overfeat_arg_scope(config.net.weight_decay)
-  net = overfeat.overfeat(
+def _overfeat_scope(config):
+  return overfeat.overfeat_arg_scope(config.net.weight_decay)
+
+
+def _overfeat(X, config, is_train):
+  return overfeat.overfeat(
       X, num_classes=config.data.num_classes,
       is_training=is_train,
       dropout_keep_prob=config.net.dropout_keep,
       spatial_squeeze=True,
       global_pool=False)
-  return net, argscope
 
 
-def MobileNet_v1(X, config, is_train):
-  argscope = mobilenet_v1.mobilenet_v1_arg_scope(
+def _mobilenet_v1_scope(config):
+  return mobilenet_v1.mobilenet_v1_arg_scope(
       is_training=is_train,
       weight_decay=0.00004,
       stddev=0.09,
       regularize_depthwise=False)
-  net = mobilenet_v1.mobilenet_v1(
+
+
+def _mobilenet_v1(X, config, is_train):
+  return mobilenet_v1.mobilenet_v1(
       X, num_classes=config.net.num_classes,
       dropout_keep_prob=config.net.dropout_keep,
       is_training=is_train,
@@ -209,61 +222,56 @@ def MobileNet_v1(X, config, is_train):
       prediction_fn=tf.contrib.layers.softmax,
       spatial_squeeze=True,
       global_pool=False)
-  return net, argscope
 
 
-def NasNet(X, config, is_train):
+def _nasnet_scope(config):
   scope_fn_map = {
       'nasnet_cifar': nasnet.nasnet_cifar_arg_scope,
       'nasnet_mobile': nasnet.nasnet_mobile_arg_scope,
       'nasnet_large': nasnet.nasnet_mobile_arg_scope
   }
+  return scope_fn_map[config.net.name](
+      weight_decay=config.net.weight_decay,
+      batch_norm_decay=config.net.batch_norm_decay,
+      batch_norm_epsilon=config.net.batch_norm_epsilon)
+
+
+def _nasnet(X, config, is_train):
   net_fn_map = {
       'nasnet_cifar': nasnet.build_nasnet_cifar,
       'nasnet_mobile': nasnet.build_nasnet_mobile,
       'nasnet_large': nasnet.build_nasnet_large
   }
-  argscope = scope_fn_map[config.net.name](
-      weight_decay=config.net.weight_decay,
-      batch_norm_decay=config.net.batch_norm_decay,
-      batch_norm_epsilon=config.net.batch_norm_epsilon)
-  net = net_fn_map[config.net.name](X, config.data.num_classes, is_train)
-  return net, argscope
+  return net_fn_map[config.net.name](X, config.data.num_classes, is_train)
 
 #------------------------------------------------------------
 # PUBLIC AREA : for public model
 #------------------------------------------------------------
 
 
-def SqueezeNet(X, config, is_train):
-  net = squeezenet.inference(X, config.net.dropout_keep, is_train)
-  return net, None
+def _squeezenet(X, config, is_train):
+  return squeezenet.inference(X, config.net.dropout_keep, is_train)
 
 
-def Inception_Resnet_v1(X, config, is_train):
-  net = inception_resnet_v1.inception_resnet_v1(
+def _inception_resnet_v1(X, config, is_train):
+  return inception_resnet_v1.inception_resnet_v1(
       X, is_train, config.net.dropout_keep)
-  return net, None
 
 #------------------------------------------------------------
 # CUSTOM AREA : for own network model
 #------------------------------------------------------------
 
 
-def SimpleNet(X, config, is_train):
-  net = simplenet.simplenet(
+def _simplenet(X, config, is_train):
+  return simplenet.simplenet(
       X, num_classes=config.data.num_classes,
       is_training=is_train)
-  return net, None
 
 
-def MLP(X, config, is_train):
-  net = mlp.mlp(X, num_classes=config.data.num_classes)
-  return net, None
+def _mlp(X, config, is_train):
+  return mlp.mlp(X, num_classes=config.data.num_classes)
 
 
-def AudioNet(X, config, is_train):
+def _audionet(X, config, is_train):
   model = audionet.AudioNet()
-  argscope = model.arguments_scope()
-  net = model.model(X, config.data.num_classes, is_train)
-  return net, argscope
+  return model.model(X, config.data.num_classes, is_train)

@@ -18,8 +18,8 @@ class AVEC2014(database.DatasetBase):
     self.name = 'avec2014'
     self.target = 'avec.image.cnn'
     self.data_dir = '../_datasets/AVEC2014'
-    self.task = 'train'
-    self.output_dir = None
+    self.task = 'test'
+    self.output_dir = '../_model/avec2014_resnet_50'
     self.device = '0'
 
     """ log """
@@ -59,9 +59,9 @@ class AVEC2014(database.DatasetBase):
     self.test = params.Phase('test')
     self.test.data = params.Data(
         batchsize=50,
-        entry_path="pp_tst_img.txt",
+        entry_path="pp_tst_img_heatmap.txt",
         shuffle=False,
-        total_num=17727,
+        total_num=300,
         loader='load_image',
         reader_thread=1)
     self.test.data = self.set_data_attr(self.test.data)

@@ -20,7 +20,7 @@ class AVEC_IMAGE_CNN(context.Context):
     context.Context.__init__(self, config)
 
   def _net(self, data):
-    logit, net = network(data, self.config, 'train')
+    logit, net = network(data, self.config, self.phase, 'net')
     return logit, net
 
   def _loss(self, logit, label):
@@ -48,6 +48,8 @@ class AVEC_IMAGE_CNN(context.Context):
 
     # update at the same time
     saver = tf.train.Saver(var_list=variables.all())
+
+    variables.print_trainable_list()
 
     # hooks
     self.add_hook(self.snapshot.init())
