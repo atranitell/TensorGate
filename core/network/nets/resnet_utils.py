@@ -33,6 +33,9 @@ each block, instead of subsampling the input activations in the first residual
 unit of each block. The two implementations give identical results but our
 implementation is more memory efficient.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import tensorflow as tf
@@ -121,6 +124,7 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
 
 @slim.add_arg_scope
 def stack_blocks_dense(net, blocks, output_stride=None,
+                       store_non_strided_activations=False,
                        outputs_collections=None):
   """Stacks ResNet `Blocks` and controls output feature density.
 
@@ -151,6 +155,12 @@ def stack_blocks_dense(net, blocks, output_stride=None,
       For example, if the ResNet employs units with strides 1, 2, 1, 3, 4, 1,
       then valid values for the output_stride are 1, 2, 6, 24 or None (which
       is equivalent to output_stride=24).
+    store_non_strided_activations: If True, we compute non-strided (undecimated)
+      activations at the last unit of each block and store them in the
+      `outputs_collections` before subsampling them. This gives us access to
+      higher resolution intermediate activations which are useful in some
+      dense prediction problems but increases 4x the computation and memory cost
+      at the last unit of each block.
     outputs_collections: Collection to add the ResNet block outputs.
 
   Returns:
@@ -170,34 +180,38 @@ def stack_blocks_dense(net, blocks, output_stride=None,
 
   for block in blocks:
     with tf.variable_scope(block.scope, 'block', [net]) as sc:
+      block_stride = 1
       for i, unit in enumerate(block.args):
-        if output_stride is not None and current_stride > output_stride:
-          raise ValueError(
-              'The target output_stride cannot be reached.')
+        if store_non_strided_activations and i == len(block.args) - 1:
+          # Move stride from the block's last unit to the end of the block.
+          block_stride = unit.get('stride', 1)
+          unit = dict(unit, stride=1)
 
         with tf.variable_scope('unit_%d' % (i + 1), values=[net]):
-          unit_depth, unit_depth_bottleneck, unit_stride = unit
-
           # If we have reached the target output_stride, then we need to employ
           # atrous convolution with stride=1 and multiply the atrous rate by the
           # current unit's stride for use in subsequent layers.
           if output_stride is not None and current_stride == output_stride:
-            net = block.unit_fn(net,
-                                depth=unit_depth,
-                                depth_bottleneck=unit_depth_bottleneck,
-                                stride=1,
-                                rate=rate)
-            rate *= unit_stride
+            net = block.unit_fn(net, rate=rate, **dict(unit, stride=1))
+            rate *= unit.get('stride', 1)
 
           else:
-            net = block.unit_fn(net,
-                                depth=unit_depth,
-                                depth_bottleneck=unit_depth_bottleneck,
-                                stride=unit_stride,
-                                rate=1)
-            current_stride *= unit_stride
-      net = slim.utils.collect_named_outputs(
-          outputs_collections, sc.name, net)
+            net = block.unit_fn(net, rate=1, **unit)
+            current_stride *= unit.get('stride', 1)
+            if output_stride is not None and current_stride > output_stride:
+              raise ValueError('The target output_stride cannot be reached.')
+
+      # Collect activations at the block's end before performing subsampling.
+      net = slim.utils.collect_named_outputs(outputs_collections, sc.name, net)
+
+      # Subsampling of the block's output activations.
+      if output_stride is not None and current_stride == output_stride:
+        rate *= block_stride
+      else:
+        net = subsample(net, block_stride)
+        current_stride *= block_stride
+        if output_stride is not None and current_stride > output_stride:
+          raise ValueError('The target output_stride cannot be reached.')
 
   if output_stride is not None and current_stride != output_stride:
     raise ValueError('The target output_stride cannot be reached.')
@@ -208,7 +222,9 @@ def stack_blocks_dense(net, blocks, output_stride=None,
 def resnet_arg_scope(weight_decay=0.0001,
                      batch_norm_decay=0.997,
                      batch_norm_epsilon=1e-5,
-                     batch_norm_scale=True):
+                     batch_norm_scale=True,
+                     activation_fn=tf.nn.relu,
+                     use_batch_norm=True):
   """Defines the default ResNet arg scope.
 
   TODO(gpapan): The batch-normalization related default values above are
@@ -224,6 +240,8 @@ def resnet_arg_scope(weight_decay=0.0001,
       normalizing activations by their variance in batch normalization.
     batch_norm_scale: If True, uses an explicit `gamma` multiplier to scale the
       activations in the batch normalization layer.
+    activation_fn: The activation function which is used in ResNet.
+    use_batch_norm: Whether or not to use batch normalization.
 
   Returns:
     An `arg_scope` to use for the resnet models.
@@ -232,15 +250,16 @@ def resnet_arg_scope(weight_decay=0.0001,
       'decay': batch_norm_decay,
       'epsilon': batch_norm_epsilon,
       'scale': batch_norm_scale,
-      'updates_collections': None,
+      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+      'fused': None,  # Use fused batch norm if possible.
   }
 
   with slim.arg_scope(
       [slim.conv2d],
       weights_regularizer=slim.l2_regularizer(weight_decay),
       weights_initializer=slim.variance_scaling_initializer(),
-      activation_fn=tf.nn.relu,
-      normalizer_fn=slim.batch_norm, 
+      activation_fn=activation_fn,
+      normalizer_fn=slim.batch_norm if use_batch_norm else None,
       normalizer_params=batch_norm_params):
     with slim.arg_scope([slim.batch_norm], **batch_norm_params):
       # The following implies padding='SAME' for pool1, which makes feature
