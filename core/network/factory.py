@@ -78,11 +78,11 @@ def network(X, config, phase, name='', reuse=None):
   """
   is_training = True if phase == 'train' else False
   with tf.variable_scope(name) as scope:
-    argscope = argscope_map[config.net.name](config)
+    argscope = argscope_map[config.net.name]
     if reuse:
       scope.reuse_variables()
     if argscope is not None:
-      with arg_scope(argscope):
+      with arg_scope(argscope(config)):
         return network_map[config.net.name](X, config, is_training)
     else:
       return network_map[config.net.name](X, config, is_training)

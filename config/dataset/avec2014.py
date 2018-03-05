@@ -61,9 +61,9 @@ class AVEC2014(database.DatasetBase):
         batchsize=50,
         entry_path="pp_tst_img_heatmap.txt",
         shuffle=False,
-        total_num=300,
+        total_num=300,  # 17727,
         loader='load_image',
-        reader_thread=1)
+        reader_thread=16)
     self.test.data = self.set_data_attr(self.test.data)
 
   def set_data_attr(self, data):

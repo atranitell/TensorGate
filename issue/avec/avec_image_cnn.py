@@ -13,6 +13,8 @@ from core.utils.string import string
 from core.utils.variables import variables
 from core.utils.filesystem import filesystem
 
+from issue.avec.avec_utils import get_accurate_from_file
+
 
 class AVEC_IMAGE_CNN(context.Context):
 
@@ -92,10 +94,10 @@ class AVEC_IMAGE_CNN(context.Context):
     with context.DefaultSession() as sess:
       # get latest checkpoint
       global_step = self.snapshot.restore(sess, saver)
-
-      # output to file
       info = string.concat(batchsize, [path, label, logit * self.data.range])
-      with open(test_dir + '%s.txt' % global_step, 'wb') as fw:
+      filename = test_dir + '%s.txt' % global_step
+      # start to run
+      with open(filename, 'wb') as fw:
         with context.QueueContext(sess):
           # Initial some variables
           num_iter = int(total_num / batchsize)
@@ -103,27 +105,25 @@ class AVEC_IMAGE_CNN(context.Context):
 
           for _ in range(num_iter):
             # running session to acuqire value
-            _loss, _mae, _rmse, _info = sess.run([loss, mae, rmse, info])
+            _loss, _info = sess.run([loss, info])
             mean_loss += _loss
-            mean_mae += _mae
-            mean_rmse += _rmse
             # save tensor info to text file
             [fw.write(_line + b'\r\n') for _line in _info]
 
           # statistic
           mean_loss = 1.0 * mean_loss / num_iter
-          mean_mae = 1.0 * mean_mae / num_iter
-          mean_rmse = 1.0 * mean_rmse / num_iter
 
       # display results on screen
-      keys = ['total sample', 'num batch', 'loss', 'mae', 'rmse']
-      vals = [total_num, num_iter, mean_loss, mean_mae, mean_rmse]
+      _mae, _rmse = get_accurate_from_file(filename)
+      keys = ['total sample', 'num batch', 'loss', 'video_mae', 'video_rmse']
+      vals = [total_num, num_iter, mean_loss, _mae, _rmse]
       logger.test(logger.iters(int(global_step), keys, vals))
 
       # write to summary
-      self.summary.adds(global_step=global_step,
-                        tags=['test/loss', 'test/mae', 'test/rmse'],
-                        values=[mean_loss, mean_mae, mean_rmse])
+      self.summary.adds(
+          global_step=global_step,
+          tags=['test/loss', 'test/video_mae', 'test/video_rmse'],
+          values=[mean_loss, _mae, _rmse])
 
       self._exit_()
       return mean_mae
