@@ -59,21 +59,13 @@ from __future__ import print_function
 import tensorflow as tf
 
 from nets import resnet_utils
-
-
 resnet_arg_scope = resnet_utils.resnet_arg_scope
 slim = tf.contrib.slim
 
 
 @slim.add_arg_scope
-def bottleneck(inputs,
-               depth,
-               depth_bottleneck,
-               stride,
-               rate=1,
-               outputs_collections=None,
-               scope=None,
-               use_bounded_activations=False):
+def bottleneck(inputs, depth, depth_bottleneck, stride, rate=1,
+               outputs_collections=None, scope=None):
   """Bottleneck residual unit variant with BN after convolutions.
 
   This is the original residual unit proposed in [1]. See Fig. 1(a) of [2] for
@@ -92,8 +84,6 @@ def bottleneck(inputs,
     rate: An integer, rate for atrous convolution.
     outputs_collections: Collection to add the ResNet unit output.
     scope: Optional variable_scope.
-    use_bounded_activations: Whether or not to use bounded activations. Bounded
-      activations better lend themselves to quantized inference.
 
   Returns:
     The ResNet unit's output.
@@ -103,12 +93,8 @@ def bottleneck(inputs,
     if depth == depth_in:
       shortcut = resnet_utils.subsample(inputs, stride, 'shortcut')
     else:
-      shortcut = slim.conv2d(
-          inputs,
-          depth, [1, 1],
-          stride=stride,
-          activation_fn=tf.nn.relu6 if use_bounded_activations else None,
-          scope='shortcut')
+      shortcut = slim.conv2d(inputs, depth, [1, 1], stride=stride,
+                             activation_fn=None, scope='shortcut')
 
     residual = slim.conv2d(inputs, depth_bottleneck, [1, 1], stride=1,
                            scope='conv1')
@@ -117,15 +103,10 @@ def bottleneck(inputs,
     residual = slim.conv2d(residual, depth, [1, 1], stride=1,
                            activation_fn=None, scope='conv3')
 
-    if use_bounded_activations:
-      # Use clip_by_value to simulate bandpass activation.
-      residual = tf.clip_by_value(residual, -6.0, 6.0)
-      output = tf.nn.relu6(shortcut + residual)
-    else:
-      output = tf.nn.relu(shortcut + residual)
+    output = tf.nn.relu(shortcut + residual)
 
     return slim.utils.collect_named_outputs(outputs_collections,
-                                            sc.name,
+                                            sc.original_name_scope,
                                             output)
 
 
@@ -166,9 +147,9 @@ def resnet_v1(inputs,
     inputs: A tensor of size [batch, height_in, width_in, channels].
     blocks: A list of length equal to the number of ResNet blocks. Each element
       is a resnet_utils.Block object describing the units in the block.
-    num_classes: Number of predicted classes for classification tasks.
-      If 0 or None, we return the features before the logit layer.
-    is_training: whether batch_norm layers are in training mode.
+    num_classes: Number of predicted classes for classification tasks. If None
+      we return the features before the logit layer.
+    is_training: whether is training or not.
     global_pool: If True, we perform global average pooling before computing the
       logits. Set to True for image classification, False for dense prediction.
     output_stride: If None, then the output will be computed at the nominal
@@ -178,9 +159,6 @@ def resnet_v1(inputs,
       max-pooling, if False excludes it.
     spatial_squeeze: if True, logits is of shape [B, C], if false logits is
         of shape [B, 1, 1, C], where B is batch_size and C is number of classes.
-        To use this parameter, the input images must be smaller than 300x300
-        pixels, in which case the output logit layer does not contain spatial
-        information and can be removed.
     reuse: whether or not the network and its variables should be reused. To be
       able to reuse 'scope' must be given.
     scope: Optional variable_scope.
@@ -189,10 +167,10 @@ def resnet_v1(inputs,
     net: A rank-4 tensor of size [batch, height_out, width_out, channels_out].
       If global_pool is False, then height_out and width_out are reduced by a
       factor of output_stride compared to the respective height_in and width_in,
-      else both height_out and width_out equal one. If num_classes is 0 or None,
-      then net is the output of the last ResNet block, potentially after global
-      average pooling. If num_classes a non-zero integer, net contains the
-      pre-softmax activations.
+      else both height_out and width_out equal one. If num_classes is None, then
+      net is the output of the last ResNet block, potentially after global
+      average pooling. If num_classes is not None, net contains the pre-softmax
+      activations.
     end_points: A dictionary from components of the network to the corresponding
       activation.
 
@@ -200,7 +178,7 @@ def resnet_v1(inputs,
     ValueError: If the target output_stride is not valid.
   """
   with tf.variable_scope(scope, 'resnet_v1', [inputs], reuse=reuse) as sc:
-    end_points_collection = sc.original_name_scope + '_end_points'
+    end_points_collection = sc.name + '_end_points'
     with slim.arg_scope([slim.conv2d, bottleneck,
                          resnet_utils.stack_blocks_dense],
                         outputs_collections=end_points_collection):
@@ -209,53 +187,33 @@ def resnet_v1(inputs,
         if include_root_block:
           if output_stride is not None:
             if output_stride % 4 != 0:
-              raise ValueError('The output_stride needs to be a multiple of 4.')
+              raise ValueError(
+                  'The output_stride needs to be a multiple of 4.')
             output_stride /= 4
-          net = resnet_utils.conv2d_same(net, 64, 7, stride=2, scope='conv1')
+          net = resnet_utils.conv2d_same(
+              net, 64, 7, stride=2, scope='conv1')
           net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool1')
-        net = resnet_utils.stack_blocks_dense(net, blocks, output_stride)
-        # Convert end_points_collection into a dictionary of end_points.
-        end_points = slim.utils.convert_collection_to_dict(
-            end_points_collection)
-
+        net = resnet_utils.stack_blocks_dense(
+            net, blocks, output_stride)
         if global_pool:
           # Global average pooling.
-          net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
-          end_points['global_pool'] = net
-        if num_classes:
+          net = tf.reduce_mean(
+              net, [1, 2], name='pool5', keep_dims=True)
+        if num_classes is not None:
           net = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
                             normalizer_fn=None, scope='logits')
-          end_points[sc.name + '/logits'] = net
-          if spatial_squeeze:
-            net = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
-            end_points[sc.name + '/spatial_squeeze'] = net
-          end_points['predictions'] = slim.softmax(net, scope='predictions')
-        return net, end_points
-resnet_v1.default_image_size = 224
-
-
-def resnet_v1_block(scope, base_depth, num_units, stride):
-  """Helper function for creating a resnet_v1 bottleneck block.
-
-  Args:
-    scope: The scope of the block.
-    base_depth: The depth of the bottleneck layer for each unit.
-    num_units: The number of units in the block.
-    stride: The stride of the block, implemented as a stride in the last unit.
-      All other units have stride=1.
-
-  Returns:
-    A resnet_v1 bottleneck block.
-  """
-  return resnet_utils.Block(scope, bottleneck, [{
-      'depth': base_depth * 4,
-      'depth_bottleneck': base_depth,
-      'stride': 1
-  }] * (num_units - 1) + [{
-      'depth': base_depth * 4,
-      'depth_bottleneck': base_depth,
-      'stride': stride
-  }])
+        if spatial_squeeze:
+          logits = tf.squeeze(net, [1, 2], name='SpatialSqueeze')
+        else:
+          logits = net
+        # Convert end_points_collection into a dictionary of
+        # end_points.
+        end_points = slim.utils.convert_collection_to_dict(
+            end_points_collection)
+        if num_classes is not None:
+          end_points['predictions'] = slim.softmax(
+              logits, scope='predictions')
+        return logits, end_points
 
 
 def resnet_v1_50(inputs,
@@ -268,16 +226,19 @@ def resnet_v1_50(inputs,
                  scope='resnet_v1_50'):
   """ResNet-50 model of [1]. See resnet_v1() for arg and return description."""
   blocks = [
-      resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_block('block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_block('block3', base_depth=256, num_units=6, stride=2),
-      resnet_v1_block('block4', base_depth=512, num_units=3, stride=1),
+      resnet_utils.Block(
+          'block1', bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
+      resnet_utils.Block(
+          'block2', bottleneck, [(512, 128, 1)] * 3 + [(512, 128, 2)]),
+      resnet_utils.Block(
+          'block3', bottleneck, [(1024, 256, 1)] * 5 + [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block4', bottleneck, [(2048, 512, 1)] * 3)
   ]
   return resnet_v1(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, spatial_squeeze=spatial_squeeze,
                    reuse=reuse, scope=scope)
-resnet_v1_50.default_image_size = resnet_v1.default_image_size
 
 
 def resnet_v1_101(inputs,
@@ -290,16 +251,19 @@ def resnet_v1_101(inputs,
                   scope='resnet_v1_101'):
   """ResNet-101 model of [1]. See resnet_v1() for arg and return description."""
   blocks = [
-      resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_block('block2', base_depth=128, num_units=4, stride=2),
-      resnet_v1_block('block3', base_depth=256, num_units=23, stride=2),
-      resnet_v1_block('block4', base_depth=512, num_units=3, stride=1),
+      resnet_utils.Block(
+          'block1', bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
+      resnet_utils.Block(
+          'block2', bottleneck, [(512, 128, 1)] * 3 + [(512, 128, 2)]),
+      resnet_utils.Block(
+          'block3', bottleneck, [(1024, 256, 1)] * 22 + [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block4', bottleneck, [(2048, 512, 1)] * 3)
   ]
   return resnet_v1(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, spatial_squeeze=spatial_squeeze,
                    reuse=reuse, scope=scope)
-resnet_v1_101.default_image_size = resnet_v1.default_image_size
 
 
 def resnet_v1_152(inputs,
@@ -312,16 +276,18 @@ def resnet_v1_152(inputs,
                   scope='resnet_v1_152'):
   """ResNet-152 model of [1]. See resnet_v1() for arg and return description."""
   blocks = [
-      resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_block('block2', base_depth=128, num_units=8, stride=2),
-      resnet_v1_block('block3', base_depth=256, num_units=36, stride=2),
-      resnet_v1_block('block4', base_depth=512, num_units=3, stride=1),
-  ]
+      resnet_utils.Block(
+          'block1', bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
+      resnet_utils.Block(
+          'block2', bottleneck, [(512, 128, 1)] * 7 + [(512, 128, 2)]),
+      resnet_utils.Block(
+          'block3', bottleneck, [(1024, 256, 1)] * 35 + [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block4', bottleneck, [(2048, 512, 1)] * 3)]
   return resnet_v1(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, spatial_squeeze=spatial_squeeze,
                    reuse=reuse, scope=scope)
-resnet_v1_152.default_image_size = resnet_v1.default_image_size
 
 
 def resnet_v1_200(inputs,
@@ -334,13 +300,15 @@ def resnet_v1_200(inputs,
                   scope='resnet_v1_200'):
   """ResNet-200 model of [2]. See resnet_v1() for arg and return description."""
   blocks = [
-      resnet_v1_block('block1', base_depth=64, num_units=3, stride=2),
-      resnet_v1_block('block2', base_depth=128, num_units=24, stride=2),
-      resnet_v1_block('block3', base_depth=256, num_units=36, stride=2),
-      resnet_v1_block('block4', base_depth=512, num_units=3, stride=1),
-  ]
+      resnet_utils.Block(
+          'block1', bottleneck, [(256, 64, 1)] * 2 + [(256, 64, 2)]),
+      resnet_utils.Block(
+          'block2', bottleneck, [(512, 128, 1)] * 23 + [(512, 128, 2)]),
+      resnet_utils.Block(
+          'block3', bottleneck, [(1024, 256, 1)] * 35 + [(1024, 256, 2)]),
+      resnet_utils.Block(
+          'block4', bottleneck, [(2048, 512, 1)] * 3)]
   return resnet_v1(inputs, blocks, num_classes, is_training,
                    global_pool=global_pool, output_stride=output_stride,
                    include_root_block=True, spatial_squeeze=spatial_squeeze,
                    reuse=reuse, scope=scope)
-resnet_v1_200.default_image_size = resnet_v1.default_image_size

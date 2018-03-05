@@ -17,7 +17,8 @@ config_map = {
     'kinface.npy': kinface.KinfaceNPY,
     'lfw': lfw.LFW,
     'trafficflow': trafficflow.TrafficFlow,
-    'avec2014_audio': avec2014.AVEC2014_AUDIO
+    'avec2014.audio': avec2014.AVEC2014_AUDIO,
+    'avec2014': avec2014.AVEC2014
 }
 
 

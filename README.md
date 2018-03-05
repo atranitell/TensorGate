@@ -1,17 +1,25 @@
 # TensorGate [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]() [![tg](https://img.shields.io/badge/TensorGate-v4.0-brightgreen.svg)]()
 **TensorGate** is an framework based on [Tensorflow v1.5](https://github.com/tensorflow/tensorflow) deep learning open source library. It offers a set of upper layer demo for a variety of deep learning, such as image classification, recognition, GAN network, etc.
 
+### Plan
+- add heatmap for AVEC2014-Image
+- add GradCAM and GuidedMAP
+
+### Update 4.1 [3/4/2018]
+- add AVEC2014 Image Issue [untest]
+- add AVEC2014 Audio Issue [untest]
+
 ### Update 4.0 [3/2/2018]
 - package functions with class.
 - offer a global constant file.
 - learning rate: add cosine, linear cosine, noisy linear cosine, inverse time.
-- optimizer: add proximal, proximal adagrad
-- env: summary, logger, compiler
-- move classical model to ./example
-- move project model to ./issue
-- separate preprocessing method by input format
-- re-construct data layer
-- move a part of classical method to example folder
+- optimizer: add proximal, proximal adagrad.
+- env: summary, logger, compiler.
+- move classical model to ./example.
+- move project model to ./issue.
+- separate preprocessing method by input format.
+- re-construct data layer.
+- move a part of classical method to example folder.
 
 ### Directory
 - **./config** provide config file for dataset.

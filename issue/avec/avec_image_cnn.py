@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" regression task for audio
+""" regression task for image
     updated: 2018/02/05
 """
 import tensorflow as tf
@@ -14,17 +14,13 @@ from core.utils.variables import variables
 from core.utils.filesystem import filesystem
 
 
-class AVEC_AUDIO_CNN(context.Context):
+class AVEC_IMAGE_CNN(context.Context):
 
   def __init__(self, config):
     context.Context.__init__(self, config)
 
-  def _net(self, X):
-    X = tf.reshape(
-        X, [self.batchsize,
-            self.data.configs[0].frame_length *
-            self.config.data.configs[0].frame_num, 1])
-    logit, net = network(X, self.config, self.phase)
+  def _net(self, data):
+    logit, net = network(data, self.config, 'train')
     return logit, net
 
   def _loss(self, logit, label):

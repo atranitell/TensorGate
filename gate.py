@@ -43,6 +43,8 @@ def run(name, extra):
     from issue.kinface.kinface import select as App
   elif config.target == 'trafficflow':
     from issue.trafficnet import trafficflow as App
+  elif config.target.find('avec') == 0:
+    from issue.avec.avec import select as App
   # Unkown
   else:
     raise ValueError('Unknown target [%s]' % config.target)

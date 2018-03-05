@@ -12,6 +12,7 @@ from core.data.image.preprocessing import vgg_preprocessing
 
 from core.data.image.preprocessing import mnist_gan_preprocessing
 from core.data.image.preprocessing import kinship_vae_preprocessing
+from core.data.image.preprocessing import avec2014_preprocessing
 
 
 preprocessing_map = {
@@ -21,6 +22,7 @@ preprocessing_map = {
     'vgg': vgg_preprocessing,
     'gan.mnist': mnist_gan_preprocessing,
     'vae.kinship': kinship_vae_preprocessing,
+    'avec2014': avec2014_preprocessing
 }
 
 

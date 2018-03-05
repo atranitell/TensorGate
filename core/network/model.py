@@ -51,9 +51,7 @@ def ResNet(X, config, is_train):
       weight_decay=config.net.weight_decay,
       batch_norm_decay=config.net.batch_norm_decay,
       batch_norm_epsilon=config.net.batch_norm_epsilon,
-      batch_norm_scale=config.net.batch_norm_scale,
-      activation_fn=config.net.activation_fn,
-      use_batch_norm=config.net.use_batch_norm)
+      batch_norm_scale=config.net.batch_norm_scale)
   net_fn_map = {
       'resnet_v2_50': resnet_v2.resnet_v2_50,
       'resnet_v2_101': resnet_v2.resnet_v2_101,

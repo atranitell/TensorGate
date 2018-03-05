@@ -34,7 +34,7 @@ class AudioNet():
     self.batch_norm_epsilon = 1e-5
     self.batch_norm_scale = True
     self.dropout = 0.5
-    return self.audionet(inputs, num_classes, is_training, 'sen',  9, 'ma')
+    return self.audionet(inputs, num_classes, is_training, 'sen',  17, 'ma')
 
   def audionet(self, inputs, num_classes, is_training, net_kind, layer_num, keep_type):
     """ a factory corresponding to different experiments"""

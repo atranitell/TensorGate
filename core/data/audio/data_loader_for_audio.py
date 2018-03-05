@@ -9,12 +9,26 @@ from core.data import data_prefetch
 from core.data import data_utils
 
 
-def _load_audio(filepath, start_idx, length):
+def _load_audio(filepath, start_idx, fnum, flen, finvl):
   file_path_abs = str(filepath, encoding='utf-8')
   data = np.load(file_path_abs)
-  data = data[start_idx:start_idx + length]
-  data = np.float32(np.reshape(data, data.shape))
-  return data
+
+  valid_length = data.shape[0] - fnum * flen - finvl
+  if start_idx < 0:
+    start = random.randint(0, valid_length)
+  else:
+    start = start_idx
+
+  audio_data = np.array([])
+  for i in range(fnum):
+    start_i = start + i * finvl
+    _data = data[start_i: start_i + flen]
+    if start_idx < 0:
+      _data += np.random.normal(0.001, 1.0)
+    audio_data = np.append(audio_data, _data)
+
+  audio_data = np.float32(np.reshape(audio_data, [fnum, flen]))
+  return audio_data
 
 
 def load_audio(config):
@@ -31,10 +45,11 @@ def load_audio(config):
 
   files = tf.py_func(
       func=_load_audio,
-      inp=[tf_input[0], tf_input[1], cfg.length],
+      inp=[tf_input[0], tf_input[1], cfg.frame_num,
+           cfg.frame_length, cfg.frame_invl],
       Tout=tf.float32)
 
-  files = tf.reshape(files, [cfg.length, 1])
+  files = tf.reshape(files, [cfg.frame_num, cfg.frame_length])
   paths = tf_input[0]
   extras = tf_input[2]
 
