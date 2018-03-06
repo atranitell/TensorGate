@@ -12,6 +12,7 @@ from core.utils.logger import logger
 from core.utils.string import string
 from core.utils.variables import variables
 from core.utils.filesystem import filesystem
+from core.utils.heatmap import HeatMap
 
 from issue.avec.avec_utils import get_accurate_from_file
 
@@ -100,16 +101,13 @@ class AVEC_IMAGE_CNN(context.Context):
       with open(filename, 'wb') as fw:
         with context.QueueContext(sess):
           # Initial some variables
-          num_iter = int(total_num / batchsize)
-          mean_loss, mean_mae, mean_rmse = 0, 0, 0
-
+          mean_loss, num_iter = 0., int(total_num / batchsize)
           for _ in range(num_iter):
             # running session to acuqire value
             _loss, _info = sess.run([loss, info])
             mean_loss += _loss
             # save tensor info to text file
             [fw.write(_line + b'\r\n') for _line in _info]
-
           # statistic
           mean_loss = 1.0 * mean_loss / num_iter
 
@@ -126,7 +124,139 @@ class AVEC_IMAGE_CNN(context.Context):
           values=[mean_loss, _mae, _rmse])
 
       self._exit_()
-      return mean_mae
+      return _mae
 
-  def val(self):
-    pass
+  def heatmap(self):
+    self.heatmap_guided_cam()
+
+  def heatmap_gap(self):
+    """ HEATMAP BY USING GAP
+    """
+    # save current context
+    self._enter_('test')
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/heatmap_gap/')
+    # get data pipeline
+    data, label, path = loads(self.config)
+
+    # get network
+    logit, net = self._net(data)
+    loss, mae, rmse = self._loss(logit, label)
+
+    # heatmap
+    heatmap = HeatMap(self.data.configs[0].raw_height,
+                      self.data.configs[0].raw_width)
+    x = net['gap_conv']
+    w = variables.select_vars('net/resnet_v2_50/logits/weights')[0]
+
+    # get saver
+    saver = tf.train.Saver()
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(int(self.data.total_num / self.data.batchsize)):
+          _x, _w, _path = sess.run([x, w, path])
+          dstlist, srclist = heatmap.make_paths(test_dir, _path)
+          heatmap.gap(_x, _w[0], [0], dstlist, srclist, True)
+
+    self._exit_()
+    return 0
+
+  def heatmap_gb(self):
+    """ HEATMAP BY USING guided backpropagation
+    """
+    # save current context
+    self._enter_('test')
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/heatmap_gb/')
+    # get data pipeline
+    data, label, path = loads(self.config)
+
+    # get network
+    logit, net = self._net(data)
+    loss, mae, rmse = self._loss(logit, label)
+
+    # heatmap
+    heatmap = HeatMap(self.data.configs[0].raw_height,
+                      self.data.configs[0].raw_width)
+    gb_grad = tf.gradients(logit, data)[0]
+
+    # get saver
+    saver = tf.train.Saver()
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(int(self.data.total_num / self.data.batchsize)):
+          _gb, _path = sess.run([gb_grad, path])
+          dstlist, srclist = heatmap.make_paths(test_dir, _path)
+          heatmap.guided_backpropagation(_gb, dstlist)
+
+    self._exit_()
+    return 0
+
+  def heatmap_cam(self):
+    """ HEATMAP BY USING CAM
+    """
+    # save current context
+    self._enter_('test')
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/heatmap_cam/')
+    # get data pipeline
+    data, label, path = loads(self.config)
+
+    # get network
+    logit, net = self._net(data)
+    loss, mae, rmse = self._loss(logit, label)
+
+    # heatmap
+    heatmap = HeatMap(self.data.configs[0].raw_height,
+                      self.data.configs[0].raw_width)
+    x = net['gap_conv']
+    g = tf.gradients(logit, x)[0]
+
+    # get saver
+    saver = tf.train.Saver()
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(int(self.data.total_num / self.data.batchsize)):
+          _x, _g, _path = sess.run([x, g, path])
+          dstlist, srclist = heatmap.make_paths(test_dir, _path)
+          heatmap.grad_cam(_x, _g, dstlist, srclist, True)
+
+    self._exit_()
+    return 0
+
+  def heatmap_guided_cam(self):
+    """ HEATMAP BY USING GUIDED CAM
+    """
+    # save current context
+    self._enter_('test')
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/heatmap_gb_cam/')
+    # get data pipeline
+    data, label, path = loads(self.config)
+
+    # get network
+    logit, net = self._net(data)
+    loss, mae, rmse = self._loss(logit, label)
+
+    # heatmap
+    heatmap = HeatMap(self.data.configs[0].output_height,
+                      self.data.configs[0].output_width)
+    x = net['gap_conv']
+    g = tf.gradients(logit, x)[0]
+    gb_grad = tf.gradients(logit, data)[0]
+
+    # get saver
+    saver = tf.train.Saver()
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(int(self.data.total_num / self.data.batchsize)):
+          _x, _g, _gb, _path = sess.run([x, g, gb_grad, path])
+          dstlist, srclist = heatmap.make_paths(test_dir, _path)
+          heatmap.guided_grad_cam(_x, _g, _gb, dstlist, srclist, True)
+
+    self._exit_()
+    return 0

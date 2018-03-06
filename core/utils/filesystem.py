@@ -21,5 +21,15 @@ class Filesystem():
         raise ValueError('Path %s has existed.' % path)
     return path
 
+  def mkdirs(self, path, raise_path_exits=False):
+    """ Create a dir leaf
+    """
+    if not os.path.exists(path):
+      os.makedirs(path)
+    else:
+      if raise_path_exits:
+        raise ValueError('Paht %s has exitsted.' % path)
+    return path
+
 
 filesystem = Filesystem()

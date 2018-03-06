@@ -1,9 +1,11 @@
 # TensorGate [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]() [![tg](https://img.shields.io/badge/TensorGate-v4-brightgreen.svg)]()
 **TensorGate** is an framework based on [Tensorflow v1.6](https://github.com/tensorflow/tensorflow) deep learning open source library. It offers a set of upper layer demo for a variety of deep learning, such as image classification, recognition, GAN network, etc.
 
-### Plan
+### Update 4.1.1 [3/6/2018]
+- add batchnorm params to update collections
+- add GradCAM, guidedCAM, guided backpropagation
 - add heatmap for AVEC2014-Image
-- add GradCAM and GuidedMAP
+- package heatmap as a class
 
 ### Update 4.1 [3/4/2018]
 - add AVEC2014 Image Issue [untest]

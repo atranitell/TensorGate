@@ -78,42 +78,5 @@ class Image():
       abspath = path.join_step(dst, step, 'png', name_list[i])
       self.save_multi_to_one(imgs, [size_l, size_w], abspath)
 
-  # def heatmap(self, path, data, weight, raw_h, raw_w, save_path=''):
-  #   """ a uniform IO for generating a single heatmap
-  #   Input
-  #       ImagePath: a str of path to load image
-  #       data: (C, kernelsize, kernelsize)
-  #       weights: (C, )
-  #       raw_h: height of Image
-  #       raw_w: width of Image
-  #   """
-  #   # dim
-  #   channels = data.shape[0]
-
-  #   conv_img = data[0] * weight[0]
-  #   for _c in range(1, channels):
-  #     conv_img += data[_c] * weight[_c]
-  #   conv_img = cv2.resize(conv_img, (raw_h, raw_w))
-
-  #   # get raw image
-  #   # src = cv2.imread(path)
-  #   # src = cv2.cvtColor(src, cv2.COLOR_BGR2RGB)
-
-  #   # heatmap-and-image
-  #   # plt.close('all')
-  #   # plt.xticks([], [])
-  #   # plt.yticks([], [])
-  #   # plt.imshow(src)
-  #   # im = plt.imshow(conv_img, cmap='jet', alpha=0.4, interpolation='nearest')
-  #   # plt.savefig(save_path + '.jpg', bbox_inches='tight')
-
-  #   # heatmap-only
-  #   plt.close('all')
-  #   plt.xticks([], [])
-  #   plt.yticks([], [])
-  #   im = plt.imshow(conv_img, cmap='jet', interpolation='nearest')
-  #   plt.colorbar(im)
-  #   plt.savefig(save_path + '_heatmap.jpg', bbox_inches='tight')
-
 
 image = Image()
