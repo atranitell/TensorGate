@@ -34,7 +34,11 @@ class Snapshot():
     if ckpt and ckpt.model_checkpoint_path:
       saver.restore(sess, ckpt.model_checkpoint_path)
       global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+      try:
+        int(global_step)
+      except:
+        global_step = 0
       logger.sys('Load checkpoint from: %s' % ckpt.model_checkpoint_path)
       return global_step
     else:
-      return
+      raise ValueError('Could not find suitable restore files.')
