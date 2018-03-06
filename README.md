@@ -6,6 +6,7 @@
 - add GradCAM, guidedCAM, guided backpropagation
 - add heatmap for AVEC2014-Image
 - package heatmap as a class
+- add imagenet dataset
 
 ### Update 4.1 [3/4/2018]
 - add AVEC2014 Image Issue [untest]
