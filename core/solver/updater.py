@@ -34,11 +34,11 @@ def default(config, loss, global_step, var_list=None, index=0):
   # configure optimizer
   optimizer = configure_optimizer(config.optimizer[index], lr)
 
-  # compute gradients
-  grads = optimizer.compute_gradients(loss, var_list=var_list)
-
-  # apply to op
-  grad_op = optimizer.apply_gradients(grads, global_step)
+  # add batch norm to update collections
+  update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+  with tf.control_dependencies(update_ops):
+    grads = optimizer.compute_gradients(loss, var_list=var_list)
+    grad_op = optimizer.apply_gradients(grads, global_step)
 
   # assemble
   train_op = grad_op
