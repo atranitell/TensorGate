@@ -14,9 +14,12 @@ def _load_image(path, cfgimg, phase):
   # load in
   image_raw = tf.read_file(path)
   image = tf.image.decode_image(image_raw, channels=cfgimg.channels)
-  image = tf.reshape(image, [cfgimg.raw_height,
-                             cfgimg.raw_width,
-                             cfgimg.channels])
+
+  # reshape
+  if cfgimg.raw_height > 0 and cfgimg.raw_width > 0:
+    image = tf.reshape(image, [cfgimg.raw_height,
+                               cfgimg.raw_width,
+                               cfgimg.channels])
 
   # if graying
   if cfgimg.gray:

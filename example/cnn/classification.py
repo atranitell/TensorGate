@@ -12,7 +12,7 @@ from core.utils.variables import variables
 from core.utils.filesystem import filesystem
 from core.utils.string import string
 from core.utils.logger import logger
-from core.utils.profiler import Profiler
+from core.utils.heatmap import HeatMap
 
 
 class classification(context.Context):
@@ -120,3 +120,40 @@ class classification(context.Context):
 
       self._exit_()
       return mean_err
+
+  def heatmap(self):
+    """
+    """
+    # save current context
+    self._enter_('test')
+
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/heatmap/')
+    # get data pipeline
+    data, label, path = loads(self.config)
+
+    # total_num
+    total_num = self.data.total_num
+    batchsize = self.data.batchsize
+
+    # network
+    logit, net = self._net(data)
+    loss, error, pred = self._loss(logit, label)
+
+    # GRAD-CAM
+    heatmap = HeatMap(224, 224)
+    x = net['vgg_16/pool5']
+    g = tf.gradients(tf.reduce_max(logit, 1), x)[0]
+
+    # get saver
+    saver = tf.train.Saver()
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _ in range(int(total_num / batchsize)):
+          _x, _g, _path = sess.run([x, g, path])
+          dstlist, srclist = heatmap.make_paths(test_dir, _path)
+          heatmap.grad_cam(_x, _g, dstlist, srclist, True)
+
+    self._exit_()
+    return 0

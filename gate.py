@@ -61,6 +61,8 @@ def run(name, extra):
     app.val()
   elif config.task == 'pipline':
     app.pipline()
+  elif config.task == 'heatmap':
+    app.heatmap()
   else:
     raise ValueError('Unknown task [%s]' % config.task)
 

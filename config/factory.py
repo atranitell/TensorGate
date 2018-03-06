@@ -8,6 +8,7 @@ from config.dataset import kinface
 from config.dataset import lfw
 from config.dataset import trafficflow
 from config.dataset import avec2014
+from config.dataset import imagenet
 
 config_map = {
     'mnist': mnist.MNIST,
@@ -18,7 +19,8 @@ config_map = {
     'lfw': lfw.LFW,
     'trafficflow': trafficflow.TrafficFlow,
     'avec2014.audio': avec2014.AVEC2014_AUDIO,
-    'avec2014': avec2014.AVEC2014
+    'avec2014': avec2014.AVEC2014,
+    'imagenet': imagenet.ImageNet
 }
 
 
