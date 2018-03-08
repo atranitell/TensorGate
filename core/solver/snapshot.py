@@ -40,5 +40,6 @@ class Snapshot():
         global_step = 0
       logger.sys('Load checkpoint from: %s' % ckpt.model_checkpoint_path)
       return global_step
-    else:
-      raise ValueError('Could not find suitable restore files.')
+    else: 
+      logger.sys('Start a new model to train.')
+      return
