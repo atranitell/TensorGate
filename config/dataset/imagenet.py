@@ -16,9 +16,9 @@ class ImageNet(database.DatasetBase):
 
     """ base """
     self.name = 'imagenet'
-    self.target = 'cnn.classification'
-    self.data_dir = 'E:/_datasets/ImageNet'
-    self.task = 'heatmap'
+    self.target = 'lab.guided-learning'  # 'cnn.classification'
+    self.data_dir = '../_datasets/ImageNet'
+    self.task = 'train'
     self.output_dir = '../_model/imagenet_vgg_16'
     self.device = '0'
 
@@ -42,25 +42,24 @@ class ImageNet(database.DatasetBase):
     """ train """
     self.train = params.Phase('train')
     self.train.lr = [params.LearningRate()]
-    self.train.lr[0].set_vstep(values=[0.1, 0.01, 0.001, 0.0001],
-                               boundaries=[300000, 300000, 300000])
+    self.train.lr[0].set_fixed(0.001)
     self.train.optimizer = [params.Optimizer()]
-    self.train.optimizer[0].set_momentum(0.9)
+    self.train.optimizer[0].set_sgd()
 
     self.train.data = params.Data(
-        batchsize=32,
-        entry_path="train.txt",
+        batchsize=1,
+        entry_path="test.txt",
         shuffle=True,
-        total_num=1280000,
+        total_num=1,  # 1280000,
         loader='load_image',
-        reader_thread=16)
+        reader_thread=1)
     self.train.data = self.set_data_attr(self.train.data)
 
     """ test """
     self.test = params.Phase('test')
     self.test.data = params.Data(
         batchsize=1,
-        entry_path="test_mini.txt",
+        entry_path="test.txt",
         shuffle=False,
         total_num=1,
         loader='load_image',

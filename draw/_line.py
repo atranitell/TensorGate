@@ -52,7 +52,9 @@ def draw_basic_line_chart(config):
     # save data
     if 'save_data' in dt:
       _max_v, _max_i = find_max_value(res[dt['key']], res['iter'])
+      _min_v, _min_i = find_min_value(res[dt['key']], res['iter'])
       print('file:%s, iter:%d, max:%f' % (dt['path'], _max_i, _max_v))
+      print('file:%s, iter:%d, min:%f' % (dt['path'], _min_i, _min_v))
       save_path = dt['path'].split('.log')[0] + '_sum.txt'
       utils.write_to_text(res, ['iter', dt['key']], save_path)
 
@@ -81,12 +83,22 @@ def draw_basic_line_chart(config):
   plt.show()
 
 
-def find_max_value(entries, steps, min_iter=0):
+def find_max_value(entries, steps, start_iter=0):
   max_entry = 0
   max_iter = 0
   for entry in zip(steps, entries):
-    if entry[0] >= min_iter:
+    if entry[0] >= start_iter:
       if max_entry < entry[1]:
         max_entry = entry[1]
         max_iter = entry[0]
   return max_entry, max_iter
+
+def find_min_value(entries, steps, start_iter=0):
+  min_entry = 9999999
+  min_iter = 0
+  for entry in zip(steps, entries):
+    if entry[0] >= start_iter:
+      if min_entry > entry[1]:
+        min_entry = entry[1]
+        min_iter = entry[0]
+  return min_entry, min_iter

@@ -18,7 +18,7 @@ class AVEC2014(database.DatasetBase):
     self.name = 'avec2014'
     self.target = 'avec.image.cnn'
     self.data_dir = '../_datasets/AVEC2014'
-    self.task = 'test'
+    self.task = 'heatmap'
     self.output_dir = '../_model/avec2014_resnet_50'
     self.device = '0'
 
@@ -58,10 +58,10 @@ class AVEC2014(database.DatasetBase):
     """ test """
     self.test = params.Phase('test')
     self.test.data = params.Data(
-        batchsize=50,
-        entry_path="pp_tst_img_heatmap.txt",
+        batchsize=1,
+        entry_path="pp_tst_img_paper.txt",
         shuffle=False,
-        total_num=300,  # 17727,
+        total_num=10,  # 17727,
         loader='load_image',
         reader_thread=16)
     self.test.data = self.set_data_attr(self.test.data)
@@ -98,8 +98,8 @@ class AVEC2014_AUDIO(database.DatasetBase):
     self.name = 'avec2014.audio'
     self.target = 'avec.audio.cnn'
     self.data_dir = '../_datasets/AVEC2014_Audio'
-    self.task = 'train'
-    self.output_dir = None
+    self.task = 'heatmap'
+    self.output_dir = 'C:/Users/KaiJIN/Desktop/Gate/SensNet-v2/visualization'
     self.device = '0'
 
     """ log """
@@ -115,15 +115,11 @@ class AVEC2014_AUDIO(database.DatasetBase):
     self.net = params.Net('audionet')
     self.net.set_weight_decay(0.0001)
     self.net.set_dropout_keep(0.5)
-    self.net.set_batch_norm(
-        batch_norm_decay=0.999,
-        batch_norm_epsilon=1e-5,
-        batch_norm_scale=False)
 
     """ train """
     self.train = params.Phase('train')
     self.train.lr = [params.LearningRate()]
-    self.train.lr[0].set_fixed(learning_rate=0.0001)
+    self.train.lr[0].set_fixed(learning_rate=0.00003)
     self.train.optimizer = [params.Optimizer()]
     self.train.optimizer[0].set_adam()
 
@@ -136,20 +132,31 @@ class AVEC2014_AUDIO(database.DatasetBase):
         reader_thread=32)
     self.train.data = self.set_data_attr(self.train.data)
 
+    """ val """
+    self.val = params.Phase('val')
+    self.val.data = params.Data(
+        batchsize=50,
+        entry_path="pp_val_32.txt",  # 32
+        shuffle=False,
+        total_num=14199,  # 14199-32 28542-16 13999-64
+        loader='load_audio',
+        reader_thread=1)
+    self.val.data = self.set_data_attr(self.val.data)
+
     """ test """
     self.test = params.Phase('test')
     self.test.data = params.Data(
         batchsize=50,
-        entry_path="pp_tst_succ64.txt",
+        entry_path="pp_trn_32.txt",  # 32
         shuffle=False,
-        total_num=25465,
+        total_num=15292,  # 25465-32 51074-16 25265-64
         loader='load_audio',
         reader_thread=1)
     self.test.data = self.set_data_attr(self.test.data)
 
   def set_data_attr(self, data):
     default_audio = params.Audio()
-    default_audio.frame_num = 32
+    default_audio.frame_num = 32  # 32
     default_audio.frame_length = 200
     default_audio.frame_invl = 200
     data.entry_path = self.data_dir + '/' + data.entry_path
