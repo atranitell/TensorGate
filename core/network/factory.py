@@ -37,7 +37,11 @@ network_map = {
     'squeezenet': model._squeezenet,
     'simplenet': model._simplenet,
     'mlp': model._mlp,
-    'audionet': model._audionet
+    'audionet': model._audionet,
+    'resnet_v2_50_bishared': model._bisahred_resnet,
+    'resnet_v2_101_bishared': model._bisahred_resnet,
+    'resnet_v2_152_bishared': model._bisahred_resnet,
+    'resnet_v2_200_bishared': model._bisahred_resnet
 }
 
 argscope_map = {
@@ -69,7 +73,11 @@ argscope_map = {
     'squeezenet': None,
     'simplenet': None,
     'mlp': None,
-    'audionet': None
+    'audionet': None,
+    'resnet_v2_50_bishared': model._bisahred_resnet_scope,
+    'resnet_v2_101_bishared': model._bisahred_resnet_scope,
+    'resnet_v2_152_bishared': model._bisahred_resnet_scope,
+    'resnet_v2_200_bishared': model._bisahred_resnet_scope
 }
 
 

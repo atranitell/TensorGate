@@ -25,6 +25,8 @@ from core.network.custom import simplenet
 from core.network.custom import mlp
 from core.network.custom import audionet
 
+from core.network.custom import resnet_v2_bishared
+
 
 #------------------------------------------------------------
 # SLIM AREA : for tensorflow slim model
@@ -275,3 +277,29 @@ def _mlp(X, config, is_train):
 def _audionet(X, config, is_train):
   model = audionet.AudioNet()
   return model.model(X, config.data.num_classes, is_train)
+
+
+def _bisahred_resnet(X, config, is_train):
+  net_fn_map = {
+      'resnet_v2_50_bishared': resnet_v2_bishared.resnet_v2_50,
+      'resnet_v2_101_bishared': resnet_v2_bishared.resnet_v2_101,
+      'resnet_v2_152_bishared': resnet_v2_bishared.resnet_v2_152,
+      'resnet_v2_200_bishared': resnet_v2_bishared.resnet_v2_200
+  }
+  net = net_fn_map[config.net.name](
+      X, num_classes=config.data.num_classes,
+      is_training=is_train,
+      global_pool=True,
+      output_stride=None,
+      spatial_squeeze=True)
+  return net
+
+
+def _bisahred_resnet_scope(config):
+  resnet_scope_fn = resnet_v2_bishared.resnet_arg_scope
+  argscope = resnet_scope_fn(
+      weight_decay=config.net.weight_decay,
+      batch_norm_decay=config.net.batch_norm_decay,
+      batch_norm_epsilon=config.net.batch_norm_epsilon,
+      batch_norm_scale=config.net.batch_norm_scale)
+  return argscope
