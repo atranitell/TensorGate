@@ -63,7 +63,7 @@ class AVEC_IMAGE_BICNN(context.Context):
         weights_regularizer=None,
         activation_fn=None,
         scope='logits')
-    return logit, net, logit1
+    return logit, net
 
   def _loss(self, logit, label):
     loss, logits, labels = l2.get_loss(logit, label, self.config)
@@ -80,11 +80,9 @@ class AVEC_IMAGE_BICNN(context.Context):
     data, label, path = loads(self.config)
 
     # get network
-    logit, net, logit1 = self._net(data)
+    logit, net = self._net(data)
     # get loss
-    loss1, mae, rmse = self._loss(logit, label)
-    loss2, _, _ = self._loss(logit1, label)
-    loss = loss1 + loss2
+    loss, mae, rmse = self._loss(logit, label)
 
     # update
     global_step = tf.train.create_global_step()
@@ -129,7 +127,7 @@ class AVEC_IMAGE_BICNN(context.Context):
     batchsize = self.data.batchsize
 
     # get network
-    logit, net, _ = self._net(data)
+    logit, net = self._net(data)
     # get loss
     loss, mae, rmse = self._loss(logit, label)
 
@@ -188,7 +186,7 @@ class AVEC_IMAGE_BICNN(context.Context):
     batchsize = self.data.batchsize
 
     # get network
-    logit, net, _ = self._net(data)
+    logit, net = self._net(data)
     # get loss
     loss, mae, rmse = self._loss(logit, label)
 

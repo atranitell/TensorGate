@@ -19,6 +19,7 @@ config_map = {
     'lfw': lfw.LFW,
     'trafficflow': trafficflow.TrafficFlow,
     'avec2014': avec2014.AVEC2014,
+    'avec2014.flow': avec2014.AVEC2014_FLOW,
     'avec2014.audio': avec2014.AVEC2014_AUDIO,
     'avec2014.bi': avec2014.AVEC2014_BI,
     'avec2014.bishared': avec2014.AVEC2014_BISHARED,

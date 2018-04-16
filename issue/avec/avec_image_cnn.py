@@ -23,7 +23,8 @@ class AVEC_IMAGE_CNN(context.Context):
     context.Context.__init__(self, config)
 
   def _net(self, data):
-    logit, net = network(data, self.config, self.phase, 'net')
+    # for old version, the name should keep 'net'
+    logit, net = network(data, self.config, self.phase)
     return logit, net
 
   def _loss(self, logit, label):

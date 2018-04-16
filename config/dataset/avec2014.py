@@ -88,6 +88,88 @@ class AVEC2014(database.DatasetBase):
     return data
 
 
+class AVEC2014_FLOW(database.DatasetBase):
+  """ Based on images extracted from the video frames.
+  """
+
+  def __init__(self, extra):
+    database.DatasetBase.__init__(self, extra)
+    r = self._read_config_file
+
+    """ base """
+    self.name = 'avec2014.flow'
+    self.target = 'avec.image.cnn'
+    self.data_dir = '../_datasets/AVEC2014'
+    self.task = 'train'
+    self.output_dir = None
+    self.device = '0'
+
+    """ log """
+    self.log = params.Log(
+        print_invl=20,
+        save_summaries_invl=20,
+        save_model_invl=1000,
+        test_invl=1000,
+        val_invl=1000,
+        max_iter=999999)
+
+    """ net """
+    self.net = params.Net('resnet_v2_50')
+    self.net.set_weight_decay(0.0005)
+    self.net.set_batch_norm(
+        batch_norm_decay=0.997,
+        batch_norm_epsilon=1e-5)
+
+    """ train """
+    self.train = params.Phase('train')
+    self.train.lr = [params.LearningRate()]
+    self.train.lr[0].set_fixed(learning_rate=0.001)
+    self.train.optimizer = [params.Optimizer()]
+    self.train.optimizer[0].set_adam(beta1=0.9,
+                                     beta2=0.999,
+                                     epsilon=1e-8)
+    self.train.data = params.Data(
+        batchsize=32,
+        entry_path="pp_trn_0_flow.txt",
+        shuffle=True,
+        total_num=23564,
+        loader='load_image',
+        reader_thread=16)
+    self.train.data = self.set_data_attr(self.train.data)
+
+    """ test """
+    self.test = params.Phase('test')
+    self.test.data = params.Data(
+        batchsize=50,
+        entry_path="pp_tst_flow.txt",
+        shuffle=False,
+        total_num=17727,
+        loader='load_image',
+        reader_thread=16)
+    self.test.data = self.set_data_attr(self.test.data)
+
+  def set_data_attr(self, data):
+    default_img = params.Image(
+        channels=3,
+        frames=1,
+        raw_height=256,
+        raw_width=256,
+        output_height=224,
+        output_width=224,
+        preprocessing_method='avec2014',
+        gray=False)
+    data.entry_path = self.data_dir + '/' + data.entry_path
+    data.set_image([default_img])
+    data.set_entry_attr(
+        entry_dtype=(str, int),
+        entry_check=(True, False))
+    data.set_label(num_classes=1,
+                   span=63,
+                   one_hot=False,
+                   scale=True)
+    return data
+
+
 class AVEC2014_AUDIO(database.DatasetBase):
 
   def __init__(self, extra):
