@@ -14,9 +14,11 @@ Choose a task to execuate.
 """
 
 from gate.config import mnist
+from gate.config import trafficflow
 
 config_map = {
-    'mnist': mnist.MNIST
+    'mnist': mnist.MNIST,
+    'trafficflow': trafficflow.TRAFFICFLOW
 }
 
 

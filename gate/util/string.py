@@ -17,6 +17,14 @@ import tensorflow as tf
 from gate.util.logger import logger
 
 
+def join_dots(*inputs):
+  """ ['123', '456', '789']
+  Return:
+      '123.456.789'
+  """
+  return '.'.join([item for item in inputs])
+
+
 def clip_last_sub_string(content, separator='/', keep_sep=False):
   """ raw: a/b/c/d/e
       return: if keep_sep is true -> a/b/c/d/ else -> a/b/c/d
