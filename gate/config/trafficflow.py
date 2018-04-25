@@ -28,7 +28,7 @@ class TRAFFICFLOW(base.ConfigBase):
     self.name = 'trafficflow'
     self.target = 'trafficflow.vanilla'
     self.data_dir = '../_datasets/trafficflow'
-    self.output_dir = None
+    self.output_dir = 'E:/gate/_outputs/trafficflow.trafficflow.vanilla.180425171913'
     self.task = 'train'
 
     """ log """

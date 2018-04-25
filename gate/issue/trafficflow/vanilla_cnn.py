@@ -87,7 +87,7 @@ class VanillaCNN(context.Context):
     # get logit
     mae, rmse = self._error(logit, label)
     # output to file
-    info = string.concat(self.batchsize, [path, label, pred])
+    info = string.concat(self.batchsize, [path, label, logit])
     mean_loss, mean_mae, mean_rmse = 0, 0, 0
     saver = tf.train.Saver()
 
