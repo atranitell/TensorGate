@@ -40,6 +40,8 @@ def run(dataset, config_file):
   """ Task """
   if config.task == 'train':
     App(config).train()
+  elif config.task == 'test':
+    App(config).test()
 
 
 if __name__ == "__main__":
