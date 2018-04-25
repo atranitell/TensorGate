@@ -34,6 +34,8 @@ def run(dataset, config_file):
   """ Target """
   if config.target == 'cnn.classification':
     from gate.issue.cnn.classification import Classification as App
+  elif config.target == 'cnn.regression':
+    from gate.issue.cnn.regression import Regression as App
   elif config.target.find('trafficflow') == 0:
     from gate.issue.trafficflow.trafficflow import select as App
 
