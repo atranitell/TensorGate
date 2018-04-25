@@ -18,6 +18,7 @@ from gate.data.queue import data_loader
 
 loader_maps = {
     'load_image': data_loader.load_image,
+    'load_npy': data_loader.load_npy
 }
 
 

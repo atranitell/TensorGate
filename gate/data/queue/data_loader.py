@@ -13,6 +13,7 @@ Data Loader
 
 """
 
+import numpy as np
 import tensorflow as tf
 from gate.data.queue import data_entry
 from gate.data.queue import data_prefetch
@@ -51,7 +52,6 @@ def load_image(config):
   data = config.data
   res, count = data_entry.parse_from_text(
       data.entry_path, data.entry_dtype, data.entry_check)
-
   # the total num will be written.
   config.data.total_num = count
 
@@ -72,3 +72,40 @@ def load_image(config):
   extras = extras[0] if len(extras) == 1 else extras
 
   return data_prefetch.generate_batch(images, extras, paths, data)
+
+
+def _load_npy(filepath):
+  file_path_abs = str(filepath, encoding='utf-8')
+  data = np.load(file_path_abs)
+  data = np.float32(np.reshape(data, data.shape))
+  return data
+
+
+def load_npy(config):
+  """ Any format
+  """
+  data = config.data
+  res, count = data_entry.parse_from_text(
+      data.entry_path, data.entry_dtype, data.entry_check)
+ # the total num will be written.
+  config.data.total_num = count
+  cfg = data.configs[0]
+
+  tf_inputs = data_utils.convert_to_tensor(res, data.entry_dtype)
+  tf_input = tf.train.slice_input_producer(tf_inputs, shuffle=data.shuffle)
+
+  files, paths, extras = [], [], []
+  for i, t in enumerate(data.entry_check):
+    if t:
+      content = tf.py_func(_load_npy, [tf_input[i]], tf.float32)
+      content = tf.reshape(content, cfg.shape)
+      files.append(content)
+      paths.append(tf_input[i])
+    else:
+      extras.append(tf_input[i])
+
+  files = files[0] if len(files) == 1 else files
+  paths = paths[0] if len(paths) == 1 else paths
+  extras = extras[0] if len(extras) == 1 else extras
+
+  return data_prefetch.generate_batch(files, extras, paths, config.data)

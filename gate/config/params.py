@@ -34,6 +34,9 @@ class NET():
 
   """
 
+  def __init__(self):
+    self.name = None
+
   def _set_dropout_keep(self, dropout_keep=0.5):
     self.dropout_keep = dropout_keep
 
@@ -108,16 +111,31 @@ class NET():
   def _set_global_pool(self, global_pool=True):
     self.global_pool = global_pool
 
+  def _raise_if_net_defined(self):
+    if self.name is not None:
+      raise ValueError('The network has been defined.')
+
+  def _set_name(self, name):
+    self._raise_if_net_defined()
+    self.name = name
+
+  def _set_num_classes(self, num_classes):
+    """ determined the output dim
+    """
+    self.num_classes = num_classes
+
   def resnet_v2_50(self,
+                   num_classes=10,
                    weight_decay=0.0001,
                    batch_norm_decay=0.997,
                    batch_norm_epsilon=1e-5,
                    batch_norm_scale=True,
                    use_batch_norm=True,
-                   activation_fn=tf.nn.relu,
+                   activation_fn='relu',
                    global_pool=True,
                    scope='resnet_v2_50'):
-    self.scope = scope
+    self._set_name(scope)
+    self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_batch_norm(batch_norm_decay,
                          batch_norm_epsilon,
@@ -127,8 +145,20 @@ class NET():
     self._set_global_pool(global_pool)
 
   def cifarnet(self,
+               num_classes=10,
                weight_decay=0.004,
                dropout_keep=0.5):
+    self._set_name('cifarnet')
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_dropout_keep(dropout_keep)
+
+  def lenet(self,
+            num_classes=10,
+            weight_decay=0.004,
+            dropout_keep=0.5):
+    self._set_name('lenet')
+    self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_dropout_keep(dropout_keep)
 
@@ -287,7 +317,7 @@ class DATA():
                 one_hot=False,
                 scale=False):
     """ num_classes: net output dim, for regression, the value is 1
-      ranges: label span: [start, end]
+      ranges: label span: [0, ranges]
       one hot: if the input label as a one hot
       scale: True for ranges -> (0, 1) and ranges is not None
     """
@@ -296,8 +326,8 @@ class DATA():
     self.range = ranges
     self.scale = scale
 
-  def add_image(self, image_config):
-    self.configs.append(image_config)
+  def add(self, config):
+    self.configs.append(config)
 
 
 class Image():
@@ -321,6 +351,15 @@ class Image():
     self.output_width = output_width
     self.preprocessing_method = preprocessing_method
     self.gray = gray
+
+
+class Numpy():
+
+  def __init__(self,
+               shape=None,
+               name='numpy_type_data'):
+    self.name = name
+    self.shape = shape
 
 
 class Phase():
