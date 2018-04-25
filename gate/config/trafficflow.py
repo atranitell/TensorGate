@@ -28,7 +28,7 @@ class TRAFFICFLOW(base.ConfigBase):
     self.name = 'trafficflow'
     self.target = 'trafficflow.vanilla'
     self.data_dir = '../_datasets/trafficflow'
-    self.output_dir = 'E:/gate/_outputs/trafficflow.trafficflow.vanilla.180425171913'
+    self.output_dir = None
     self.task = 'train'
 
     """ log """
@@ -54,7 +54,7 @@ class TRAFFICFLOW(base.ConfigBase):
     self.train = params.Phase('train')
     # phase.train.optimizer
     self.train.lr = [params.LR()]
-    self.train.lr[0].set_fixed(0.001)
+    self.train.lr[0].set_fixed(0.0001)
     self.train.opt = [params.OPT()]
     self.train.opt[0].set_adam()
 
