@@ -103,10 +103,10 @@ class VanillaCNN(context.Context):
             mean_rmse += _rmse
             [fw.write(_line + b'\r\n') for _line in _info]
 
-          # statistic
-          mean_loss = 1.0 * mean_loss / self.num_batch
-          mean_mae = 1.0 * mean_mae / self.num_batch
-          mean_rmse = 1.0 * mean_rmse / self.num_batch
+      # statistic
+      mean_loss = 1.0 * mean_loss / self.num_batch
+      mean_mae = 1.0 * mean_mae / self.num_batch
+      mean_rmse = 1.0 * mean_rmse / self.num_batch
 
       # display results on screen
       keys = ['total sample', 'num batch', 'loss', 'mae', 'rmse']
@@ -115,7 +115,7 @@ class VanillaCNN(context.Context):
 
       # write to summary
       self.summary.adds(global_step=global_step,
-                        tags=['test/mae', 'tset/rmse', 'test/loss'],
+                        tags=['test/mae', 'test/rmse', 'test/loss'],
                         values=[mean_mae, mean_rmse, mean_loss])
 
       self._exit_()
