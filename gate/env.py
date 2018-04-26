@@ -36,6 +36,7 @@ class Env():
     self._LOG_INFO = True
     self._LOG_ERR = True
     self._LOG_CFG = True
+    self._LOG_TIMER = True
 
     # compile config - processing *.py files
     self._COMPILE_DIR_BIN = '../_bin'  # output dir of binary file
