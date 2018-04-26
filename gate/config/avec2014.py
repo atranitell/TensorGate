@@ -46,7 +46,8 @@ class AVEC2014(base.ConfigBase):
 
     """ net """
     self.net = [params.NET()]
-    self.net[0].resnet_v2_50(
+    self.net[0].resnet_v2(
+        depth='50',
         num_classes=1,
         weight_decay=0.0005,
         batch_norm_decay=0.997,
@@ -132,7 +133,8 @@ class AVEC2014_FLOW(base.ConfigBase):
 
     """ net """
     self.net = [params.NET()]
-    self.net[0].resnet_v2_50(
+    self.net[0].resnet_v2(
+        depth='50',
         num_classes=1,
         weight_decay=0.0005,
         batch_norm_decay=0.997,
@@ -203,7 +205,7 @@ class AVEC2014_BICNN(base.ConfigBase):
     """ base """
     self.name = 'avec2014.bicnn'
     # .normal/.rgb/.opt/.shared
-    self.target = 'avec2014.img.bicnn.opt'
+    self.target = 'avec2014.img.bicnn.shared'
     self.data_dir = '../_datasets/AVEC2014'
     self.output_dir = None
     self.task = 'train'
@@ -218,13 +220,32 @@ class AVEC2014_BICNN(base.ConfigBase):
         max_iter=120000)
 
     """ net """
-    self.net = [params.NET(), params.NET()]
-    self.net[0].resnet_v2_50(
+    self.net = [params.NET()]
+    # self.net[0].resnet_v2_bishared(
+    #     depth='50',
+    #     num_classes=1,
+    #     weight_decay=0.0005)
+
+    self.net[0].vgg_bishared(
+        depth='11',
         num_classes=1,
-        weight_decay=0.0005)
-    self.net[1].resnet_v2_50(
-        num_classes=1,
-        weight_decay=0.0005)
+        weight_decay=0.0005,
+        global_pool=True)
+
+    # self.net[0].alexnet_bishared(
+    #     num_classes=1,
+    #     weight_decay=0.0005,
+    #     global_pool=True)
+
+    # self.net = [params.NET(), params.NET()]
+    # self.net[0].resnet_v2(
+    #     depth='50'
+    #     num_classes=1,
+    #     weight_decay=0.0005)
+    # self.net[1].resnet_v2(
+    #     depth='50'
+    #     num_classes=1,
+    #     weight_decay=0.0005)
 
     """ phase.train """
     self.train = params.Phase('train')
