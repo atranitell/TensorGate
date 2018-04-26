@@ -49,11 +49,12 @@ class NET():
   def _set_dropout_keep(self, dropout_keep=0.5):
     self.dropout_keep = dropout_keep
 
-  def _set_batch_norm(self,
-                      batch_norm_decay=0.997,
-                      batch_norm_epsilon=1e-5,
-                      batch_norm_scale=True,
-                      use_batch_norm=True):
+  def _set_batch_norm(
+          self,
+          batch_norm_decay=0.997,
+          batch_norm_epsilon=1e-5,
+          batch_norm_scale=True,
+          use_batch_norm=True):
     """ USE Batch Normalization """
     self.use_batch_norm = use_batch_norm
     self.batch_norm_decay = batch_norm_decay
@@ -127,17 +128,19 @@ class NET():
     """
     self.num_classes = num_classes
 
-  def resnet_v2_50(self,
-                   num_classes=10,
-                   weight_decay=0.0001,
-                   batch_norm_decay=0.997,
-                   batch_norm_epsilon=1e-5,
-                   batch_norm_scale=True,
-                   use_batch_norm=True,
-                   activation_fn='relu',
-                   global_pool=True,
-                   scope='resnet_v2_50'):
-    self._set_name(scope)
+  def resnet_v2(
+          self,
+          depth='50',  # 50, 101, 152, 200
+          num_classes=1000,
+          weight_decay=0.0001,
+          batch_norm_decay=0.997,
+          batch_norm_epsilon=1e-5,
+          batch_norm_scale=True,
+          use_batch_norm=True,
+          activation_fn='relu',
+          global_pool=True,
+          scope='resnet_v2_'):
+    self._set_name(scope+depth)
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_batch_norm(batch_norm_decay,
@@ -147,31 +150,56 @@ class NET():
     self._set_activation_fn(activation_fn)
     self._set_global_pool(global_pool)
 
-  def cifarnet(self,
-               num_classes=10,
-               weight_decay=0.004,
-               dropout_keep=0.5):
+  def resnet_v2_bishared(
+          self,
+          depth='50',  # 50, 101, 152, 200
+          num_classes=1000,
+          weight_decay=0.0001,
+          batch_norm_decay=0.997,
+          batch_norm_epsilon=1e-5,
+          batch_norm_scale=True,
+          use_batch_norm=True,
+          activation_fn='relu',
+          global_pool=True,
+          scope='resnet_v2_'):
+    self._set_name(scope+depth+'_bishared')
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_batch_norm(batch_norm_decay,
+                         batch_norm_epsilon,
+                         batch_norm_scale,
+                         use_batch_norm)
+    self._set_activation_fn(activation_fn)
+    self._set_global_pool(global_pool)
+
+  def cifarnet(
+          self,
+          num_classes=10,
+          weight_decay=0.004,
+          dropout_keep=0.5):
     self._set_name('cifarnet')
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_dropout_keep(dropout_keep)
 
-  def lenet(self,
-            num_classes=10,
-            weight_decay=0.004,
-            dropout_keep=0.5):
+  def lenet(
+          self,
+          num_classes=10,
+          weight_decay=0.004,
+          dropout_keep=0.5):
     self._set_name('lenet')
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_dropout_keep(dropout_keep)
 
-  def alexnet(self,
-              num_classes=1000,
-              weight_decay=0.0005,
-              dropout_keep=0.5,
-              spatial_squeeze=True,
-              global_pool=False,
-              scope='alexnet_v2'):
+  def alexnet(
+          self,
+          num_classes=1000,
+          weight_decay=0.0005,
+          dropout_keep=0.5,
+          spatial_squeeze=True,
+          global_pool=False,
+          scope='alexnet_v2'):
     self._set_name(scope)
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
@@ -179,16 +207,32 @@ class NET():
     self._set_global_pool(global_pool)
     self._set_spatial_squeeze(spatial_squeeze)
 
-  def audionet(self,
-               num_classes=1,
-               weight_decay=0.0001,
-               batch_norm_decay=0.997,
-               batch_norm_epsilon=1e-5,
-               batch_norm_scale=True,
-               use_batch_norm=True,
-               activation_fn='relu',
-               global_pool=True,
-               scope='audionet'):
+  def alexnet_bishared(
+          self,
+          num_classes=1000,
+          weight_decay=0.0005,
+          dropout_keep=0.5,
+          spatial_squeeze=True,
+          global_pool=True,
+          scope='alexnet_v2_bishared'):
+    self._set_name(scope)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_dropout_keep(dropout_keep)
+    self._set_global_pool(global_pool)
+    self._set_spatial_squeeze(spatial_squeeze)
+
+  def audionet(
+          self,
+          num_classes=1,
+          weight_decay=0.0001,
+          batch_norm_decay=0.997,
+          batch_norm_epsilon=1e-5,
+          batch_norm_scale=True,
+          use_batch_norm=True,
+          activation_fn='relu',
+          global_pool=True,
+          scope='audionet'):
     self._set_name(scope)
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
@@ -199,16 +243,51 @@ class NET():
     self._set_activation_fn(activation_fn)
     self._set_global_pool(global_pool)
 
+  def vgg(
+          self,
+          depth='11',  # 11, 16, 19
+          num_classes=1000,
+          weight_decay=0.0005,
+          dropout_keep=0.5,
+          spatial_squeeze=True,
+          scope='vgg_',
+          # fc_conv_padding='VALID',
+          global_pool=False):
+    self._set_name(scope+depth)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_dropout_keep(dropout_keep)
+    self._set_spatial_squeeze(spatial_squeeze)
+    self._set_global_pool(global_pool)
+
+  def vgg_bishared(
+          self,
+          depth='11',
+          num_classes=1000,
+          weight_decay=0.0005,
+          dropout_keep=0.5,
+          spatial_squeeze=True,
+          scope='vgg_',
+          # fc_conv_padding='VALID',
+          global_pool=False):
+    self._set_name(scope+depth+'_bishared')
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_dropout_keep(dropout_keep)
+    self._set_spatial_squeeze(spatial_squeeze)
+    self._set_global_pool(global_pool)
+
 
 class LOG():
 
-  def __init__(self,
-               print_invl=20,
-               save_summary_invl=20,
-               save_model_invl=1000,
-               test_invl=1000,
-               val_invl=1000,
-               max_iter=1000000):
+  def __init__(
+          self,
+          print_invl=20,
+          save_summary_invl=20,
+          save_model_invl=1000,
+          test_invl=1000,
+          val_invl=1000,
+          max_iter=1000000):
     self.print_invl = print_invl
     self.save_summary_invl = save_summary_invl
     self.save_model_invl = save_model_invl
@@ -237,10 +316,11 @@ class OPT():
     self.epsilon = epsilon
     self.rho = rho
 
-  def set_ftrl(self,
-               learning_rate_power=-0.5,
-               initial_accumulator_value=0.1,
-               l1=0.0, l2=0.0):
+  def set_ftrl(
+          self,
+          learning_rate_power=-0.5,
+          initial_accumulator_value=0.1,
+          l1=0.0, l2=0.0):
     self.name = 'ftrl'
     self.learning_rate_power = learning_rate_power
     self.initial_accumulator_value = initial_accumulator_value
@@ -272,10 +352,11 @@ class LR():
     self.name = 'fixed'
     self.learning_rate = learning_rate
 
-  def set_exponential(self,
-                      learning_rate=0.1,
-                      decay_epochs=30,
-                      decay_rate=0.1):
+  def set_exponential(
+          self,
+          learning_rate=0.1,
+          decay_epochs=30,
+          decay_rate=0.1):
     """ decayed_learning_rate = learning_rate *
           decay_rate ^ (global_step / decay_steps)
     """
@@ -285,19 +366,21 @@ class LR():
     # self.decay_steps = self._decay_steps(total_num, batchsize, decay_epochs)
     self.decay_rate = decay_rate
 
-  def set_polynomial(self,
-                     learning_rate=0.1,
-                     decay_epochs=30,
-                     end_learning_rate=0.00001):
+  def set_polynomial(
+          self,
+          learning_rate=0.1,
+          decay_epochs=30,
+          end_learning_rate=0.00001):
     self.name = 'polynomial'
     self.learning_rate = learning_rate
     self.decay_epochs = decay_epochs
     # self.decay_steps = self._decay_steps(total_num, batchsize, decay_epochs)
     self.end_learning_rate = end_learning_rate
 
-  def set_vstep(self,
-                values=[0.1, 0.01, 0.001, 0.0001],
-                boundaries=[10000, 50000, 100000]):
+  def set_vstep(
+          self,
+          values=[0.1, 0.01, 0.001, 0.0001],
+          boundaries=[10000, 50000, 100000]):
     """ boundaries: [iter1, iter2]
         values: [lr1, lr2, lr3]
     """
@@ -306,10 +389,11 @@ class LR():
     self.boundaries = boundaries
     self.values = values
 
-  def set_natural_exp(self,
-                      learning_rate=0.1,
-                      decay_rate=0.1,
-                      decay_epochs=30):
+  def set_natural_exp(
+          self,
+          learning_rate=0.1,
+          decay_rate=0.1,
+          decay_epochs=30):
     self.name = 'natural_exp'
     self.learning_rate = learning_rate
     self.decay_rate = decay_rate
@@ -319,11 +403,12 @@ class LR():
 
 class DATA():
 
-  def __init__(self,
-               batchsize,
-               entry_path=None,
-               shuffle=None,
-               name='Data'):
+  def __init__(
+          self,
+          batchsize,
+          entry_path=None,
+          shuffle=None,
+          name='Data'):
     self.name = name
     self.batchsize = batchsize
     self.entry_path = entry_path
@@ -331,28 +416,31 @@ class DATA():
     self.total_num = None
     self.configs = []
 
-  def set_queue_loader(self,
-                       loader=None,
-                       reader_thread=8,
-                       min_queue_num=128):
+  def set_queue_loader(
+          self,
+          loader=None,
+          reader_thread=8,
+          min_queue_num=128):
     self.loader = loader
     self.reader_thread = reader_thread
     self.min_queue_num = min_queue_num
 
-  def set_entry_attr(self,
-                     entry_dtype=None,
-                     entry_check=None):
+  def set_entry_attr(
+          self,
+          entry_dtype=None,
+          entry_check=None):
     """ entry_dtype: a tuple showing the item type
       entry_check: a tuple describes a file path
     """
     self.entry_dtype = entry_dtype
     self.entry_check = entry_check
 
-  def set_label(self,
-                num_classes=None,
-                span=None,
-                one_hot=False,
-                scale=False):
+  def set_label(
+          self,
+          num_classes=None,
+          span=None,
+          one_hot=False,
+          scale=False):
     """ num_classes: net output dim, for regression, the value is 1
       span: label span: [0, span]
       one hot: if the input label as a one hot
