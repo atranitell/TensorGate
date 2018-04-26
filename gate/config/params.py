@@ -37,6 +37,9 @@ class NET():
   def __init__(self):
     self.name = None
 
+  def _set_spatial_squeeze(self, spatial_squeeze=True):
+    self.spatial_squeeze = spatial_squeeze
+
   def _set_dropout_keep(self, dropout_keep=0.5):
     self.dropout_keep = dropout_keep
 
@@ -161,6 +164,40 @@ class NET():
     self._set_num_classes(num_classes)
     self._set_weight_decay(weight_decay)
     self._set_dropout_keep(dropout_keep)
+
+  def alexnet(self,
+              num_classes=1000,
+              weight_decay=0.0005,
+              dropout_keep=0.5,
+              spatial_squeeze=True,
+              global_pool=False,
+              scope='alexnet_v2'):
+    self._set_name(scope)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_dropout_keep(dropout_keep)
+    self._set_global_pool(global_pool)
+    self._set_spatial_squeeze(spatial_squeeze)
+
+  def audionet(self,
+               num_classes=1,
+               weight_decay=0.0001,
+               batch_norm_decay=0.997,
+               batch_norm_epsilon=1e-5,
+               batch_norm_scale=True,
+               use_batch_norm=True,
+               activation_fn='relu',
+               global_pool=True,
+               scope='audionet'):
+    self._set_name(scope)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_batch_norm(batch_norm_decay,
+                         batch_norm_epsilon,
+                         batch_norm_scale,
+                         use_batch_norm)
+    self._set_activation_fn(activation_fn)
+    self._set_global_pool(global_pool)
 
 
 class LOG():
@@ -313,35 +350,39 @@ class DATA():
 
   def set_label(self,
                 num_classes=None,
-                ranges=None,
+                span=None,
                 one_hot=False,
                 scale=False):
     """ num_classes: net output dim, for regression, the value is 1
-      ranges: label span: [0, ranges]
+      span: label span: [0, span]
       one hot: if the input label as a one hot
-      scale: True for ranges -> (0, 1) and ranges is not None
+      scale: True for span -> (0, 1) and span is not None
     """
     self.num_classes = num_classes
     self.one_hot = one_hot
-    self.range = ranges
+    self.span = span
     self.scale = scale
 
   def add(self, config):
-    self.configs.append(config)
+    if isinstance(config, list):
+      self.configs += config
+    else:
+      self.configs.append(config)
 
 
 class Image():
 
-  def set_fixed_length_image(self,
-                             channels=3,
-                             frames=1,
-                             raw_height=None,
-                             raw_width=None,
-                             output_height=None,
-                             output_width=None,
-                             preprocessing_method=None,
-                             gray=False,
-                             name='fixed_length_image'):
+  def set_fixed_length_image(
+          self,
+          channels=3,
+          frames=1,
+          raw_height=None,
+          raw_width=None,
+          output_height=None,
+          output_width=None,
+          preprocessing_method=None,
+          gray=False,
+          name='fixed_length_image'):
     self.name = name
     self.channels = channels
     self.frames = frames
@@ -351,6 +392,24 @@ class Image():
     self.output_width = output_width
     self.preprocessing_method = preprocessing_method
     self.gray = gray
+
+
+class Audio():
+
+  def set_fixed_length_audio(
+          self,
+          frame_num=32,
+          frame_length=200,
+          frame_invl=200,
+          name='fixed_length_image'):
+    self.name = name
+    # load number of frame
+    self.frame_num = frame_num
+    # the length of each frame
+    self.frame_length = frame_length
+    # the interval of slide window
+    # if the value is equal to frame length, each frame will not overlap
+    self.frame_invl = frame_invl
 
 
 class Numpy():
