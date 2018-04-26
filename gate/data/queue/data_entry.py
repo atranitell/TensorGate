@@ -30,6 +30,7 @@ def parse_from_text(text_path, dtype_list, path_list):
       according to the dtype_list, return a tuple
       each item in tuple is a list.
   """
+  logger.start_timer()
   # check path
   if not os.path.exists(text_path):
     raise ValueError('%s does not exist!' % text_path)
@@ -68,5 +69,5 @@ def parse_from_text(text_path, dtype_list, path_list):
       # count
       count += 1
 
-  logger.sys('Total loading in %d files.' % count)
+  logger.end_timer('Total loading in %d files, ' % count)
   return res, count
