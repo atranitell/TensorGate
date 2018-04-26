@@ -14,6 +14,7 @@ Logger to control display
 """
 
 import os
+import time
 import logging
 from datetime import datetime
 from gate.env import env
@@ -24,8 +25,10 @@ class Logger():
   """
 
   def __init__(self):
+    # init
     self.logger = logging.getLogger('TensorGate')
     self.logger.setLevel(logging.DEBUG)
+    # control output
     self._DATE = env._LOG_DATE
     self._SYS = env._LOG_SYS
     self._TRAIN = env._LOG_TRAIN
@@ -37,6 +40,9 @@ class Logger():
     self._ERR = env._LOG_ERR
     # config information
     self._CFG = env._LOG_CFG
+    # control timer
+    self._TIMER = env._LOG_TIMER
+    self._start_timer = None
 
   def init(self, name, output_dir):
     """ initilize the logger
@@ -133,6 +139,18 @@ class Logger():
       else:
         _data += ', %s:%.4f' % (str(keys[i]), float(values[i]))
     return _data
+
+  def start_timer(self):
+    self._start_timer = time.time()
+
+  def end_timer(self, content=''):
+    if self._start_timer is None:
+      raise ValueError('Call start_timer function first.')
+    spend = time.time() - self._start_timer
+    if self._TIMER:
+      content = content + 'elapsed time:%.3fs' % spend
+      self._print('[TIM]', content)
+    self._start_timer = None
 
 
 logger = Logger()
