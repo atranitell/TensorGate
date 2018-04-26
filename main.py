@@ -36,8 +36,10 @@ def run(dataset, config_file):
     from gate.issue.cnn.classification import Classification as App
   elif config.target == 'cnn.regression':
     from gate.issue.cnn.regression import Regression as App
-  elif config.target.find('trafficflow') == 0:
+  elif config.target.startswith('trafficflow'):
     from gate.issue.trafficflow.trafficflow import select as App
+  elif config.target.startswith('avec2014'):
+    from gate.issue.avec2014.avec2014 import select as App
 
   """ Task """
   if config.task == 'train':
