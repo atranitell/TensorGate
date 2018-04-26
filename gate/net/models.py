@@ -34,6 +34,9 @@ from gate.net.nets import pix2pix
 
 from gate.net.custom import audionet
 
+from gate.net.deepfuse import resnet_v2_bishared
+from gate.net.deepfuse import vgg_bishared
+from gate.net.deepfuse import alexnet_bishared
 
 # -------------------------------------------------------
 # SLIM
@@ -189,14 +192,12 @@ def _vgg_scope(config):
 
 def _vgg(X, config, is_training):
   net_fn_map = {
-      'vgg_a': vgg.vgg_a,
+      'vgg_11': vgg.vgg_a,
       'vgg_16': vgg.vgg_16,
       'vgg_19': vgg.vgg_19,
-      'vgg_d': vgg.vgg_d,
-      'vgg_e': vgg.vgg_e
   }
   return net_fn_map[config.name](
-      X, num_classes=config.data.num_classes,
+      X, num_classes=config.num_classes,
       is_training=is_training,
       dropout_keep_prob=config.dropout_keep,
       spatial_squeeze=True,
@@ -272,3 +273,63 @@ def _audionet(X, config, is_training):
 # -------------------------------------------------------
 # DEEP Fuse
 # -------------------------------------------------------
+
+
+def _bisahred_resnet(X, config, is_train):
+  net_fn_map = {
+      'resnet_v2_50_bishared': resnet_v2_bishared.resnet_v2_50,
+      'resnet_v2_101_bishared': resnet_v2_bishared.resnet_v2_101,
+      'resnet_v2_152_bishared': resnet_v2_bishared.resnet_v2_152,
+      'resnet_v2_200_bishared': resnet_v2_bishared.resnet_v2_200
+  }
+  net = net_fn_map[config.name](
+      X, num_classes=config.num_classes,
+      is_training=is_train,
+      global_pool=True,
+      output_stride=None,
+      spatial_squeeze=True)
+  return net
+
+
+def _bisahred_resnet_scope(config):
+  resnet_scope_fn = resnet_v2_bishared.resnet_arg_scope
+  argscope = resnet_scope_fn(
+      weight_decay=config.weight_decay,
+      batch_norm_decay=config.batch_norm_decay,
+      batch_norm_epsilon=config.batch_norm_epsilon,
+      batch_norm_scale=config.batch_norm_scale)
+  return argscope
+
+
+def _vgg_bishared_scope(config):
+  return vgg_bishared.vgg_arg_scope(config.weight_decay)
+
+
+def _vgg_bishared(X, config, is_training):
+  net_fn_map = {
+      'vgg_11_bishared': vgg_bishared.vgg_a,
+      'vgg_16_bishared': vgg_bishared.vgg_16,
+      'vgg_19_bishared': vgg_bishared.vgg_19,
+  }
+  return net_fn_map[config.name](
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=config.spatial_squeeze,
+      fc_conv_padding='VALID',
+      global_pool=config.global_pool)
+
+
+def _alexnet_bishared(X, config, is_training):
+  return alexnet_bishared.alexnet_v2(
+      inputs=X,
+      num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=config.spatial_squeeze,
+      scope=config.name,
+      global_pool=config.global_pool)
+
+
+def _alexnet_bishared_scope(config):
+  return alexnet_bishared.alexnet_v2_arg_scope(config.weight_decay)
