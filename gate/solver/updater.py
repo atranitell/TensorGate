@@ -69,7 +69,7 @@ def add_grad_to_summary(grads, grad_summary=True, grad_hist=False):
   """ save grad info
   """
   if grad_summary is False and grad_hist is False:
-    logger.sys('GRAD has not been recorded.')
+    logger.sys('GRAD is NOT recorded.')
     return
   with tf.name_scope('grads'):
     for grad, var in grads:
@@ -88,7 +88,7 @@ def add_weight_to_summary(weight_summary=True, weight_hist=False):
   """ save weight info
   """
   if weight_summary is False and weight_hist is False:
-    logger.sys('WEIGHT has not been recorded.')
+    logger.sys('WEIGHT is NOT recorded.')
     return
   with tf.name_scope('weights'):
     for weight in tf.trainable_variables():
