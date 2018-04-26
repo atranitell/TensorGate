@@ -25,7 +25,7 @@ network_map = {
     'alexnet_v2': models._alexnet,
     'cifarnet': models._cifarnet,
     'overfeat': models._overfeat,
-    'vgg_a': models._vgg,
+    'vgg_11': models._vgg,
     'vgg_16': models._vgg,
     'vgg_19': models._vgg,
     'inception_v1': models._inception_v1,
@@ -51,17 +51,21 @@ network_map = {
     # 'simplenet': model._simplenet,
     # 'mlp': model._mlp,
     'audionet': models._audionet,
-    # 'resnet_v2_50_bishared': model._bisahred_resnet,
-    # 'resnet_v2_101_bishared': model._bisahred_resnet,
-    # 'resnet_v2_152_bishared': model._bisahred_resnet,
-    # 'resnet_v2_200_bishared': model._bisahred_resnet
+    'resnet_v2_50_bishared': models._bisahred_resnet,
+    'resnet_v2_101_bishared': models._bisahred_resnet,
+    'resnet_v2_152_bishared': models._bisahred_resnet,
+    'resnet_v2_200_bishared': models._bisahred_resnet,
+    'vgg_11_bishared': models._vgg_bishared,
+    'vgg_16_bishared': models._vgg_bishared,
+    'vgg_19_bishared': models._vgg_bishared,
+    'alexnet_v2_bishared': models._alexnet_bishared
 }
 
 argscope_map = {
     'alexnet_v2': models._alexnet_scope,
     'cifarnet': models._cifarnet_scope,
     'overfeat': models._overfeat_scope,
-    'vgg_a': models._vgg_scope,
+    'vgg_11': models._vgg_scope,
     'vgg_16': models._vgg_scope,
     'vgg_19': models._vgg_scope,
     'inception_v1': models._inception_scope,
@@ -87,10 +91,14 @@ argscope_map = {
     # 'simplenet': None,
     # 'mlp': None,
     'audionet': None,
-    # 'resnet_v2_50_bishared': model._bisahred_resnet_scope,
-    # 'resnet_v2_101_bishared': model._bisahred_resnet_scope,
-    # 'resnet_v2_152_bishared': model._bisahred_resnet_scope,
-    # 'resnet_v2_200_bishared': model._bisahred_resnet_scope
+    'resnet_v2_50_bishared': models._bisahred_resnet_scope,
+    'resnet_v2_101_bishared': models._bisahred_resnet_scope,
+    'resnet_v2_152_bishared': models._bisahred_resnet_scope,
+    'resnet_v2_200_bishared': models._bisahred_resnet_scope,
+    'vgg_11_bishared': models._vgg_bishared_scope,
+    'vgg_16_bishared': models._vgg_bishared_scope,
+    'vgg_19_bishared': models._vgg_bishared_scope,
+    'alexnet_v2_bishared': models._alexnet_bishared_scope
 }
 
 
