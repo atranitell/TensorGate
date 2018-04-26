@@ -102,9 +102,9 @@ class Classification(context.Context):
             mean_err += _err
             [fw.write(_line + b'\r\n') for _line in _info]
 
-          # statistic
-          mean_loss = 1.0 * mean_loss / self.num_batch
-          mean_err = 1.0 * mean_err / self.num_batch
+      # statistic
+      mean_loss = 1.0 * mean_loss / self.num_batch
+      mean_err = 1.0 * mean_err / self.num_batch
 
       # display results on screen
       keys = ['total sample', 'num batch', 'loss', 'error']
