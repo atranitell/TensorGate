@@ -141,8 +141,7 @@ class Running_Hook(tf.train.SessionRunHook):
           self.func_test()
 
     if cur_iter == self.config.max_iter:
-      logger.sys(
-          'Has achieved the maximum iterations, the system will terminate.')
+      logger.sys('Achieved the maximum iterations, the system will terminate.')
       exit(0)
 
 
