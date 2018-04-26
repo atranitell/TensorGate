@@ -15,10 +15,15 @@ Choose a task to execuate.
 
 from gate.config import mnist
 from gate.config import trafficflow
+from gate.config import avec2014
 
 config_map = {
     'mnist': mnist.MNIST,
-    'trafficflow': trafficflow.TRAFFICFLOW
+    'trafficflow': trafficflow.TRAFFICFLOW,
+    'avec2014': avec2014.AVEC2014,
+    'avec2014.flow': avec2014.AVEC2014_FLOW,
+    'avec2014.bicnn': avec2014.AVEC2014_BICNN,
+    'avec2014.audio': avec2014.AVEC2014_AUDIO
 }
 
 

@@ -32,6 +32,13 @@ from gate.net.nets import cyclegan
 from gate.net.nets import dcgan
 from gate.net.nets import pix2pix
 
+from gate.net.custom import audionet
+
+
+# -------------------------------------------------------
+# SLIM
+# -------------------------------------------------------
+
 
 def _lenet(X, config, is_training):
   return lenet.lenet(
@@ -250,3 +257,18 @@ def _nasnet(X, config, is_training):
       'nasnet_large': nasnet.build_nasnet_large
   }
   return net_fn_map[config.name](X, config.num_classes, is_training)
+
+
+# -------------------------------------------------------
+# custom
+# -------------------------------------------------------
+
+
+def _audionet(X, config, is_training):
+  model = audionet.AudioNet()
+  return model.model(X, config.num_classes, is_training)
+
+
+# -------------------------------------------------------
+# DEEP Fuse
+# -------------------------------------------------------
