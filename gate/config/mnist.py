@@ -60,7 +60,7 @@ class MNIST(base.ConfigBase):
         shuffle=True)
     self.train.data.set_queue_loader(
         loader='load_image',
-        reader_thread=32,
+        reader_thread=8,
         min_queue_num=32)
     self.set_default_data_attr(self.train.data)
 
