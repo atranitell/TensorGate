@@ -88,3 +88,165 @@ def _resnet_scope(config):
       activation_fn=config.activation_fn,
       use_batch_norm=config.use_batch_norm)
   return argscope
+
+
+def _alexnet(X, config, is_training):
+  return alexnet.alexnet_v2(
+      inputs=X,
+      num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=config.spatial_squeeze,
+      scope=config.scope,
+      global_pool=config.global_pool)
+
+
+def _alexnet_scope(config):
+  return alexnet.alexnet_v2_arg_scope(config.weight_decay)
+
+
+def _inception_scope(config):
+  arg_scope_fn = {
+      'inception_v1': inception.inception_v1_arg_scope,
+      'inception_v2': inception.inception_v2_arg_scope,
+      'inception_v3': inception.inception_v3_arg_scope,
+      'inception_v4': inception.inception_v4_arg_scope
+  }
+  return arg_scope_fn[config.name](
+      weight_decay=config.weight_decay,
+      use_batch_norm=config.use_batch_norm,
+      batch_norm_decay=config.batch_norm_decay,
+      batch_norm_epsilon=config.batch_norm_epsilon,
+      activation_fn=config.activation_fn)
+
+
+def _inception_v1(X, config, is_training):
+  return inception.inception_v1(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _inception_v2(X, config, is_training):
+  return inception.inception_v2(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      min_depth=16,
+      depth_multiplier=1.0,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _inception_v3(X, config, is_training):
+  return inception.inception_v3(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      min_depth=16,
+      depth_multiplier=1.0,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _inception_v4(X, config, is_training):
+  return inception.inception_v4(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      create_aux_logits=True)
+
+
+def _inception_resnet_v2_scope(config):
+  return inception.inception_resnet_v2_arg_scope(
+      weight_decay=config.weight_decay,
+      batch_norm_decay=config.batch_norm_decay,
+      batch_norm_epsilon=config.batch_norm_epsilon,
+      activation_fn=config.activation_fn)
+
+
+def _inception_resnet_v2(X, config, is_training):
+  return inception.inception_resnet_v2(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      create_aux_logits=True,
+      activation_fn=config.activation_fn)
+
+
+def _vgg_scope(config):
+  return vgg.vgg_arg_scope(config.weight_decay)
+
+
+def _vgg(X, config, is_training):
+  net_fn_map = {
+      'vgg_a': vgg.vgg_a,
+      'vgg_16': vgg.vgg_16,
+      'vgg_19': vgg.vgg_19,
+      'vgg_d': vgg.vgg_d,
+      'vgg_e': vgg.vgg_e
+  }
+  return net_fn_map[config.name](
+      X, num_classes=config.data.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=True,
+      fc_conv_padding='VALID',
+      global_pool=False)
+
+
+def _overfeat_scope(config):
+  return overfeat.overfeat_arg_scope(config.weight_decay)
+
+
+def _overfeat(X, config, is_training):
+  return overfeat.overfeat(
+      X, num_classes=config.num_classes,
+      is_training=is_training,
+      dropout_keep_prob=config.dropout_keep,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _mobilenet_v1_scope(config, is_training):
+  return mobilenet_v1.mobilenet_v1_arg_scope(
+      is_training=is_training,
+      weight_decay=0.00004,
+      stddev=0.09,
+      regularize_depthwise=False)
+
+
+def _mobilenet_v1(X, config, is_training):
+  return mobilenet_v1.mobilenet_v1(
+      X, num_classes=config.num_classes,
+      dropout_keep_prob=config.dropout_keep,
+      is_training=is_training,
+      min_depth=8,
+      depth_multiplier=1.0,
+      conv_defs=None,
+      prediction_fn=tf.contrib.layers.softmax,
+      spatial_squeeze=True,
+      global_pool=False)
+
+
+def _nasnet_scope(config):
+  scope_fn_map = {
+      'nasnet_cifar': nasnet.nasnet_cifar_arg_scope,
+      'nasnet_mobile': nasnet.nasnet_mobile_arg_scope,
+      'nasnet_large': nasnet.nasnet_mobile_arg_scope
+  }
+  return scope_fn_map[config.name](
+      weight_decay=config.weight_decay,
+      batch_norm_decay=config.batch_norm_decay,
+      batch_norm_epsilon=config.batch_norm_epsilon)
+
+
+def _nasnet(X, config, is_training):
+  net_fn_map = {
+      'nasnet_cifar': nasnet.build_nasnet_cifar,
+      'nasnet_mobile': nasnet.build_nasnet_mobile,
+      'nasnet_large': nasnet.build_nasnet_large
+  }
+  return net_fn_map[config.name](X, config.num_classes, is_training)
