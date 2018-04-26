@@ -17,21 +17,18 @@ import tensorflow as tf
 
 from gate.data.preprocessing import cifarnet_preprocessing
 from gate.data.preprocessing import avec2014_preprocessing
-# from gate.data.preprocessing import inception_preprocessing
-# from gate.data.preprocessing import lenet_preprocessing
-# from gate.data.preprocessing import vgg_preprocessing
-
-# from gate.data.preprocessing import mnist_gan_preprocessing
-# from gate.data.preprocessing import kinship_vae_preprocessing
+from gate.data.preprocessing import inception_preprocessing
+from gate.data.preprocessing import lenet_preprocessing
+from gate.data.preprocessing import vgg_preprocessing
+from gate.data.preprocessing import kinship_vae_preprocessing
 
 
 preprocessing_map = {
     'cifarnet': cifarnet_preprocessing,
-    # 'inception': inception_preprocessing,
-    # 'lenet': lenet_preprocessing,
-    # 'vgg': vgg_preprocessing,
-    # 'gan.mnist': mnist_gan_preprocessing,
-    # 'vae.kinship': kinship_vae_preprocessing,
+    'inception': inception_preprocessing,
+    'lenet': lenet_preprocessing,
+    'vgg': vgg_preprocessing,
+    'vae.kinship': kinship_vae_preprocessing,
     'avec2014': avec2014_preprocessing
 }
 
