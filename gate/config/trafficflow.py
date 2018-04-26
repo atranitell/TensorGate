@@ -42,7 +42,8 @@ class TRAFFICFLOW(base.ConfigBase):
 
     """ net """
     self.net = [params.NET()]
-    self.net[0].resnet_v2_50(
+    self.net[0].resnet_v2(
+        depth='50',
         num_classes=1,
         weight_decay=0.0001,
         batch_norm_decay=0.997,
