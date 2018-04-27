@@ -19,6 +19,8 @@ Computer Vision for image recognition covering:
 
 import os
 import sys
+import argparse
+
 os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 sys.path.append('gate/net')
@@ -26,7 +28,6 @@ sys.path.append('gate/net')
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-import argparse
 from gate.config.factory import get_config
 
 

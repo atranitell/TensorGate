@@ -17,7 +17,13 @@ import tensorflow as tf
 import numpy as np
 from gate import context
 from gate.net.vae import kinvae
+from gate.data.factory import get_data
 from gate.layer import cosine
+from gate.layer import similarity
+from gate.util import filesystem
+from gate.util import string
+from gate.util.logger import logger
+from gate.issue.avec2014.utils import get_accurate_from_file
 
 
 class KINBASE(context.Context):
@@ -80,3 +86,60 @@ class KINBASE(context.Context):
       self.test_x = x if idx == 0 else np.row_stack((self.test_x, x))
       self.test_y = y if idx == 0 else np.row_stack((self.test_y, y))
       self.test_l = label if idx == 0 else np.append(self.test_l, label)
+
+  def _inference(self, output_dir):
+    """ COMMON FOR TRAIN AND VAL """
+    # considering output train image
+    data, info, path = get_data(self.config)
+    c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
+    c1_path, p1_path, c2_path, p2_path = tf.unstack(path, axis=1)
+    label, cond = tf.unstack(info, axis=1)
+
+    # encode image to a vector
+    feat_c1, feat_p2 = self._net(c1_real, p2_real)
+    R_loss, loss = self._loss_metric(feat_c1, feat_p2, None)
+
+    saver = tf.train.Saver()
+
+    with context.DefaultSession() as sess:
+      step = self.snapshot.restore(sess, saver)
+      info = string.concat(
+          self.batchsize,
+          [c1_path, p1_path, c2_path, p2_path, label, loss])
+
+      output = [info, feat_c1, feat_p2, label]
+      fw = open(output_dir + '%s.txt' % step, 'wb')
+
+      with context.QueueContext(sess):
+        for i in range(self.num_batch):
+          _info, _x, _y, _label = sess.run(output)
+          self._write_feat_to_npy(i, _x, _y, _label)
+          [fw.write(_line + b'\r\n') for _line in _info]
+          c1_zs = _x if i == 0 else np.row_stack((c1_zs, _x))
+          p2_zs = _y if i == 0 else np.row_stack((p2_zs, _y))
+
+      fw.close()
+      np.save(output_dir + '/' + step + '_c1.npy', c1_zs)
+      np.save(output_dir + '/' + step + '_p2.npy', p2_zs)
+
+      return step
+
+  def test(self):
+    """ we need acquire threshold from validation first """
+    with tf.Graph().as_default():
+      self._enter_('val')
+      _val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
+      _step = self._inference(_val_dir)
+      self._exit_()
+
+    with tf.Graph().as_default():
+      self._enter_('test')
+      _tst_dir = filesystem.mkdir(self.config.output_dir + '/test/')
+      _step = self._inference(_tst_dir)
+      val_err, val_thed, test_err = similarity.get_all_result(
+          self.val_x, self.val_y, self.val_l,
+          self.test_x, self.test_y, self.test_l, False)
+      keys = ['val_error', 'thred', 'test_error']
+      vals = [val_err, val_thed, test_err]
+      logger.test(logger.iters(int(_step) - 1, keys, vals))
+      self._exit_()

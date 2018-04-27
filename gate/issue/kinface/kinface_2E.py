@@ -21,14 +21,16 @@ from gate.util import variable
 from gate.issue.kinface import kinbase
 
 
-class KINFACE_1E(kinbase.KINBASE):
+class KINFACE_2E(kinbase.KINBASE):
 
   def __init__(self, config):
     kinbase.KINBASE.__init__(self, config)
 
   def _net(self, c1_real, p2_real):
-    c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
-    p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real, True)
+    with tf.variable_scope('net1'):
+      c1_mu, c1_sigma, feat_c1 = self._encoder(c1_real)
+    with tf.variable_scope('net2'):
+      p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real)
     return feat_c1, feat_p2
 
   def train(self):
