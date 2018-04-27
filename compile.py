@@ -11,6 +11,9 @@ Updated on 2017/12/09
 
 A tootls compile py to pyc and mv all py to another folder
 
+Usage:
+  python compile.py -bin=_bin -src=_src
+
 """
 
 import os
@@ -18,59 +21,70 @@ import argparse
 import shutil
 import py_compile
 
-# compile config - processing *.py files
-_ROOT = '../'
-_COMPILE_EXCLUDE_ROOT = ['_', '.git', '.vscode']  # skip folders
-_COMPILE_EXCLUDE_FILE = ['']  # skip files
 
+class Compiler():
 
-def is_include(root, exclude):
-  """ sub is a list """
-  for sub in exclude:
-    if sub in root:
-      return True
+  def __init__(self, dir_bin=None, dir_src=None):
+    self._EXCLUDE_ROOT = ['_', '.git', '.vscode']
+    self._EXCLUDE_FILE = None
+    self.filelist = self._traverse()
+    self.compile_src(dir_src)
+    self.compile_bin(dir_bin)
 
+  def compile_src(self, dir_src=None):
+    # dir_src is None, do nothing
+    if dir_src is None:
+      return
+    dir_src = os.path.join('../', dir_src)
+    self.mkdir(dir_src)
+    # copy to new dst
+    for path in self.filelist:
+      dst_src = path.replace('./', dir_src + '/')
+      if not os.path.exists(os.path.dirname(dst_src)):
+        os.makedirs(os.path.dirname(dst_src))
+      shutil.copy(path, dst_src)
+      print(dst_src)
 
-def mkdir(path):
-  """ remove old and create new """
-  if os.path.exists(path):
-    shutil.rmtree(path)
-  os.mkdir(path)
+  def compile_bin(self, dir_bin=None):
+    if dir_bin is None:
+      return
+    dir_bin = os.path.join('../', dir_bin)
+    self.mkdir(dir_bin)
+    for path in self.filelist:
+      dst_bin = path.replace('./', dir_bin + '/') + 'c'
+      py_compile.compile(path, cfile=dst_bin, optimize=2)
+      print(dst_bin)
 
-
-def process(root, fname, dir_bin=None, dir_src=None):
-  """ compile and move """
-  path = os.path.join(root, fname)
-  if dir_bin is not None:
-    dst_bin = path.replace('./', dir_bin + '/') + 'c'
-    py_compile.compile(path, cfile=dst_bin, optimize=2)
-    print(dst_bin)
-
-  if dir_src is not None:
-    dst_src = path.replace('./', dir_src + '/')
-    if not os.path.exists(os.path.dirname(dst_src)):
-      os.makedirs(os.path.dirname(dst_src))
-    shutil.copy(path, dst_src)
-    print(dst_src)
-
-
-def traverse(dir_bin=None, dir_src=None):
-  """ traverse tree """
-  if dir_bin is not None:
-    dir_bin = os.path.join(_ROOT, dir_bin)
-    mkdir(dir_bin)
-  if dir_src is not None:
-    dir_src = os.path.join(_ROOT, dir_src)
-    mkdir(dir_src)
-  for paths in os.walk('./'):
-    root = paths[0]
-    if is_include(root, _COMPILE_EXCLUDE_ROOT):
-      continue
-    for fname in paths[2]:
-      if is_include(fname, _COMPILE_EXCLUDE_FILE):
+  def _traverse(self):
+    """ acquire current all python file paths
+    """
+    filepaths = []
+    for paths in os.walk('./'):
+      root = paths[0]
+      if self.is_include(root, self._EXCLUDE_ROOT):
         continue
-      if os.path.splitext(fname)[1] == '.py':
-        process(root, fname, dir_bin, dir_src)
+      for fname in paths[2]:
+        if self.is_include(fname, self._EXCLUDE_FILE):
+          continue
+        if os.path.splitext(fname)[1] == '.py':
+          filepaths.append(os.path.join(root, fname))
+    return filepaths
+
+  @staticmethod
+  def mkdir(path):
+    """ remove old and create new """
+    if os.path.exists(path):
+      shutil.rmtree(path)
+    os.mkdir(path)
+
+  @staticmethod
+  def is_include(root, exclude):
+    """ sub is a list """
+    if exclude is None:
+      return False
+    for sub in exclude:
+      if sub in root:
+        return True
 
 
 if __name__ == '__main__':
@@ -79,4 +93,4 @@ if __name__ == '__main__':
   parser.add_argument('-bin', type=str, dest='bin', default=None)
   parser.add_argument('-src', type=str, dest='src', default=None)
   args, _ = parser.parse_known_args()
-  traverse(args.bin, args.src)
+  Compiler(args.bin, args.src)
