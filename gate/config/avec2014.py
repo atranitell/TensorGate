@@ -109,6 +109,39 @@ class AVEC2014(base.ConfigBase):
                    scale=True)
 
 
+class AVEC2014_HEATMAP(AVEC2014):
+
+  def __init__(self, config):
+
+    base.ConfigBase.__init__(self, config)
+
+    """ base """
+    self.name = 'avec2014.heatmap'
+    self.target = 'avec2014.img.cnn'
+    self.data_dir = '../_datasets/AVEC2014'
+    self.output_dir = '../models/AVEC2014.image/avec2014_resnet_50'
+    self.task = 'heatmap'
+
+    """ net """
+    self.net = [params.NET()]
+    self.net[0].resnet_v2(
+        depth='50',
+        num_classes=1,
+        weight_decay=0.0005)
+
+    """ data.test """
+    self.test = params.Phase('test')
+    self.test.data = params.DATA(
+        batchsize=1,
+        entry_path='../_datasets/AVEC2014/pp_tst_img_paper.txt',
+        shuffle=False)
+    self.test.data.set_queue_loader(
+        loader='load_image',
+        reader_thread=1,
+        min_queue_num=1)
+    self.set_default_data_attr(self.test.data)
+
+
 class AVEC2014_FLOW(base.ConfigBase):
 
   def __init__(self, config):

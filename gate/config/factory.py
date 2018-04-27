@@ -22,6 +22,7 @@ config_map = {
     'mnist': mnist.MNIST,
     'trafficflow': trafficflow.TRAFFICFLOW,
     'avec2014': avec2014.AVEC2014,
+    'avec2014.heatmap': avec2014.AVEC2014_HEATMAP,
     'avec2014.flow': avec2014.AVEC2014_FLOW,
     'avec2014.bicnn': avec2014.AVEC2014_BICNN,
     'avec2014.audio': avec2014.AVEC2014_AUDIO,

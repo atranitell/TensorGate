@@ -52,6 +52,10 @@ def run(dataset, config_file):
     App(config).train()
   elif config.task == 'test':
     App(config).test()
+  elif config.task == 'val':
+    App(config).val()
+  elif config.task == 'heatmap':
+    App(config).heatmap()
 
 
 if __name__ == "__main__":
