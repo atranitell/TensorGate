@@ -25,7 +25,7 @@ import py_compile
 class Compiler():
 
   def __init__(self, dir_bin=None, dir_src=None):
-    self._EXCLUDE_ROOT = ['_', '.git', '.vscode']
+    self._EXCLUDE_ROOT = ['_', '.git', '.vscode', 'drawer', 'tool']
     self._EXCLUDE_FILE = None
     self.filelist = self._traverse()
     self.compile_src(dir_src)
