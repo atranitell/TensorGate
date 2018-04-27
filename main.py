@@ -18,7 +18,10 @@ Computer Vision for image recognition covering:
 """
 
 import os
+import sys
+os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+sys.path.append('gate/net')
 
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
@@ -40,6 +43,8 @@ def run(dataset, config_file):
     from gate.issue.trafficflow.trafficflow import select as App
   elif config.target.startswith('avec2014'):
     from gate.issue.avec2014.avec2014 import select as App
+  elif config.target.startswith('kinface'):
+    from gate.issue.kinface.kinface import select as App
 
   """ Task """
   if config.task == 'train':

@@ -13,11 +13,13 @@ CONFIG BASE
 
 """
 
+import json
+
 
 class ConfigBase():
 
   def __init__(self, config):
-    pass
+    self.config_value = self._load_config_file(config)
 
   def set_phase(self, phase):
     """ for switch phase
@@ -44,3 +46,30 @@ class ConfigBase():
   def _val(self):
     self.phase = self.val.name
     self.data = self.val.data
+
+  def _load_config_file(self, config):
+    if config is not None:
+      with open(config) as fp:
+        return json.load(fp)
+    else:
+      return None
+
+  def _read_config_file(self, default_v, key_v):
+    """ key_v like 'train.lr' -> [train][lr]
+    """
+    r = key_v.split('.')
+    try:
+      if len(r) == 1:
+        config_v = self.config_value[r[0]]
+      elif len(r) == 2:
+        config_v = self.config_value[r[0]][r[1]]
+      elif len(r) == 3:
+        config_v = self.config_value[r[0]][r[1]][r[2]]
+      elif len(r) == 4:
+        config_v = self.config_value[r[0]][r[1]][r[2]][r[3]]
+      else:
+        raise ValueError('Too long to implement!')
+      v = config_v
+    except:
+      v = default_v
+    return v

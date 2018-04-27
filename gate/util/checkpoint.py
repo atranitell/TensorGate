@@ -71,6 +71,7 @@ import os
 import re
 import tensorflow as tf
 from tensorflow.contrib import framework
+from tensorflow.python import pywrap_tensorflow
 from tensorflow.python.tools import freeze_graph
 from tensorflow.python.tools import optimize_for_inference
 from tensorflow.python.tools import import_pb_to_tensorboard
@@ -325,3 +326,51 @@ def pb_to_tensorboard(model_dir, log_dir):
   import_pb_to_tensorboard.import_to_tensorboard(
       model_dir=model_dir,
       log_dir=log_dir)
+
+
+def ckpt_change_prefix(infile, outfile, old_prefix, new_prefix):
+  """ Solve the issue of different name scope of same model.
+  e.g.
+      # change_checkpoint_prefix(
+      #     infile='vgg_16.ckpt', outfile='vgg_16_new',
+      #     old_prefix='vgg_16', new_prefix='net/vgg_16')
+  """
+  with tf.Graph().as_default():
+    reader = pywrap_tensorflow.NewCheckpointReader(infile)
+    var_to_shape_map = reader.get_variable_to_shape_map()
+    # save to Graph
+    for key in var_to_shape_map:
+      print("tensor_name_old: ", key)
+      new_key = key.replace(old_prefix, new_prefix)
+      tf.Variable(reader.get_tensor(key), name=new_key)
+      print("tensor_name_new: ", new_key)
+    # save to file
+    saver = tf.train.Saver(var_list=tf.global_variables())
+    with tf.Session() as sess:
+      sess.run(tf.global_variables_initializer())
+      saver.save(sess, outfile)
+
+
+def ckpt_compute_parameter(filepath):
+  """ compute sum weights in DNN model
+  e.g.
+      compute_parameter_num('train.ckpt-100001')
+  """
+  def _inner_product(arr):
+    _val = 1
+    for _i in arr:
+      _val *= _i
+    return _val
+
+  reader = pywrap_tensorflow.NewCheckpointReader(filepath)
+  var_to_shape_map = reader.get_variable_to_shape_map()
+  val_list = []
+  for key in var_to_shape_map:
+    if key.find('Adam') > 0:
+      continue
+    print("tensor_name: ", key)
+    val = _inner_product(var_to_shape_map[key])
+    print("tensor_size: ", var_to_shape_map[key], val)
+    val_list.append(val)
+  print('Total params number: ', sum(val_list))
+  return sum(val_list)

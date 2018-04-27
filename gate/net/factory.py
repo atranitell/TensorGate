@@ -13,9 +13,6 @@ NETWORK FACTORY: Parse parameters from the config
 
 """
 
-import sys
-sys.path.append('gate\\net')
-
 import tensorflow as tf
 from gate.net import models
 

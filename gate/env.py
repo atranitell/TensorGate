@@ -38,15 +38,8 @@ class Env():
     self._LOG_CFG = True
     self._LOG_TIMER = True
 
-    # compile config - processing *.py files
-    self._COMPILE_DIR_BIN = '../_bin'  # output dir of binary file
-    self._COMPILE_DIR_SRC = '../_src'  # output dir of code source
-    self._COMPILE_EXCLUDE_ROOT = ['_', '.git', '.vscode']  # skip folders
-    self._COMPILE_EXCLUDE_FILE = ['compile.py']  # skip files
-
     # SUMMARY SCALAR
     self._SUMMARY_SCALAR = True
-
     # SUMMARY SETTING
     self._SUMMARY_GRAD_STAT = False
     self._SUMMARY_GRAD_HIST = False

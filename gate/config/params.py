@@ -128,6 +128,9 @@ class NET():
     """
     self.num_classes = num_classes
 
+  def _set_z_dim(self, z_dim):
+    self.z_dim = z_dim
+
   def resnet_v2(
           self,
           depth='50',  # 50, 101, 152, 200
@@ -276,6 +279,13 @@ class NET():
     self._set_dropout_keep(dropout_keep)
     self._set_spatial_squeeze(spatial_squeeze)
     self._set_global_pool(global_pool)
+
+  def kinvae(
+          self,
+          z_dim=100,
+          scope='kinvae'):
+    self._set_name(scope)
+    self._set_z_dim(z_dim)
 
 
 class LOG():
