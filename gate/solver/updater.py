@@ -14,6 +14,7 @@ UPDATER
 """
 
 import tensorflow as tf
+from gate.util import variable
 from gate.util.logger import logger
 from gate.solver.optimizer import configure_optimizer
 from gate.solver.learning_rate import configure_lr
@@ -35,6 +36,9 @@ def default(config, loss, global_step, var_list=None, index=0):
   # default to train all variables in the network.
   if var_list is None:
     var_list = tf.trainable_variables()
+  else:
+    logger.info('Specify training vars list:')
+    variable.print_vars(var_list)
 
   # configure learning rate
   lr = configure_lr(config=config.lr[index],

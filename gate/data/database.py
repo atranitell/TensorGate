@@ -16,4 +16,8 @@ DATASETS BASE
 import abc
 import tensorflow as tf
 
-# class Database(tf.data.Dataset)
+
+class Database(tf.data.Dataset):
+
+  def __init__(self):
+    pass

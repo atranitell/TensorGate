@@ -67,8 +67,8 @@ class AVEC2014_AUDIO_CNN(context.Context):
           step=global_step,
           keys=['loss', 'mae', 'rmse'],
           values=[loss, mae, rmse],
-          func_test=self.test,
-          func_val=None))
+          # func_test=self.test,
+          func_val=self.val))
 
       saver = tf.train.Saver(var_list=variable.all())
       with context.DefaultSession(self.hooks) as sess:
@@ -77,6 +77,42 @@ class AVEC2014_AUDIO_CNN(context.Context):
           sess.run(train_op)
 
     self._exit_()
+
+  def val(self):
+    self._enter_('val')
+    # create a folder to save
+    val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
+    # get data
+    image, label, path = get_data(self.config)
+    # get net
+    logit, _ = self._net(image)
+    # output to file
+    info = string.concat(self.batchsize, [path, label, logit*self.data.span])
+    saver = tf.train.Saver()
+
+    # running val
+    with context.DefaultSession() as sess:
+      global_step = self.snapshot.restore(sess, saver)
+      result_path = val_dir + '%s.txt' % global_step
+      with open(result_path, 'wb') as fw:
+        with context.QueueContext(sess):
+          for _ in range(self.num_batch):
+            _info = sess.run(info)
+            [fw.write(_line + b'\r\n') for _line in _info]
+
+      # display results on screen
+      _mae, _rmse = get_accurate_from_file(result_path)
+      keys = ['total sample', 'num batch', 'video_mae', 'video_rmse']
+      vals = [self.total_num, self.num_batch, _mae, _rmse]
+      logger.val(logger.iters(int(global_step), keys, vals))
+
+      # write to summary
+      self.summary.adds(global_step=global_step,
+                        tags=['val/video_mae', 'val/video_rmse'],
+                        values=[_mae, _rmse])
+
+      self._exit_()
+      return _rmse
 
   def test(self):
     self._enter_('test')

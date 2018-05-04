@@ -21,7 +21,8 @@ import os
 import sys
 import argparse
 
-os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
+GPU_ID = '0' if len(sys.argv) == 1 else sys.argv[1]
+os.environ["CUDA_VISIBLE_DEVICES"] = GPU_ID
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 sys.path.append('gate/net')
 
@@ -40,6 +41,8 @@ def run(dataset, config_file):
     from gate.issue.cnn.classification import Classification as App
   elif config.target == 'cnn.regression':
     from gate.issue.cnn.regression import Regression as App
+  elif config.target.startswith('detect'):
+    from gate.issue.detect.detect import select as App
   elif config.target.startswith('trafficflow'):
     from gate.issue.trafficflow.trafficflow import select as App
   elif config.target.startswith('avec2014'):
@@ -61,7 +64,7 @@ def run(dataset, config_file):
 if __name__ == "__main__":
   # parse command line
   parser = argparse.ArgumentParser()
-  parser.add_argument('-dataset', type=str, dest='dataset')
+  parser.add_argument('-dataset', type=str, dest='dataset', default='coco2014')
   parser.add_argument('-config', type=str, dest='config_file', default=None)
   args, _ = parser.parse_known_args()
   run(args.dataset, args.config_file)

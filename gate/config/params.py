@@ -426,6 +426,13 @@ class DATA():
     self.total_num = None
     self.configs = []
 
+  def set_custom_loader(
+          self,
+          loader=None,
+          data_dir=None):
+    self.loader = loader
+    self.data_dir = data_dir
+
   def set_queue_loader(
           self,
           loader=None,

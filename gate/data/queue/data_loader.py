@@ -16,9 +16,9 @@ Data Loader
 import random
 import numpy as np
 import tensorflow as tf
+from gate.data import data_utils
 from gate.data.queue import data_entry
 from gate.data.queue import data_prefetch
-from gate.data.queue import data_utils
 from gate.data.preprocessing.factory import get_preprocessing
 
 

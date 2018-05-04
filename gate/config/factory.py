@@ -17,6 +17,7 @@ from gate.config import mnist
 from gate.config import trafficflow
 from gate.config import avec2014
 from gate.config import kinface
+from gate.config import coco
 
 config_map = {
     'mnist': mnist.MNIST,
@@ -26,7 +27,8 @@ config_map = {
     'avec2014.flow': avec2014.AVEC2014_FLOW,
     'avec2014.bicnn': avec2014.AVEC2014_BICNN,
     'avec2014.audio': avec2014.AVEC2014_AUDIO,
-    'kinface.vae': kinface.KinfaceVAE
+    'kinface.vae': kinface.KinfaceVAE,
+    'coco2014': coco.COCO2014
 }
 
 

@@ -14,12 +14,13 @@ Data Loader
 """
 
 from gate.data.queue import data_loader
-
+from gate.data.custom import db_coco
 
 loader_maps = {
     'load_image': data_loader.load_image,
     'load_npy': data_loader.load_npy,
-    'load_audio': data_loader.load_audio
+    'load_audio': data_loader.load_audio,
+    'coco': db_coco.DB_COCO
 }
 
 
