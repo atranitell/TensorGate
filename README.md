@@ -101,7 +101,7 @@ $ python main.py 0 -dataset=mnist -extra=demo.json
 - **[compile.py](#)** packege `gate` into a fold in `.bin` or `.py` without debug info
 
 ## To-Do
-- [ ] (05/08/18) Review Kinface related issues
+- [x] (05/08/18) Review Kinface related issues
 - [x] (05/08/18) Review AVEC2014-CNN/HEATMAP/FLOW/BICNN/Audio-NET
 - [ ] Reconstruct gate framework to make more flexible
 - [ ] Add mask-rcnn trainig module

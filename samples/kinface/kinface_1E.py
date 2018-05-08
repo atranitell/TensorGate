@@ -1,24 +1,25 @@
-# -*- coding: utf-8 -*-
-"""
-DECTRION FRAMEWORK
-
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2018/2/25
-
---------------------------------------------------------
-
-FOR KINFACE
-
-"""
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""FOR KINFACE"""
 
 import tensorflow as tf
 from gate import context
-from gate.data.factory import get_data
+from gate.data.data_factory import load_data
 from gate.solver import updater
-from gate.util import variable
-from gate.issue.kinface import kinbase
+from gate.utils import variable
+from samples.kinface import kinbase
 
 
 class KINFACE_1E(kinbase.KINBASE):
@@ -35,7 +36,7 @@ class KINFACE_1E(kinbase.KINBASE):
     self._enter_('train')
     with tf.Graph().as_default() as graph:
       # load data
-      data, info, path = get_data(self.config)
+      data, info, path = load_data(self.config)
       c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
       label, cond = tf.unstack(info, axis=1)
       # load net

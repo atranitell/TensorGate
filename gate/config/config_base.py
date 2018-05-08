@@ -76,7 +76,7 @@ class Configbase():
     with open(config_path) as fp:
       return json.load(fp)
 
-  def r(self, default_v, key_v):
+  def _read_config_file(self, default_v, key_v):
     """key_v like 'train.lr' -> [train][lr]
 
     Example:
@@ -85,8 +85,6 @@ class Configbase():
         else return '../_datasets/train'
 
     """
-    if self.EXTRA_CONFIG is None:
-      raise ValueError('System has not loaded the extra config file.')
     r = key_v.split('.')
     try:
       if len(r) == 1:
@@ -101,7 +99,5 @@ class Configbase():
         raise ValueError('Too long to implement!')
       v = config_v
     except BaseException:
-      content = 'Key {0:,} has not found, using default {1:,}'
-      logger.warn(content.format(key_v, default_v))
       v = default_v
     return v
