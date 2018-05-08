@@ -1,57 +1,48 @@
-# -*- coding: utf-8 -*-
-"""
-DECTRION FRAMEWORK
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""ENVIRONMENT FOR COMMON CALLING"""
 
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2018/4/19
-
---------------------------------------------------------
-
-ENVIRONMENT FOR COMMON CALLING
-
-"""
-
-from gate.util import filesystem
+from gate.utils import filesystem
 
 
 class Env():
-  """ Environment Variables.
-  """
+  """Environment Variables."""
 
-  def __init__(self):
-    # setting output file
-    self._OUTPUT = filesystem.mkdir('../_outputs/')
-    self._DATASET = '../_datasets'
+  _OUTPUT = filesystem.mkdir('../_outputs/')
+  _DATASET = '../_datasets'
 
-    # logger config
-    self._LOG_DATE = True
-    self._LOG_SYS = True
-    self._LOG_TRAIN = True
-    self._LOG_TEST = True
-    self._LOG_VAL = True
-    self._LOG_NET = True
-    self._LOG_WARN = True
-    self._LOG_INFO = True
-    self._LOG_ERR = True
-    self._LOG_CFG = True
-    self._LOG_TIMER = True
+  # logger config
+  _LOG_DATE = True
+  _LOG_SYS = True
+  _LOG_TRAIN = True
+  _LOG_TEST = True
+  _LOG_VAL = True
+  _LOG_NET = True
+  _LOG_WARN = True
+  _LOG_INFO = True
+  _LOG_ERR = True
+  _LOG_CFG = True
+  _LOG_TIMER = True
 
-    # compile config - processing *.py files
-    self._COMPILE_DIR_BIN = '../_bin'  # output dir of binary file
-    self._COMPILE_DIR_SRC = '../_src'  # output dir of code source
-    self._COMPILE_EXCLUDE_ROOT = ['_', '.git', '.vscode']  # skip folders
-    self._COMPILE_EXCLUDE_FILE = ['compile.py']  # skip files
-
-    # SUMMARY SCALAR
-    self._SUMMARY_SCALAR = True
-
-    # SUMMARY SETTING
-    self._SUMMARY_GRAD_STAT = False
-    self._SUMMARY_GRAD_HIST = False
-    self._SUMMARY_WEIGHT_STAT = False
-    self._SUMMARY_WEIGHT_HIST = False
+  # SUMMARY SCALAR
+  _SUMMARY_SCALAR = True
+  # SUMMARY SETTING
+  _SUMMARY_GRAD_STAT = False
+  _SUMMARY_GRAD_HIST = False
+  _SUMMARY_WEIGHT_STAT = False
+  _SUMMARY_WEIGHT_HIST = False
 
 
 env = Env()

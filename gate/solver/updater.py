@@ -1,20 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-GATE FRAMEWORK
-
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2017/8/28
-
---------------------------------------------------------
-
-UPDATER
-
-"""
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""UPDATER"""
 
 import tensorflow as tf
-from gate.util.logger import logger
+from gate.utils import variable
+from gate.utils.logger import logger
 from gate.solver.optimizer import configure_optimizer
 from gate.solver.learning_rate import configure_lr
 from gate.env import env
@@ -29,12 +31,17 @@ def default(config, loss, global_step, var_list=None, index=0):
   Considering multi-updater, each should independently train,
     it should receive var list as input.
 
-  var_list: variables should be trained.
-  index: a flag to pinpoint setting. For single updater, the value is 0.
+  Args:
+    var_list: variables should be trained.
+    index: a flag to pinpoint setting. For single updater, the value is 0.
+
   """
   # default to train all variables in the network.
   if var_list is None:
     var_list = tf.trainable_variables()
+  else:
+    logger.info('Specify training vars list:')
+    variable.print_vars(var_list)
 
   # configure learning rate
   lr = configure_lr(config=config.lr[index],

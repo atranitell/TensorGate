@@ -1,25 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-DECTRION FRAMEWORK
-
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2017/6/21
-
---------------------------------------------------------
-
-Some fast layer descriptors
-
-"""
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Some fast layer descriptors"""
 
 import tensorflow as tf
 from tensorflow.contrib import layers
 
-
-# -------------------------------------------------------
-# ACTIVATION AREA
-# -------------------------------------------------------
 
 def relu(x, name='relu'):
   return tf.nn.relu(x, name)
@@ -27,10 +24,6 @@ def relu(x, name='relu'):
 
 def lrelu(x, leak=0.2, name='lrelu'):
   return tf.maximum(x, leak * x, name=name)
-
-# -------------------------------------------------------
-# POOLING AREA
-# -------------------------------------------------------
 
 
 def max_pool2d(x, ksize, stride, padding='SAME', name='max_pool2d'):
@@ -40,10 +33,6 @@ def max_pool2d(x, ksize, stride, padding='SAME', name='max_pool2d'):
       stride=stride,
       padding=padding,
       scope=name)
-
-# -------------------------------------------------------
-# NORMALIZATION AREA
-# -------------------------------------------------------
 
 
 def bn(x, decay=0.9, is_training=True, scope='bn'):
@@ -55,10 +44,6 @@ def bn(x, decay=0.9, is_training=True, scope='bn'):
       scale=True,
       is_training=is_training,
       scope=scope)
-
-# -------------------------------------------------------
-# CONVLUTION AREA
-# -------------------------------------------------------
 
 
 def conv2d(x, filters, ksize, stride,
@@ -95,10 +80,6 @@ def conv_cond_concat(x, y):
   cond = tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])
   return tf.concat([x, y * cond], 3)
 
-
-# -------------------------------------------------------
-# LINEAR AREA
-# -------------------------------------------------------
 
 def linear(x, output_size, scope="linear", reuse=None):
   return layers.fully_connected(

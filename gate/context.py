@@ -1,27 +1,28 @@
-# -*- coding: utf-8 -*-
-"""
-DECTRION FRAMEWORK
-
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2018/4/19
-
---------------------------------------------------------
-
-CONTEXT for all issues.
-
-"""
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""CONTEXT for all issues"""
 
 import time
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
-from gate.util.logger import logger
-from gate.util import filesystem
-from gate.util import string
-from gate.util import variable
 from gate.env import env
+from gate.utils import filesystem
+from gate.utils import string
+from gate.utils import variable
+from gate.utils.logger import logger
 from gate.solver import snapshot
 from gate.solver import summary
 
@@ -53,6 +54,9 @@ class Context():
     self.hooks = []
     self.summary = summary.Summary(self.config)
     self.snapshot = snapshot.Snapshot(self.config)
+
+    # print config information
+    string.print_members(config)
 
   def _enter_(self, phase):
     self.prephase = self.phase
@@ -111,8 +115,9 @@ class Running_Hook(tf.train.SessionRunHook):
     self.func_test = func_test
 
   def begin(self):
+    pass
     # display variables
-    variable.print_trainable_list()
+    # variable.print_trainable_list()
     # variables.print_global_list()
 
   def before_run(self, run_context):
@@ -146,8 +151,7 @@ class Running_Hook(tf.train.SessionRunHook):
 
 
 class QueueContext():
-  """ For managing the data reader queue.
-  """
+  """For managing the data reader queue."""
 
   def __init__(self, sess):
     self.sess = sess
@@ -165,8 +169,7 @@ class QueueContext():
 
 
 class DefaultSession():
-  """ Default session for custom
-  """
+  """Default session for custom"""
 
   def __init__(self, hooks=None):
     self.hooks = hooks
@@ -178,8 +181,8 @@ class DefaultSession():
     ----
       test presents that the performance has no benefits.
     """
-    # tf_config = tf.ConfigProto()
-    # tf_config.gpu_options.allow_growth = True
+    tf_config = tf.ConfigProto()
+    tf_config.gpu_options.allow_growth = True
     if self.hooks is not None:
       self.sess = tf.train.MonitoredTrainingSession(
           hooks=self.hooks,

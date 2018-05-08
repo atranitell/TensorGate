@@ -1,31 +1,36 @@
-# -*- coding: utf-8 -*-
-"""
-GATE FRAMEWORK
-
-Copyright (c) 2017 Kai JIN.
-Licensed under the MIT License (see LICENSE for details)
-Written by Kai JIN
-Updated on 2017/3/16
-
---------------------------------------------------------
-
-Optimizer
-
-"""
+# Copyright 2017 The KaiJIN Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Optimizer"""
 
 import tensorflow as tf
-from gate.util.logger import logger
+from gate.utils.logger import logger
 
 
 def configure_optimizer(config, learning_rate):
   """Configures the optimizer used for training.
+
   Args:
     config: config.train.optimizer
     learning_rate: A scalar or `Tensor` learning rate.
+
   Returns:
     An instance of an optimizer.
+
   Raises:
     ValueError: if opt.optimizer is not recognized.
+
   """
   logger.info('Routine will use %s optimizer.' % config.name)
 
