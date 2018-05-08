@@ -56,7 +56,8 @@ class KinfaceVAE(Configbase):
     self.train = params.Phase('train')
     self.train.data = params.DATA(
         batchsize=r(32, 'train.batchsize'),
-        entry_path=r('../_datasets/kinface2/train_kinvae_1.txt', 'train.entry_path'),
+        entry_path=r('../_datasets/kinface2/train_kinvae_1.txt',
+                     'train.entry_path'),
         shuffle=True)
     self.train.data.set_queue_loader(
         loader='load_image',
@@ -68,7 +69,8 @@ class KinfaceVAE(Configbase):
     self.val = params.Phase('val')
     self.val.data = params.DATA(
         batchsize=r(100, 'test.batchsize'),
-        entry_path=r('../_datasets/kinface2/train_kinvae_1.txt', 'val.entry_path'),
+        entry_path=r('../_datasets/kinface2/train_kinvae_1.txt',
+                     'val.entry_path'),
         shuffle=False)
     self.val.data.set_queue_loader(
         loader='load_image',
@@ -80,7 +82,8 @@ class KinfaceVAE(Configbase):
     self.test = params.Phase('test')
     self.test.data = params.DATA(
         batchsize=r(100, 'test.batchsize'),
-        entry_path=r('../_datasets/kinface2/test_kinvae_1.txt', 'test.entry_path'),
+        entry_path=r('../_datasets/kinface2/test_kinvae_1.txt',
+                     'test.entry_path'),
         shuffle=False)
     self.test.data.set_queue_loader(
         loader='load_image',
@@ -101,6 +104,6 @@ class KinfaceVAE(Configbase):
         gray=False)
     data.add([image, image, image, image])
     data.set_entry_attr(
-      (str, str, str, str, int, int),
-      (True, True, True, True, False, False))
+        (str, str, str, str, int, int),
+        (True, True, True, True, False, False))
     data.set_label(num_classes=4)

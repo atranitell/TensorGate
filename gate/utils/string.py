@@ -46,7 +46,7 @@ def print_members(obj):
     for item in sorted(obj.__dict__.items()):
       if type(item[1]) in common_type and item[0].find('__') < 0:
         res.append('%s: %s' % item)
-      elif type(item[1]) == list:
+      elif type(item[1]) == list and len(item[1]) > 0:
         if type(item[1][0]) in common_type:
           res.append('%s: %s' % item)
         else:

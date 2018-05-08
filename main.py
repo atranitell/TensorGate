@@ -50,6 +50,8 @@ def run(args):
     from samples.avec2014.avec2014 import select as App
   elif config.target.startswith('kinface'):
     from samples.kinface.kinface import select as App
+  else:
+    raise ValueError('Unknown target [%s]' % config.target)
 
   """ Task """
   if config.task == 'train':
@@ -60,6 +62,8 @@ def run(args):
     App(config).val()
   elif config.task == 'heatmap':
     App(config).heatmap()
+  else:
+    raise ValueError('Unknown task [%s]' % config.task)
 
 
 if __name__ == "__main__":

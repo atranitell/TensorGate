@@ -19,19 +19,23 @@ from gate.utils import filesystem
 from gate.utils.logger import logger
 
 
+TASK_MAP = ['train', 'test', 'val', 'inference', 'extract_feature',
+            'heatmap', 'freeze_model']
+
+
 class Configbase():
   """All config class should inherit this class."""
 
   def __init__(self, args):
     """Check setting and path."""
-    self.TASK_MAP = ['train', 'test', 'val', 'inference', 'extract_feature',
-                     'heatmap', 'freeze_model']
     self.EXTRA_CONFIG = None
     if args.task is not None:
-      if args.task not in self.TASK_MAP:
+      if args.task not in TASK_MAP:
         raise ValueError('Unknown task %s' % args.task)
+      self.task = args.task
     if args.model is not None:
       filesystem.raise_path_not_exist(args.model)
+      self.output_dir = args.model
     if args.config is not None:
       filesystem.raise_path_not_exist(args.config)
       self.EXTRA_CONFIG = self._load_config_file(args.config)

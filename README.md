@@ -101,27 +101,27 @@ $ python main.py 0 -dataset=mnist -extra=demo.json
 - **[compile.py](#)** packege `gate` into a fold in `.bin` or `.py` without debug info
 
 ## To-Do
-- [ ] reconstruct gate framework to make more flexible
-- [ ] add mask-rcnn trainig module
-- [ ] add mask-rcnn inference module
-- [ ] add mask-rcnn visualization method
-- [x] add batchnorm params to update collections (fixed BN un-trained)
-- [x] add GradCAM, guidedCAM, guided backpropagation
-- [x] add heatmap for AVEC2014-Image
-- [x] package heatmap as a class
-- [x] add AVEC2014 Image Issue [untest]
-- [x] add AVEC2014 Audio Issue [untest]
-- [x] update slim model to TensorGate
-- [x] update net factory logic: argscope in the head of net model
-- [x] package functions with class
-- [x] learning rate: add cosine, linear cosine, noisy linear cosine, inverse time
-- [x] optimizer: add proximal, proximal adagrad
-- [x] env: summary, logger, compiler
-- [x] move classical model to ./example
-- [x] move project model to ./issue
-- [x] separate preprocessing method by input format
-- [x] re-construct data layer
-- [x] move a part of classical method to example folder
+- [ ] (05/08/18) Review Kinface related issues
+- [x] (05/08/18) Review AVEC2014-CNN/HEATMAP/FLOW/BICNN/Audio-NET
+- [ ] Reconstruct gate framework to make more flexible
+- [ ] Add mask-rcnn trainig module
+- [ ] Add mask-rcnn inference module
+- [ ] Add mask-rcnn visualization method
+- [x] (04/08/18) Add batchnorm params to update collections (fixed BN un-trained)
+- [x] (03/08/18) Add GradCAM, guidedCAM, guided backpropagation
+- [x] (03/08/18) Add heatmap for AVEC2014-Image
+- [x] (03/08/18) Package heatmap as a class
+- [x] Update slim model to TensorGate
+- [x] Update net factory logic: argscope in the head of net model
+- [x] Package functions with class
+- [x] Learning rate: add cosine, linear cosine, noisy linear cosine, inverse time
+- [x] Optimizer: add proximal, proximal adagrad
+- [x] Env: summary, logger, compiler
+- [x] Move classical model to ./example
+- [x] Move project model to ./issue
+- [x] Separate preprocessing method by input format
+- [x] Re-construct data layer
+- [x] Move a part of classical method to example folder
 
 ## License
 [Apache License 2.0](https://github.com/atranitell/TensorGate/blob/v6/LICENSE)

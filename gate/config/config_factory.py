@@ -17,18 +17,17 @@
 from gate.config.dataset import mnist
 from gate.config.dataset import trafficflow
 from gate.config.dataset import kinface
-# from gate.config.dataset import avec2014
+from gate.config.dataset import avec2014
 # from gate.config.dataset import coco
 
 config_map = {
     'mnist': mnist.MNIST,
     'trafficflow': trafficflow.TRAFFICFLOW,
     'kinface.vae': kinface.KinfaceVAE,
-    # 'avec2014': avec2014.AVEC2014,
-    # 'avec2014.heatmap': avec2014.AVEC2014_HEATMAP,
-    # 'avec2014.flow': avec2014.AVEC2014_FLOW,
-    # 'avec2014.bicnn': avec2014.AVEC2014_BICNN,
-    # 'avec2014.audio': avec2014.AVEC2014_AUDIO,
+    'avec2014': avec2014.AVEC2014,
+    'avec2014.flow': avec2014.AVEC2014_FLOW,
+    'avec2014.bicnn': avec2014.AVEC2014_BICNN,
+    'avec2014.audio': avec2014.AVEC2014_AUDIO,
     # 'coco2014': coco.COCO2014
 }
 
