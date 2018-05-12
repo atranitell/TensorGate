@@ -95,3 +95,5 @@ ENV/
 # for mac
 .DS_Store
 .vscode
+
+_configs
