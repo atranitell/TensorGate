@@ -22,6 +22,7 @@ class MNIST(Configbase):
 
   def __init__(self, args):
     """MNIST dataset for classification"""
+    Configbase.__init__(self, args)
     self.name = 'mnist'
     self.target = 'vision.classification'
     self.output_dir = None

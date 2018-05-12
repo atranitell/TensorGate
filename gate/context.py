@@ -36,6 +36,8 @@ class Context():
       like 'train' to 'test'.
     """
     self.config = config
+    # there, if the command args has extra parameters, it will rewrite it.
+    self.config.rewrite_command_args()
     self.phase = None
     self.data = None
 
@@ -43,6 +45,7 @@ class Context():
     pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
     # if output_dir is None, to make a new dir to save model
     # else we use the value of output_dir as workspace
+    print(self.config.name)
     filename = string.join_dots(self.config.name, self.config.target, pid)
     if self.config.output_dir is None:
       self.config.output_dir = filesystem.mkdir(env._OUTPUT + filename)

@@ -26,12 +26,11 @@ class AVEC2014(Configbase):
 
   def __init__(self, args):
     """AVEC2014 dataset for Depressive Detection"""
+    Configbase.__init__(self, args)
     self.name = 'avec2014'
     self.target = 'avec2014.img.cnn'
     self.output_dir = None
     self.task = 'train'
-    # rewrite default setting
-    super().__init__(args)
 
     """iteration controller"""
     self.log = params.LOG(
@@ -119,12 +118,11 @@ class AVEC2014_FLOW(Configbase):
 
   def __init__(self, args):
     """AVEC2014_FLOW dataset for Depressive Detection"""
+    Configbase.__init__(self, args)
     self.name = 'avec2014.flow'
     self.target = 'avec2014.img.cnn'
     self.output_dir = None
     self.task = 'train'
-    # rewrite default setting
-    super().__init__(args)
 
     """iteration controller"""
     self.log = params.LOG(
@@ -200,12 +198,11 @@ class AVEC2014_BICNN(Configbase):
 
   def __init__(self, args):
     """AVEC2014_BICNN dataset for Depressive Detection"""
+    Configbase.__init__(self, args)
     self.name = 'avec2014'
     self.target = 'avec2014.img.bicnn.shared'
     self.output_dir = None
     self.task = 'train'
-    # rewrite default setting
-    super().__init__(args)
 
     """iteration controller"""
     self.log = params.LOG(
@@ -281,12 +278,11 @@ class AVEC2014_AUDIO(Configbase):
 
   def __init__(self, args):
     """AVEC2014_AUDIO dataset for Depressive Detection"""
+    Configbase.__init__(self, args)
     self.name = 'avec2014'
     self.target = 'avec2014.audio.cnn'
     self.output_dir = None
     self.task = 'train'
-    # rewrite default setting
-    super().__init__(args)
 
     """iteration controller"""
     self.log = params.LOG(

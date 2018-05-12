@@ -22,6 +22,8 @@ class TRAFFICFLOW(Configbase):
 
   def __init__(self, args):
     """TRAFFICFLOW dataset"""
+    Configbase.__init__(self, args)
+    
     self.name = 'trafficflow'
     self.target = 'trafficflow.vanilla'
     self.output_dir = None

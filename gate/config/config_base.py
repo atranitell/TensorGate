@@ -29,16 +29,20 @@ class Configbase():
   def __init__(self, args):
     """Check setting and path."""
     self.EXTRA_CONFIG = None
-    if args.task is not None:
-      if args.task not in TASK_MAP:
-        raise ValueError('Unknown task %s' % args.task)
-      self.task = args.task
-    if args.model is not None:
-      filesystem.raise_path_not_exist(args.model)
-      self.output_dir = args.model
+    self.args = args
     if args.config is not None:
       filesystem.raise_path_not_exist(args.config)
       self.EXTRA_CONFIG = self._load_config_file(args.config)
+
+  def rewrite_command_args(self):
+    """command line is first priority"""
+    if self.args.task is not None:
+      if self.args.task not in TASK_MAP:
+        raise ValueError('Unknown task %s' % self.args.task)
+      self.task = self.args.task
+    if self.args.model is not None:
+      filesystem.raise_path_not_exist(self.args.model)
+      self.output_dir = self.args.model
 
   def set_phase(self, phase):
     """Switch system phase"""
@@ -87,6 +91,7 @@ class Configbase():
     """
     r = key_v.split('.')
     try:
+      # print(self.EXTRA_CONFIG[r[0]])
       if len(r) == 1:
         config_v = self.EXTRA_CONFIG[r[0]]
       elif len(r) == 2:
