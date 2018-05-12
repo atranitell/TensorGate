@@ -371,9 +371,8 @@ def ckpt_compute_parameter(filepath):
   for key in var_to_shape_map:
     if key.find('Adam') > 0:
       continue
-    print("tensor_name: ", key)
     val = _inner_product(var_to_shape_map[key])
-    print("tensor_size: ", var_to_shape_map[key], val)
     val_list.append(val)
+    print("tensor_name: ", key, "tensor_size: ", var_to_shape_map[key], val)
   print('Total params number: ', sum(val_list))
   return sum(val_list)
