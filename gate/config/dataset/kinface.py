@@ -22,13 +22,14 @@ class KinfaceVAE(Configbase):
 
   def __init__(self, args):
     """Kinface dataset for classification"""
+    Configbase.__init__(self, args)
+    
     r = self._read_config_file
     self.name = r('kinface2.vae', 'name')
-    self.target = r('kinface.1E1G1D', 'target')
+    self.target = r('kinface.1E1G1D.ccpp', 'target')
     self.output_dir = r(None, 'output_dir')
     self.task = r('train', 'task')
     # rewrite default setting
-    super().__init__(args)
 
     """iteration controller"""
     self.log = params.LOG(

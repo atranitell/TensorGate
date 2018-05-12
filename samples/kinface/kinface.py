@@ -56,7 +56,8 @@ from samples.kinface.kinface_1E1G import KINFACE_1E1G
 from samples.kinface.kinface_1E1G1D import KINFACE_1E1G1D
 from samples.kinface.kinface_1E2G2D import KINFACE_1E2G2D
 from samples.kinface.kinface_1E2G2D_ccpp import KINFACE_1E2G2D_CCPP
-
+from samples.kinface.kinface_1E1G1D_ccpp import KINFACE_1E1G1D_CCPP
+from samples.kinface.kinface_1E1G1D_cosine import KINFACE_1E1G1D_COSINE
 
 def select(config):
   """select different subtask"""
@@ -72,5 +73,9 @@ def select(config):
     return KINFACE_1E2G2D(config)
   elif config.target == 'kinface.1E2G2D.ccpp':
     return KINFACE_1E2G2D_CCPP(config)
+  elif config.target == 'kinface.1E1G1D.ccpp':
+    return KINFACE_1E1G1D_CCPP(config)
+  elif config.target == 'kinface.1E1G1D.cosine':
+    return KINFACE_1E1G1D_COSINE(config)
   else:
     raise ValueError('Unknown Target [%s]' % config.target)
