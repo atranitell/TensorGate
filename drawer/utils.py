@@ -65,6 +65,9 @@ def smooth(data, num):
       ret.append(data[i])
   return ret
 
+def clip(data, start_idx):
+  """Return data[start_idx:]"""
+  return data[start_idx:]
 
 def process_keys(func, *args, ignore_keys=None):
   """For each key:

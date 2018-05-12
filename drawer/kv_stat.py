@@ -22,12 +22,24 @@ import numpy as np
 
 def compute_kv(config):
   """Parse log data and calling draw"""
+  result = {}
   for _cfg in config['data']:
     data = data_parser.log_kv(_cfg['path'], _cfg['phase'], _cfg['keys'])
 
+    # clip from start idx
+    if 'start_iter' in _cfg:
+      start_idx = 0
+      for idx, iteration in enumerate(data['iter']):
+        if iteration >= _cfg['start_iter']:
+          start_idx = idx
+          break
+      data = utils.process_keys(utils.clip, data, start_idx)
+
     # downsampling all points including iter
-    if 'invl' in _cfg:
-      data = utils.process_keys(utils.downsampling, data, _cfg['invl'])
+    if 'iter_invl' in _cfg:
+      invl = int(_cfg['iter_invl'] / (data['iter'][1]-data['iter'][0]))
+      assert invl >= 1
+      data = utils.process_keys(utils.downsampling, data, invl)
 
     res_list = {}
     # compute max
@@ -42,6 +54,11 @@ def compute_kv(config):
     print(_cfg['path'])
     for res in res_list:
       print('  ', res, res_list[res])
+
+    # add-in result
+      result[os.path.basename(_cfg['path'])] = data
+
+  return result
 
 
 def compute_kv_template(config):
@@ -73,17 +90,19 @@ def compute_kv_template(config):
   print('Config file has been saved in %s' % output)
 
   if _i['run']:
-    compute_kv(config)
+    return compute_kv(config)
 
 
 def compute_tv_template_folder(config):
   """Traverse for folder"""
   root = config['info']['dir']
+  results = {}
   for folder in os.listdir(root):
     sub_config = config.copy()
     sub_config['info']['dir'] = os.path.join(root, folder)
-    compute_kv_template(sub_config)
+    results[folder] = compute_kv_template(sub_config)
     print('\n\n\n')
+  utils.save_json(results, config['info']['save_to_json'])
 
 
 def _kv_max(data, sort_key):
