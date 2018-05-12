@@ -62,8 +62,8 @@ def encoder(x, z_dim, is_training=True, reuse=None):
 def generator(z, y, is_training=True, reuse=None):
   with tf.variable_scope("KIN_VAE/generator", reuse=reuse):
     # merge noise and label
-    y = tf.to_float(tf.reshape(y, [-1, 1]))
-    z = tf.concat([z, y], 1)
+    # y = tf.to_float(tf.reshape(y, [-1, 1]))
+    # z = tf.concat([z, y], 1)
     # reshape to 2d
     net = linear(z, 512 * 1 * 1, scope='fc1')
     net = lrelu(bn(net, is_training=is_training, scope='bn_fc1'))
@@ -82,9 +82,9 @@ def generator(z, y, is_training=True, reuse=None):
 def discriminator(x, y, y_dim, is_training, reuse=None):
   with tf.variable_scope('KIN_VAE/discriminator', reuse=reuse):
     # condition
-    y = tf.one_hot(y, depth=y_dim, on_value=1)
-    y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
-    x = conv_cond_concat(x, y)
+    # y = tf.one_hot(y, depth=y_dim, on_value=1)
+    # y = tf.to_float(tf.reshape(y, [-1, 1, 1, y_dim]))
+    # x = conv_cond_concat(x, y)
     # network
     net = conv(x, 128, 3, 1, is_training, 'conv1', False)
     net = conv(net, 128, 5, 2, is_training, 'conv2')
