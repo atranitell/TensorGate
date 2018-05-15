@@ -101,6 +101,9 @@ $ python main.py 0 -dataset=mnist -extra=demo.json
 - **[compile.py](#)** packege `gate` into a fold in `.bin` or `.py` without debug info
 
 ## To-Do
+- [x] (05/15/18) Merge drawer into gate
+- [x] (05/12/18) Resume pipline & fix a bug of config-base re-write
+- [x] (05/12/18) Merge drawer in
 - [x] (05/08/18) Review Kinface related issues
 - [x] (05/08/18) Review AVEC2014-CNN/HEATMAP/FLOW/BICNN/Audio-NET
 - [ ] Reconstruct gate framework to make more flexible
