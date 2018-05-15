@@ -18,26 +18,18 @@ import os
 import sys
 import argparse
 
-# if user do not set the gpu-id, default to use gpu-0
-GPU_ID = '0' if len(sys.argv) == 1 else sys.argv[1]
-os.environ["CUDA_VISIBLE_DEVICES"] = GPU_ID
-# setting tensorflow error ouput level
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-# add slim module to system
-sys.path.append('gate/net')
 
-# setting tensorflow error level
-import tensorflow as tf
-tf.logging.set_verbosity(tf.logging.ERROR)
-# acquire dataset config file
-from gate.config.config_factory import load_config
-
-
-def run(args):
+def gate(args):
+  """TENSORFLOW ENV"""
+  # prepare for start tensorflow
+  import tensorflow as tf
+  tf.logging.set_verbosity(tf.logging.ERROR)
+  # acquire dataset config file
+  from gate.config.config_factory import load_config
   # get config for all settings.
   config = load_config(args)
 
-  """ Target """
+  """Target"""
   if config.target == 'vision.classification':
     from samples.vision.classification import Classification as App
   elif config.target == 'vision.regression':
@@ -53,7 +45,7 @@ def run(args):
   else:
     raise ValueError('Unknown target [%s]' % config.target)
 
-  """ Task """
+  """Task"""
   if config.task == 'train':
     App(config).train()
   elif config.task == 'test':
@@ -66,12 +58,28 @@ def run(args):
     raise ValueError('Unknown task [%s]' % config.task)
 
 
+def run(args):
+  """Initialize ENV"""
+  os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+  os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+  sys.path.append('gate/net')
+
+  """Distribute the task"""
+  if args.drawer is not None:
+    from drawer import drawer
+    drawer.interface(args.drawer)
+  else:
+    gate(args)
+
+
 if __name__ == "__main__":
   # parse command line
   parser = argparse.ArgumentParser()
   parser.add_argument('-dataset', type=str, dest='dataset', default=None)
+  parser.add_argument('-gpu', type=str, dest='gpu', default='0')
   parser.add_argument('-config', type=str, dest='config', default=None)
   parser.add_argument('-task', type=str, dest='task', default=None)
   parser.add_argument('-model', type=str, dest='model', default=None)
+  parser.add_argument('-drawer', type=str, dest='drawer', default=None)
   args, _ = parser.parse_known_args()
   run(args)

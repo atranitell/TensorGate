@@ -15,9 +15,9 @@
 """Key-Value for the event file from TensorGate"""
 
 import os
-import utils
-import data_parser
 import numpy as np
+from drawer import utils
+from drawer import data_parser
 
 
 def compute_kv(config):

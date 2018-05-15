@@ -15,8 +15,8 @@
 
 import os
 import matplotlib.pyplot as plt
-import utils
-import data_parser
+from drawer import utils
+from drawer import data_parser
 
 
 def draw_basic_line_chart(config):

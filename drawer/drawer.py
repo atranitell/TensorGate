@@ -19,7 +19,6 @@ file path.
 
 It accept such inputs:
 - the config file
-- the folder with several config files.
 
 The config file type:
 - template (generate config file)
@@ -32,15 +31,14 @@ Current functions:
 
 """
 
-import argparse
-import utils
-import chart_line
-import kv_stat
+from drawer import utils
+from drawer import chart_line
+from drawer import kv_stat
 
 
-def interface(args):
+def interface(config_file_path):
   """ a command manager tool """
-  config = utils.load_json(args.file)
+  config = utils.load_json(config_file_path)
   if config['task'] == 'basic_line_chart':
     chart_line.draw_basic_line_chart(config)
   elif config['task'] == 'basic_line_chart_template':
@@ -61,11 +59,3 @@ def interface(args):
     #   _statistic.print_info(config, root)
   else:
     raise ValueError('Unknown input task [%s].', config['task'])
-
-
-if __name__ == "__main__":
-  PARSER = argparse.ArgumentParser()
-  PARSER.add_argument('-file', type=str, default=None, dest='file')
-  PARSER.add_argument('-fold', type=str, default=None, dest='fold')
-  ARGS, _ = PARSER.parse_known_args()
-  interface(ARGS)
