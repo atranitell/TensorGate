@@ -1,0 +1,27 @@
+{
+  "task": "basic_line_chart_template",
+  "info": {
+    "dir": "asserts/mnist.batchsize",
+    "run": true,
+    "task": "basic_line_chart"
+  },
+  "figure": {
+    "title": null,
+    "xlabel": "iter",
+    "ylabel": "error",
+    "xmax": 15000,
+    "save_fig": null
+  },
+  "data": [
+    {
+      "legend": null,
+      "path": null,
+      "phase": "[TST]",
+      "keys": ["error"],
+      "invl": 1,
+      "smooth": 1,
+      "show": true,
+      "save_data": true
+    }
+  ]
+}

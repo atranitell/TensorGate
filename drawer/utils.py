@@ -80,4 +80,6 @@ def process_keys(func, *args, ignore_keys=None):
   for var in args[0]:
     if ignore_keys is None or var not in ignore_keys:
       ret[var] = func(args[0][var], *args[1:])
+    else:
+      ret[var] = args[0][var]
   return ret

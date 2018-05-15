@@ -1,0 +1,19 @@
+{
+  "task": "compute_kv_template",
+  "info": {
+    "dir": "asserts/mnist.batchsize",
+    "run": true,
+    "task": "compute_kv",
+  },
+  "data": [
+    {
+      "path": null,
+      "phase": "[TST]",
+      "keys": ["error"],
+      "sort_key": "error",
+      "iter_invl": 500,
+      "start_iter": 0,
+      "task": "min"
+    }
+  ]
+}

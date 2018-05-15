@@ -1,0 +1,62 @@
+[
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 8
+      }
+    }
+  },
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 16
+      }
+    }
+  },
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 32
+      }
+    }
+  },
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 64
+      }
+    }
+  },
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 128
+      }
+    }
+  },
+  {
+    "task": "mnist",
+    "extra": {
+      "name": "mnist",
+      "target": "vision.classification",
+      "train": {
+        "batchsize": 256
+      }
+    }
+  }
+]

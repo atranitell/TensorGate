@@ -27,7 +27,7 @@ def draw_basic_line_chart(config):
 
     # downsampling all points including iter
     if _cfg['invl'] > 1:
-      utils.process_keys(utils.downsampling, data, _cfg['invl'])
+      data = utils.process_keys(utils.downsampling, data, _cfg['invl'])
 
     # smooth all data[key] except for iter
     if _cfg['smooth'] > 1:

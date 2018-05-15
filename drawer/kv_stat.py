@@ -49,6 +49,13 @@ def compute_kv(config):
       res_list['iter'] = data['iter'][idx]
       for key in _cfg['keys']:
         res_list[key] = data[key][idx]
+    
+    elif _cfg['task'] == 'min':
+      idx, value = _kv_min(data, _cfg['sort_key'])
+      # broadcast to other key
+      res_list['iter'] = data['iter'][idx]
+      for key in _cfg['keys']:
+        res_list[key] = data[key][idx]
 
     # print
     print(_cfg['path'])
@@ -109,3 +116,8 @@ def _kv_max(data, sort_key):
   """Compute maximum value for a line."""
   max_idx = np.argmax(data[sort_key])
   return max_idx, data[sort_key][max_idx]
+
+def _kv_min(data, sort_key):
+  """Compute minimum value for a line."""
+  min_idx = np.argmin(data[sort_key])
+  return min_idx, data[sort_key][min_idx]

@@ -23,8 +23,9 @@ class MNIST(Configbase):
   def __init__(self, args):
     """MNIST dataset for classification"""
     Configbase.__init__(self, args)
-    self.name = 'mnist'
-    self.target = 'vision.classification'
+    r = self._read_config_file
+    self.name = r('mnist', 'name')
+    self.target = r('vision.classification', 'target')
     self.output_dir = None
     self.task = 'train'
     # rewrite default setting
@@ -37,7 +38,7 @@ class MNIST(Configbase):
         save_model_invl=500,
         test_invl=500,
         val_invl=500,
-        max_iter=50000)
+        max_iter=15000)
 
     """network model"""
     self.net = [params.NET()]
@@ -56,7 +57,7 @@ class MNIST(Configbase):
     """train"""
     self.train = params.Phase('train')
     self.train.data = params.DATA(
-        batchsize=32,
+        batchsize=r(32, 'train.batchsize'),
         entry_path='../_datasets/mnist/train.txt',
         shuffle=True)
     self.train.data.set_queue_loader(
@@ -68,7 +69,7 @@ class MNIST(Configbase):
     """test"""
     self.test = params.Phase('test')
     self.test.data = params.DATA(
-        batchsize=128,
+        batchsize=r(100, 'test.batchsize'),
         entry_path='../_datasets/mnist/test.txt',
         shuffle=False)
     self.test.data.set_queue_loader(
