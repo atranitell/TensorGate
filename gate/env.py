@@ -25,7 +25,7 @@ class Env():
 
   # logger config
   _LOG_DATE = True
-  _LOG_SYS = True
+  _LOG_SYS = False
   _LOG_TRAIN = True
   _LOG_TEST = True
   _LOG_VAL = True

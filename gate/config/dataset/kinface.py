@@ -23,7 +23,6 @@ class KinfaceVAE(Configbase):
   def __init__(self, args):
     """Kinface dataset for classification"""
     Configbase.__init__(self, args)
-    
     r = self._read_config_file
     self.name = r('kinface2.vae', 'name')
     self.target = r('kinface.1E1G1D.ccpp', 'target')
