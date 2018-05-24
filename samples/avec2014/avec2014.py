@@ -18,6 +18,7 @@ from samples.avec2014.avec2014_audio_cnn import AVEC2014_AUDIO_CNN
 from samples.avec2014.avec2014_img_cnn import AVEC2014_IMG_CNN
 from samples.avec2014.avec2014_img_4view import AVEC2014_IMG_4VIEW
 from samples.avec2014.avec2014_img_bicnn import AVEC2014_IMG_BICNN
+from samples.avec2014.avec2014_audio_fcn import AVEC2014_AUDIO_FCN
 
 
 def select(config):
@@ -31,5 +32,7 @@ def select(config):
     return AVEC2014_IMG_BICNN(config)
   elif config.target == 'avec2014.audio.cnn':
     return AVEC2014_AUDIO_CNN(config)
+  elif config.target == 'avec2014.audio.fcn':
+    return AVEC2014_AUDIO_FCN(config)
   else:
     raise ValueError('Unknown Target [%s]' % config.target)
