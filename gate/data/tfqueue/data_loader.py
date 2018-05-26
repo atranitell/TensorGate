@@ -126,7 +126,7 @@ def _load_audio(filepath, start_idx, fnum, flen, finvl):
       _data += np.random.normal(0.001, 1.0)
     audio_data = np.append(audio_data, _data)
 
-  audio_data = np.float32(np.reshape(audio_data, [fnum, flen]))
+  audio_data = np.float32(np.reshape(audio_data, [fnum*flen, 1]))
   return audio_data
 
 
@@ -148,7 +148,57 @@ def load_audio(config):
            cfg.frame_length, cfg.frame_invl],
       Tout=tf.float32)
 
-  files = tf.reshape(files, [cfg.frame_num, cfg.frame_length])
+  files = tf.reshape(files, [cfg.frame_num*cfg.frame_length, 1])
+  paths = tf_input[0]
+  extras = tf_input[2]
+
+  return data_prefetch.generate_batch(files, extras, paths, config.data)
+
+
+def _load_pair_audio(filepath, start_idx, fnum, flen, finvl):
+  file_path_abs = str(filepath, encoding='utf-8')
+  data = np.load(file_path_abs)
+  valid_length = data.shape[0] - fnum * flen - finvl
+  # first entry
+  start = random.randint(0, valid_length)
+  audio_data = np.array([])
+  for i in range(fnum):
+    start_i = start + i * finvl
+    _data = data[start_i: start_i + flen]
+    if start_idx < 0:
+      _data += np.random.normal(0.001, 1.0)
+    audio_data = np.append(audio_data, _data)
+  # second entry
+  start = random.randint(0, valid_length)
+  for i in range(fnum):
+    start_i = start + i * finvl
+    _data = data[start_i: start_i + flen]
+    if start_idx < 0:
+      _data += np.random.normal(0.001, 1.0)
+    audio_data = np.append(audio_data, _data)
+  audio_data = np.float32(np.reshape(audio_data, [2, fnum*flen, 1]))
+  return audio_data
+
+
+def load_pair_audio(config):
+  """Path_to_audio start_idx label"""
+  data = config.data
+  res, count = data_entry.parse_from_text(
+      data.entry_path, data.entry_dtype, data.entry_check)
+ # the total num will be written.
+  config.data.total_num = count
+  cfg = data.configs[0]
+
+  tf_inputs = data_utils.convert_to_tensor(res, data.entry_dtype)
+  tf_input = tf.train.slice_input_producer(tf_inputs, shuffle=data.shuffle)
+
+  files = tf.py_func(
+      func=_load_pair_audio,
+      inp=[tf_input[0], tf_input[1], cfg.frame_num,
+           cfg.frame_length, cfg.frame_invl],
+      Tout=tf.float32)
+
+  files = tf.reshape(files, [2, cfg.frame_num*cfg.frame_length, 1])
   paths = tf_input[0]
   extras = tf_input[2]
 

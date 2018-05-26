@@ -21,6 +21,7 @@ loader_maps = {
     'load_image': data_loader.load_image,
     'load_npy': data_loader.load_npy,
     'load_audio': data_loader.load_audio,
+    'load_pair_audio': data_loader.load_pair_audio
     # 'coco': db_coco.DB_COCO
 }
 
