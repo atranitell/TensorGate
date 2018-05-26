@@ -34,8 +34,8 @@ class AVEC2014_AUDIO_CNN(context.Context):
 
   def _net(self, data):
     # the input data wit shape [batchsize, L, C]
-    L = self.data.configs[0].frame_length*self.config.data.configs[0].frame_num
-    data = tf.reshape(data, [self.batchsize, L, 1])
+    # L = self.data.configs[0].frame_length*self.config.data.configs[0].frame_num
+    # data = tf.reshape(data, [self.batchsize, L, 1])
     return net_graph(data, self.config.net[0], self.phase)
 
   def _loss(self, logit, label):
