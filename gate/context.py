@@ -184,13 +184,14 @@ class DefaultSession():
     ----
       test presents that the performance has no benefits.
     """
-    tf_config = tf.ConfigProto()
+    tf_config = tf.ConfigProto(allow_soft_placement=False)
     tf_config.gpu_options.allow_growth = True
     if self.hooks is not None:
       self.sess = tf.train.MonitoredTrainingSession(
           hooks=self.hooks,
           save_checkpoint_secs=None,
-          save_summaries_steps=None)
+          save_summaries_steps=None,
+          config=tf_config)
       return self.sess
     else:
       self.sess = tf.Session()
