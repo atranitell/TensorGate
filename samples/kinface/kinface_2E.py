@@ -34,34 +34,31 @@ class KINFACE_2E(kinbase.KINBASE):
       p2_mu, p2_sigma, feat_p2 = self._encoder(p2_real)
     return feat_c1, feat_p2
 
+  @context.graph_phase_wrapper()
   def train(self):
-    self._enter_('train')
-    with tf.Graph().as_default() as graph:
-      # load data
-      data, info, path = load_data(self.config)
-      c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
-      label, cond = tf.unstack(info, axis=1)
-      # load net
-      feat_c1, feat_p2 = self._net(c1_real, p2_real)
-      loss, loss_batch = self._loss_metric(feat_c1, feat_p2, label)
-      # update gradients
-      global_step = tf.train.create_global_step()
-      train_op = updater.default(self.config, loss, global_step)
-      # add hooks
-      self.add_hook(self.snapshot.init())
-      self.add_hook(self.summary.init())
-      self.add_hook(context.Running_Hook(
-          config=self.config.log,
-          step=global_step,
-          keys=['R'],
-          values=[loss],
-          func_test=self.test,
-          func_val=None))
+    # load data
+    data, info, path = load_data(self.config)
+    c1_real, p1_real, c2_real, p2_real = tf.unstack(data, axis=1)
+    label, cond = tf.unstack(info, axis=1)
+    # load net
+    feat_c1, feat_p2 = self._net(c1_real, p2_real)
+    loss, loss_batch = self._loss_metric(feat_c1, feat_p2, label)
+    # update gradients
+    global_step = tf.train.create_global_step()
+    train_op = updater.default(self.config, loss, global_step)
+    # add hooks
+    self.add_hook(self.snapshot.init())
+    self.add_hook(self.summary.init())
+    self.add_hook(context.Running_Hook(
+        config=self.config.log,
+        step=global_step,
+        keys=['R'],
+        values=[loss],
+        func_test=self.test,
+        func_val=None))
 
-      saver = tf.train.Saver(var_list=variable.all())
-      with context.DefaultSession(self.hooks) as sess:
-        self.snapshot.restore(sess, saver)
-        while not sess.should_stop():
-          sess.run(train_op)
-
-    self._exit_()
+    saver = tf.train.Saver(var_list=variable.all())
+    with context.DefaultSession(self.hooks) as sess:
+      self.snapshot.restore(sess, saver)
+      while not sess.should_stop():
+        sess.run(train_op)

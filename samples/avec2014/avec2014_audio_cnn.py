@@ -46,41 +46,38 @@ class AVEC2014_AUDIO_CNN(context.Context):
     mae, rmse = l2.error(logit, label, self.config)
     return mae, rmse
 
+  @context.graph_phase_wrapper()
   def train(self):
-    self._enter_('train')
-    with tf.Graph().as_default() as graph:
-      # load data
-      image, label, path = load_data(self.config)
-      # load net
-      logit, _ = self._net(image)
-      # compute loss
-      loss = self._loss(logit, label)
-      # compute error
-      mae, rmse = self._error(logit, label)
-      # update gradients
-      global_step = tf.train.create_global_step()
-      train_op = updater.default(self.config, loss, global_step)
-      # add hooks
-      self.add_hook(self.snapshot.init())
-      self.add_hook(self.summary.init())
-      self.add_hook(context.Running_Hook(
-          config=self.config.log,
-          step=global_step,
-          keys=['loss', 'mae', 'rmse'],
-          values=[loss, mae, rmse],
-          # func_test=self.test,
-          func_val=self.val))
+    # load data
+    image, label, path = load_data(self.config)
+    # load net
+    logit, _ = self._net(image)
+    # compute loss
+    loss = self._loss(logit, label)
+    # compute error
+    mae, rmse = self._error(logit, label)
+    # update gradients
+    global_step = tf.train.create_global_step()
+    train_op = updater.default(self.config, loss, global_step)
+    # add hooks
+    self.add_hook(self.snapshot.init())
+    self.add_hook(self.summary.init())
+    self.add_hook(context.Running_Hook(
+        config=self.config.log,
+        step=global_step,
+        keys=['loss', 'mae', 'rmse'],
+        values=[loss, mae, rmse],
+        # func_test=self.test,
+        func_val=self.val))
 
-      saver = tf.train.Saver(var_list=variable.all())
-      with context.DefaultSession(self.hooks) as sess:
-        self.snapshot.restore(sess, saver)
-        while not sess.should_stop():
-          sess.run(train_op)
+    saver = tf.train.Saver(var_list=variable.all())
+    with context.DefaultSession(self.hooks) as sess:
+      self.snapshot.restore(sess, saver)
+      while not sess.should_stop():
+        sess.run(train_op)
 
-    self._exit_()
-
+  @context.graph_phase_wrapper()
   def val(self):
-    self._enter_('val')
     # create a folder to save
     val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
     # get data
@@ -111,12 +108,10 @@ class AVEC2014_AUDIO_CNN(context.Context):
       self.summary.adds(global_step=global_step,
                         tags=['val/video_mae', 'val/video_rmse'],
                         values=[_mae, _rmse])
-
-      self._exit_()
       return _rmse
 
+  @context.graph_phase_wrapper()
   def test(self):
-    self._enter_('test')
     # create a folder to save
     test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
     # get data
@@ -147,6 +142,4 @@ class AVEC2014_AUDIO_CNN(context.Context):
       self.summary.adds(global_step=global_step,
                         tags=['test/video_mae', 'test/video_rmse'],
                         values=[_mae, _rmse])
-
-      self._exit_()
       return _rmse

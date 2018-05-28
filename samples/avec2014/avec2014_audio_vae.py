@@ -64,57 +64,54 @@ class AVEC2014_AUDIO_VAE(context.Context):
     # ELBO = -neg_loglikelihood - KL_divergence
     return likelihood, KL_divergence
 
+  @context.graph_phase_wrapper()
   def train(self):
-    self._enter_('train')
-    with tf.Graph().as_default() as graph:
-      # load data
-      data, label, path = load_data(self.config)
-      real1, real2 = tf.unstack(data, num=2, axis=1)
+    # load data
+    data, label, path = load_data(self.config)
+    real1, real2 = tf.unstack(data, num=2, axis=1)
 
-      # load net
-      c1_mu, c1_sigma, c1_logit = self._encoder(real1)
+    # load net
+    c1_mu, c1_sigma, c1_logit = self._encoder(real1)
 
-      # generator
-      c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
-      c1_z = self._generator(c1_z)
-      fake1 = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
+    # generator
+    c1_z = c1_mu + c1_sigma * tf.random_normal(tf.shape(c1_mu))
+    c1_z = self._generator(c1_z)
+    fake1 = tf.clip_by_value(c1_z, 1e-8, 1 - 1e-8)
 
-      L_loss, KL_loss = self._loss_vae(fake1, real2, c1_mu, c1_sigma)
-      C_loss = self._loss_classifier(c1_logit, label)
-      loss = L_loss + C_loss + KL_loss
+    L_loss, KL_loss = self._loss_vae(fake1, real2, c1_mu, c1_sigma)
+    C_loss = self._loss_classifier(c1_logit, label)
+    loss = L_loss + C_loss + KL_loss
 
-      # compute error
-      mae, rmse = self._error(c1_logit, label)
+    # compute error
+    mae, rmse = self._error(c1_logit, label)
 
-      # update gradients
-      global_step = tf.train.create_global_step()
-      var_e = variable.select_vars('encoder')
-      var_g = variable.select_vars('generator')
-      op1 = updater.default(self.config, loss, global_step, var_e, 0)
-      op2 = updater.default(self.config, loss, None, var_g, 1)
-      train_op = tf.group(op1, op2)
+    # update gradients
+    global_step = tf.train.create_global_step()
+    var_e = variable.select_vars('encoder')
+    var_g = variable.select_vars('generator')
+    op1 = updater.default(self.config, loss, global_step, var_e, 0)
+    op2 = updater.default(self.config, loss, None, var_g, 1)
+    train_op = tf.group(op1, op2)
 
-      # add hooks
-      self.add_hook(self.snapshot.init())
-      self.add_hook(self.summary.init())
-      self.add_hook(context.Running_Hook(
-          config=self.config.log,
-          step=global_step,
-          keys=['C_loss', 'L_loss', 'KL_loss', 'mae', 'rmse'],
-          values=[C_loss, L_loss, KL_loss, mae, rmse],
-          func_test=None,
-          func_val=self.val))
+    # add hooks
+    self.add_hook(self.snapshot.init())
+    self.add_hook(self.summary.init())
+    self.add_hook(context.Running_Hook(
+        config=self.config.log,
+        step=global_step,
+        keys=['C_loss', 'L_loss', 'KL_loss', 'mae', 'rmse'],
+        values=[C_loss, L_loss, KL_loss, mae, rmse],
+        func_test=self.test,
+        func_val=self.val))
 
-      saver = tf.train.Saver(var_list=variable.all())
-      with context.DefaultSession(self.hooks) as sess:
-        self.snapshot.restore(sess, saver)
-        while not sess.should_stop():
-          sess.run(train_op)
+    saver = tf.train.Saver(var_list=variable.all())
+    with context.DefaultSession(self.hooks) as sess:
+      self.snapshot.restore(sess, saver)
+      while not sess.should_stop():
+        sess.run(train_op)
 
-    self._exit_()
-
+  @context.graph_phase_wrapper()
   def val(self):
-    self._enter_('val')
     # create a folder to save
     val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
 
@@ -148,12 +145,10 @@ class AVEC2014_AUDIO_VAE(context.Context):
       self.summary.adds(global_step=global_step,
                         tags=['val/video_mae', 'val/video_rmse'],
                         values=[_mae, _rmse])
-
-      self._exit_()
       return _rmse
 
+  @context.graph_phase_wrapper()
   def test(self):
-    self._enter_('test')
     # create a folder to save
     test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
     # get data
@@ -186,6 +181,4 @@ class AVEC2014_AUDIO_VAE(context.Context):
       self.summary.adds(global_step=global_step,
                         tags=['test/video_mae', 'test/video_rmse'],
                         values=[_mae, _rmse])
-
-      self._exit_()
       return _rmse

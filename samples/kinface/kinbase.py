@@ -123,7 +123,7 @@ class KINBASE(context.Context):
       np.save(output_dir + '/' + step + '_p2.npy', p2_zs)
 
       return step
-
+      
   def test(self):
     """ we need acquire threshold from validation first """
     with tf.Graph().as_default():
