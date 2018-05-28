@@ -17,7 +17,7 @@
 import time
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
+import functools
 from gate.env import env
 from gate.utils import filesystem
 from gate.utils import string
@@ -36,22 +36,8 @@ class Context():
       like 'train' to 'test'.
     """
     self.config = config
-    # there, if the command args has extra parameters, it will rewrite it.
-    self.config.rewrite_command_args()
     self.phase = None
     self.data = None
-
-    """ initialize logger """
-    pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
-    # if output_dir is None, to make a new dir to save model
-    # else we use the value of output_dir as workspace
-    print(self.config.name)
-    filename = string.join_dots(self.config.name, self.config.target, pid)
-    if self.config.output_dir is None:
-      self.config.output_dir = filesystem.mkdir(env._OUTPUT + filename)
-    logger.init(filename, self.config.output_dir)
-    logger.info('Initilized logger successful.')
-    logger.info('Current model in %s' % self.config.output_dir)
 
     """ initialize auxiliary information """
     self.hooks = []
@@ -129,24 +115,25 @@ class Running_Hook(tf.train.SessionRunHook):
     return tf.train.SessionRunArgs([self.step] + self.values)
 
   def after_run(self, run_context, run_values):
-    cur_iter = run_values.results[0] - 1
+    cur_iter = run_values.results[0]
     self.mean_values[:-1] += run_values.results[1:]
     self.mean_values[-1] += (time.time() - self.start_time) * 1000
 
-    if cur_iter % self.config.print_invl == 0 and cur_iter != 0:
+    if cur_iter == 0:
+      return
+
+    if cur_iter % self.config.print_invl == 0:
       self.mean_values /= self.config.print_invl
       logger.train(logger.iters(cur_iter, self.keys, self.mean_values))
       np.zeros_like(self.mean_values)
 
-    if (cur_iter) > 10 and (cur_iter - 1) % self.config.val_invl == 0:
+    if cur_iter % self.config.val_invl == 0:
       if self.func_val is not None:
-        with tf.Graph().as_default():
-          self.func_val()
+        self.func_val()
 
-    if (cur_iter) > 10 and (cur_iter - 1) % self.config.test_invl == 0:
+    if cur_iter % self.config.test_invl == 0:
       if self.func_test is not None:
-        with tf.Graph().as_default():
-          self.func_test()
+        self.func_test()
 
     if cur_iter == self.config.max_iter:
       logger.sys('Achieved the maximum iterations, the system will terminate.')
@@ -199,3 +186,19 @@ class DefaultSession():
 
   def __exit__(self, *unused):
     self.sess.close()
+
+
+def graph_phase_wrapper():
+  # we use the func.__name__ as default phase value
+  # so, the function name should be defined in dataset.config
+  # e.g. 'train', 'val', 'test'
+  def decorator_wrapper(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+      self._enter_(func.__name__)
+      with tf.Graph().as_default():
+        results = func(self, *args, **kwargs)
+      self._exit_()
+      return results
+    return wrapper
+  return decorator_wrapper

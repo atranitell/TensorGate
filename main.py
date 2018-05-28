@@ -17,17 +17,42 @@
 import os
 import sys
 import argparse
+from datetime import datetime
 
 
-def gate(args):
-  """TENSORFLOW ENV"""
-  # prepare for start tensorflow
-  import tensorflow as tf
-  tf.logging.set_verbosity(tf.logging.ERROR)
+def init_config(arguments):
+  """Load Config"""
   # acquire dataset config file
   from gate.config.config_factory import load_config
   # get config for all settings.
-  config = load_config(args)
+  config = load_config(arguments)
+  # there, if the command args has extra parameters, it will rewrite it.
+  config.rewrite_command_args()
+  # returns
+  return config
+
+
+def init_logger(config):
+  """ initialize logger """
+  from gate.utils import filesystem
+  from gate.utils import string
+  from gate.utils.logger import logger
+  from gate.env import env
+  pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
+  # if output_dir is None, to make a new dir to save model
+  # else we use the value of output_dir as workspace
+  filename = string.join_dots(config.name, config.target, pid)
+  if config.output_dir is None:
+    config.output_dir = filesystem.mkdir(env._OUTPUT + filename)
+  logger.init(filename, config.output_dir)
+  logger.info('Initilized logger successful.')
+  logger.info('Current model in %s' % config.output_dir)
+
+
+def gate(arguments):
+  """init env"""
+  config = init_config(arguments)
+  init_logger(config)
 
   """Target"""
   if config.target == 'vision.classification':
@@ -45,34 +70,33 @@ def gate(args):
   else:
     raise ValueError('Unknown target [%s]' % config.target)
 
-  """Instance"""
-  Instance = App(config)
-
   """Task"""
   if config.task == 'train':
-    Instance.train()
+    App(config).train()
   elif config.task == 'test':
-    Instance.test()
+    App(config).test()
   elif config.task == 'val':
-    Instance.val()
+    App(config).val()
   elif config.task == 'heatmap':
-    Instance.heatmap()
+    App(config).heatmap()
   else:
     raise ValueError('Unknown task [%s]' % config.task)
 
 
-def run(args):
+def run(arguments):
   """Initialize ENV"""
-  os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+  os.environ["CUDA_VISIBLE_DEVICES"] = arguments.gpu
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
   sys.path.append('gate/net')
+  import tensorflow as tf
+  tf.logging.set_verbosity(tf.logging.ERROR)
 
   """Distribute the task"""
-  if args.drawer is not None:
+  if arguments.drawer is not None:
     from drawer import drawer
-    drawer.interface(args.drawer)
+    drawer.interface(arguments.drawer)
   else:
-    gate(args)
+    gate(arguments)
 
 
 if __name__ == "__main__":
