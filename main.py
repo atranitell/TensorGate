@@ -45,15 +45,18 @@ def gate(args):
   else:
     raise ValueError('Unknown target [%s]' % config.target)
 
+  """Instance"""
+  Instance = App(config)
+
   """Task"""
   if config.task == 'train':
-    App(config).train()
+    Instance.train()
   elif config.task == 'test':
-    App(config).test()
+    Instance.test()
   elif config.task == 'val':
-    App(config).val()
+    Instance.val()
   elif config.task == 'heatmap':
-    App(config).heatmap()
+    Instance.heatmap()
   else:
     raise ValueError('Unknown task [%s]' % config.task)
 
