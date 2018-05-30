@@ -358,6 +358,90 @@ class AVEC2014_AUDIO_CNN(Configbase):
     data.set_label(num_classes=1, span=63, one_hot=False, scale=True)
 
 
+class AVEC2014_AUDIO_GLOBAL(Configbase):
+
+  def __init__(self, args):
+    """AVEC2014_AUDIO dataset for Depressive Detection"""
+    Configbase.__init__(self, args)
+    self.name = 'avec2014'
+    self.target = 'avec2014.audio.global'
+    self.output_dir = None
+    self.task = 'train'
+
+    """iteration controller"""
+    self.log = params.LOG(
+        print_invl=20,
+        save_summary_invl=20,
+        save_model_invl=1000,
+        test_invl=1000,
+        val_invl=1000,
+        max_iter=120000)
+
+    """network model"""
+    self.net = [params.NET()]
+    self.net[0].audionet(
+        num_classes=1,
+        weight_decay=0.0005,
+        batch_norm_decay=0.997,
+        batch_norm_epsilon=1e-5,
+        batch_norm_scale=True,
+        use_batch_norm=True,
+        activation_fn='relu',
+        global_pool=True)
+
+    """learning rate"""
+    self.lr = [params.LR()]
+    self.lr[0].set_fixed(learning_rate=0.00003)
+
+    """optimizer"""
+    self.opt = [params.OPT()]
+    self.opt[0].set_adam()
+
+    """train"""
+    self.train = params.Phase('train')
+    self.train.data = params.DATA(
+        batchsize=32,
+        entry_path='../_datasets/AVEC2014_Audio/pp_trn_raw.txt',
+        shuffle=True)
+    self.train.data.set_queue_loader(
+        loader='load_audio',
+        reader_thread=8,
+        min_queue_num=32)
+    self.set_default_data_attr(self.train.data)
+
+    """val"""
+    self.val = params.Phase('val')
+    self.val.data = params.DATA(
+        batchsize=50,
+        entry_path='../_datasets/AVEC2014_Audio/pp_val_32.txt',
+        shuffle=False)
+    self.val.data.set_queue_loader(
+        loader='load_audio',
+        reader_thread=8,
+        min_queue_num=128)
+    self.set_default_data_attr(self.val.data)
+
+    """test"""
+    self.test = params.Phase('test')
+    self.test.data = params.DATA(
+        batchsize=50,
+        entry_path='../_datasets/AVEC2014_Audio/pp_tst_32.txt',
+        shuffle=False)
+    self.test.data.set_queue_loader(
+        loader='load_audio',
+        reader_thread=8,
+        min_queue_num=128)
+    self.set_default_data_attr(self.test.data)
+
+  def set_default_data_attr(self, data):
+    audio = params.Audio()
+    audio.set_fixed_length_audio(
+        frame_num=32, frame_length=200, frame_invl=200)
+    data.add(audio)
+    data.set_entry_attr((str, int, int), (True, False, False))
+    data.set_label(num_classes=1, span=63, one_hot=False, scale=True)
+
+
 class AVEC2014_AUDIO_FCN(Configbase):
 
   def __init__(self, args):

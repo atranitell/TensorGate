@@ -87,15 +87,15 @@ def run(arguments):
   """Initialize ENV"""
   os.environ["CUDA_VISIBLE_DEVICES"] = arguments.gpu
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-  sys.path.append('gate/net')
-  import tensorflow as tf
-  tf.logging.set_verbosity(tf.logging.ERROR)
 
   """Distribute the task"""
   if arguments.drawer is not None:
     from drawer import drawer
     drawer.interface(arguments.drawer)
   else:
+    sys.path.append('gate/net')
+    import tensorflow as tf
+    tf.logging.set_verbosity(tf.logging.ERROR)
     gate(arguments)
 
 

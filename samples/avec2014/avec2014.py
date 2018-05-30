@@ -20,6 +20,7 @@ from samples.avec2014.avec2014_img_4view import AVEC2014_IMG_4VIEW
 from samples.avec2014.avec2014_img_bicnn import AVEC2014_IMG_BICNN
 from samples.avec2014.avec2014_audio_fcn import AVEC2014_AUDIO_FCN
 from samples.avec2014.avec2014_audio_vae import AVEC2014_AUDIO_VAE
+from samples.avec2014.avec2014_audio_global import AVEC2014_AUDIO_GLOBAL
 
 def select(config):
   """ select different subtask
@@ -36,5 +37,7 @@ def select(config):
     return AVEC2014_AUDIO_FCN(config)
   elif config.target == 'avec2014.audio.vae':
     return AVEC2014_AUDIO_VAE(config)
+  elif config.target == 'avec2014.audio.global':
+    return AVEC2014_AUDIO_GLOBAL(config)
   else:
     raise ValueError('Unknown Target [%s]' % config.target)

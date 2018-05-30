@@ -18,6 +18,8 @@ import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.contrib import nn
 
+from gate.net.custom import audionet
+
 
 def bn(x, decay=0.9, is_training=True):
   return layers.batch_norm(
@@ -86,28 +88,38 @@ def linear(x, output_size, scope="linear", reuse=None):
 
 def encoder(inputs, num_classes, is_training, z_dim=100, reuse=None):
   with tf.variable_scope("SenVAE/encoder", reuse=reuse):
-    # inputs-6400
-    net = lrelu(conv(inputs, 64, 10, 2, name='conv1'))
-    net = lrelu(conv(inputs, 128, 10, 2, name='conv2'))
-    net = lrelu(conv(net, 128, 10, 2, 'conv3'))
-    net = lrelu(conv(net, 256, 10, 2, 'conv4'))
-    net = lrelu(conv(net, 256, 10, 2, 'conv5'))
-    net = lrelu(conv(net, 512, 10, 2, 'conv6'))
-    net = conv(net, 1024, 10, 2, 'conv7')
-    net = layers.flatten(tf.reduce_mean(net, [1]))
-    # output-256
+    logits, net = audionet.AudioNet().model(inputs, num_classes, is_training)
+    net = layers.flatten(tf.reduce_mean(net['gap_conv'], [1]))
     gaussian_params = linear(net, 2 * z_dim, scope='fc1')
     mean = gaussian_params[:, :z_dim]
     stddev = 1e-8 + tf.nn.softplus(gaussian_params[:, z_dim:])
-    # net = layers.dropout(net, 0.5, is_training=is_training)
-    logits = layers.fully_connected(
-        net, num_classes,
-        biases_initializer=None,
-        weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
-        weights_regularizer=None,
-        activation_fn=None,
-        scope='logits')
     return mean, stddev, logits
+
+
+# def encoder(inputs, num_classes, is_training, z_dim=100, reuse=None):
+#   with tf.variable_scope("SenVAE/encoder", reuse=reuse):
+#     # inputs-6400
+#     net = lrelu(conv(inputs, 64, 10, 2, name='conv1'))
+#     net = lrelu(conv(inputs, 128, 10, 2, name='conv2'))
+#     net = lrelu(conv(net, 128, 10, 2, 'conv3'))
+#     net = lrelu(conv(net, 256, 10, 2, 'conv4'))
+#     net = lrelu(conv(net, 256, 10, 2, 'conv5'))
+#     net = lrelu(conv(net, 512, 10, 2, 'conv6'))
+#     net = conv(net, 1024, 10, 2, 'conv7')
+#     net = layers.flatten(tf.reduce_mean(net, [1]))
+#     # output-256
+#     gaussian_params = linear(net, 2 * z_dim, scope='fc1')
+#     mean = gaussian_params[:, :z_dim]
+#     stddev = 1e-8 + tf.nn.softplus(gaussian_params[:, z_dim:])
+#     # net = layers.dropout(net, 0.5, is_training=is_training)
+#     logits = layers.fully_connected(
+#         net, num_classes,
+#         biases_initializer=None,
+#         weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+#         weights_regularizer=None,
+#         activation_fn=None,
+#         scope='logits')
+#     return mean, stddev, logits
 
 
 def generator(inputs, is_training, reuse=None):
