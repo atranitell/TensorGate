@@ -67,7 +67,7 @@ class AVEC2014_AUDIO_CNN(context.Context):
         step=global_step,
         keys=['loss', 'mae', 'rmse'],
         values=[loss, mae, rmse],
-        # func_test=self.test,
+        func_test=self.test,
         func_val=self.val))
 
     saver = tf.train.Saver(var_list=variable.all())

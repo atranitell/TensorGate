@@ -388,6 +388,7 @@ class AudioNet():
 
     with tf.variable_scope('sen1_' + keep_type + '_' + itos(num_block)):
       # block1-6400
+      inputs_trans = self.conv(inputs, 1, 100, 1, name='transp')
       net = self.conv(inputs, 64, 20, 2, name='conv0')
       net = self.pool1d(net, 2, 2, name='pool0')
       # block1-1600
@@ -395,7 +396,7 @@ class AudioNet():
         net = keep(net, 64, 1, cat('k1', i))
       net_k1 = net
       end_points['k1'] = net_k1
-      net_k1 = self.attention_module(inputs, net_k1, 'a1')
+      net_k1 = self.attention_module(inputs_trans, net_k1, 'a1')
 
       # block2-1600
       net = self.conv(net, 128, 10, 2, 'k1')
@@ -405,7 +406,7 @@ class AudioNet():
         net = keep(net, 128, 1, cat('k2', i))
       net_k2 = net
       end_points['k2'] = net_k2
-      net_k2 = self.attention_module(inputs, net_k2, 'a2')
+      net_k2 = self.attention_module(inputs_trans, net_k2, 'a2')
 
       # block3-400
       net = self.conv(net, 128, 10, 2, 'k2')
@@ -415,7 +416,7 @@ class AudioNet():
         net = keep(net, 128, 1, cat('k3', i))
       net_k3 = net
       end_points['k3'] = net_k3
-      net_k3 = self.attention_module(inputs, net_k3, 'a3')
+      net_k3 = self.attention_module(inputs_trans, net_k3, 'a3')
 
       # block4-100
       net = self.conv(net, 256, 10, 2, 'k3')

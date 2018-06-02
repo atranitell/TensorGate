@@ -204,25 +204,24 @@ def load_pair_audio(config):
 
   return data_prefetch.generate_batch(files, extras, paths, config.data)
 
+
 def _load_audio_global(filepath, start_idx, fnum, flen, finvl):
   file_path_abs = str(filepath, encoding='utf-8')
   data = np.load(file_path_abs)
+  length = fnum * flen
 
-  valid_length = data.shape[0] - fnum * flen - finvl
+  valid_length = data.shape[0] - length - finvl
   if start_idx < 0:
     start = random.randint(0, valid_length)
   else:
     start = start_idx
 
-  audio_data = np.array([])
-  for i in range(fnum):
-    start_i = start + i * finvl
-    _data = data[start_i: start_i + flen]
-    if start_idx < 0:
-      _data += np.random.normal(0.001, 1.0)
-    audio_data = np.append(audio_data, _data)
-
-  audio_data = np.float32(np.reshape(audio_data, [fnum*flen, 1]))
+  ori_pos = np.abs(np.random.normal(start, length, length)) % valid_length
+  noise = np.reshape(np.random.normal(0.001, 1.0, length), (length, 1))
+  audio_global_data = data[np.sort(np.int32(ori_pos))]
+  audio_local_data = data[start: start+length] + noise
+  audio_data = np.stack([audio_global_data, audio_local_data], 1)
+  audio_data = np.float32(np.reshape(np.array(audio_data), [length, 2]))
   return audio_data
 
 
@@ -239,12 +238,12 @@ def load_audio_global(config):
   tf_input = tf.train.slice_input_producer(tf_inputs, shuffle=data.shuffle)
 
   files = tf.py_func(
-      func=_load_audio,
+      func=_load_audio_global,
       inp=[tf_input[0], tf_input[1], cfg.frame_num,
            cfg.frame_length, cfg.frame_invl],
       Tout=tf.float32)
 
-  files = tf.reshape(files, [cfg.frame_num*cfg.frame_length, 1])
+  files = tf.reshape(files, [cfg.frame_num*cfg.frame_length, 2])
   paths = tf_input[0]
   extras = tf_input[2]
 

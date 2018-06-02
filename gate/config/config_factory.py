@@ -29,9 +29,7 @@ config_map = {
     'avec2014.bicnn': avec2014.AVEC2014_BICNN,
     'avec2014.audio.cnn': avec2014.AVEC2014_AUDIO_CNN,
     'avec2014.audio.fcn': avec2014.AVEC2014_AUDIO_FCN,
-    'avec2014.audio.vae': avec2014.AVEC2014_AUDIO_VAE,
-    'avec2014.audio.global': avec2014.AVEC2014_AUDIO_GLOBAL
-    # 'coco2014': coco.COCO2014
+    'avec2014.audio.vae': avec2014.AVEC2014_AUDIO_VAE
 }
 
 
