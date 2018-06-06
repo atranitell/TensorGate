@@ -42,9 +42,11 @@ class NET():
                       batch_norm_decay=0.997,
                       batch_norm_epsilon=1e-5,
                       batch_norm_scale=True,
-                      use_batch_norm=True):
+                      use_batch_norm=True,
+                      use_pre_batch_norm=False):
     """USE Batch Normalization"""
     self.use_batch_norm = use_batch_norm
+    self.use_pre_batch_norm = use_pre_batch_norm
     self.batch_norm_decay = batch_norm_decay
     self.batch_norm_epsilon = batch_norm_epsilon
     self.batch_norm_scale = batch_norm_scale
@@ -61,6 +63,8 @@ class NET():
       self.activation_fn = tf.nn.elu
     elif name is 'tanh':
       self.activation_fn = tf.nn.tanh
+    elif name is 'leaky_relu':
+      self.activation_fn = tf.nn.leaky_relu
     else:
       raise ValueError('Unknown activation fn [%s]' % name)
 
@@ -222,6 +226,32 @@ class NET():
                          use_batch_norm)
     self._set_activation_fn(activation_fn)
     self._set_global_pool(global_pool)
+
+  def sensnet(self,
+              num_classes=1,
+              weight_decay=0.0001,
+              unit_type='multi_addition',
+              unit_num=[1, 1, 1, 1],
+              batch_norm_decay=0.999,
+              batch_norm_epsilon=1e-5,
+              batch_norm_scale=True,
+              use_batch_norm=False,
+              use_pre_batch_norm=False,
+              dropout_keep=0.5,
+              activation_fn='leaky_relu',
+              version='sensnet_v1'):
+    self._set_name(version)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_batch_norm(batch_norm_decay,
+                         batch_norm_epsilon,
+                         batch_norm_scale,
+                         use_batch_norm,
+                         use_pre_batch_norm)
+    self._set_activation_fn(activation_fn)
+    self._set_dropout_keep(dropout_keep)
+    self.unit_type = unit_type
+    self.unit_num = unit_num
 
   def vgg(self,
           depth='11',  # 11, 16, 19

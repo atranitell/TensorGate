@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 from gate import context
-from gate.net.net_factory import net_graph
+from gate.net.custom import sensnet
 from gate.data.data_factory import load_data
 from gate.solver import updater
 from gate.layer import l2
@@ -36,7 +36,7 @@ class AVEC2014_AUDIO_CNN(context.Context):
     # the input data wit shape [batchsize, L, C]
     # L = self.data.configs[0].frame_length*self.config.data.configs[0].frame_num
     # data = tf.reshape(data, [self.batchsize, L, 1])
-    return net_graph(data, self.config.net[0], self.phase)
+    return sensnet.SensNet(self.config.net[0], self.is_training)(data)
 
   def _loss(self, logit, label):
     loss = l2.loss(logit, label, self.config)
@@ -67,7 +67,7 @@ class AVEC2014_AUDIO_CNN(context.Context):
         step=global_step,
         keys=['loss', 'mae', 'rmse'],
         values=[loss, mae, rmse],
-        func_test=self.test,
+        # func_test=self.test,
         func_val=self.val))
 
     saver = tf.train.Saver(var_list=variable.all())
