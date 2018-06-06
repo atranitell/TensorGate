@@ -109,4 +109,9 @@ if __name__ == "__main__":
   parser.add_argument('-model', type=str, dest='model', default=None)
   parser.add_argument('-drawer', type=str, dest='drawer', default=None)
   args, _ = parser.parse_known_args()
+
+  if args.dataset is None and args.drawer is None:
+    print('The input is NULL')
+    exit(1)
+
   run(args)
