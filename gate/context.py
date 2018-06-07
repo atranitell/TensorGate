@@ -104,10 +104,9 @@ class Running_Hook(tf.train.SessionRunHook):
     self.func_test = func_test
 
   def begin(self):
-    pass
     # display variables
-    # variable.print_trainable_list()
-    # variables.print_global_list()
+    variable.print_trainable_list()
+    variable.print_global_list()
 
   def before_run(self, run_context):
     # feed monitor values

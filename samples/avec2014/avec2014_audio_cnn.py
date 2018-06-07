@@ -33,9 +33,6 @@ class AVEC2014_AUDIO_CNN(context.Context):
     context.Context.__init__(self, config)
 
   def _net(self, data):
-    # the input data wit shape [batchsize, L, C]
-    # L = self.data.configs[0].frame_length*self.config.data.configs[0].frame_num
-    # data = tf.reshape(data, [self.batchsize, L, 1])
     return sensnet.SensNet(self.config.net[0], self.is_training)(data)
 
   def _loss(self, logit, label):

@@ -295,15 +295,6 @@ class AVEC2014_AUDIO_CNN(Configbase):
 
     """network model"""
     self.net = [params.NET()]
-    # self.net[0].audionet(
-    #     num_classes=1,
-    #     weight_decay=0.0005,
-    #     batch_norm_decay=0.997,
-    #     batch_norm_epsilon=1e-5,
-    #     batch_norm_scale=True,
-    #     use_batch_norm=True,
-    #     activation_fn='relu',
-    #     global_pool=True)
     self.net[0].sensnet(
         num_classes=1,
         weight_decay=0.0001,
