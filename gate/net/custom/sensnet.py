@@ -234,32 +234,28 @@ class SensNet():
 
     with tf.variable_scope(model_name):
       # BLOCK1
-      net = conv(X, 64, 32, 2, 'conv_1_1')
-      net = conv(net, 64, 2, 2, 'conv_1_2')
+      net = conv(X, 64, 32, 4, 'conv_1')
       # net = pool(net, 2, 2, 'pool_1')
       for i in range(self.unit_num[0]):
         net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
       ends['unit_1'] = net
 
       # BLOCK2
-      net = conv(net, 128, 16, 2, 'conv_2_1')
-      net = conv(net, 128, 2, 2, 'conv_2_2')
+      net = conv(net, 128, 16, 4, 'conv_2')
       # net = pool(net, 2, 2, 'pool_2')
       for i in range(self.unit_num[1]):
         net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
       ends['unit_2'] = net
 
       # BLOCK3
-      net = conv(net, 128, 16, 2, 'conv_3_1')
-      net = conv(net, 128, 2, 2, 'conv_3_2')
+      net = conv(net, 128, 16, 4, 'conv_3')
       # net = pool(net, 2, 2, 'pool_3')
       for i in range(self.unit_num[2]):
         net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
       ends['unit_3'] = net
 
       # BLOCK4: output without activation
-      net = conv(net, 256, 16, 2, 'conv_4_1')
-      net = conv(net, 256, 2, 2, 'conv_4_2')
+      net = conv(net, 256, 16, 4, 'conv_4')
       # net = pool(net, 2, 2, 'pool_4')
       for i in range(self.unit_num[3]-1):
         net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
