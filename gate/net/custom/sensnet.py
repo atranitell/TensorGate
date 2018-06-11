@@ -69,6 +69,8 @@ class SensNet():
     """Directly Call"""
     if self.name == 'sensnet_v1':
       return self.SensNet_v1(X, reuse)
+    elif self.name == 'sensnet_plain':
+      return self.SensNet_Plain(X, reuse)
     else:
       raise ValueError('Unknown the net [%s]' % self.name)
 
@@ -284,6 +286,48 @@ class SensNet():
 
       # output
       net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
+
+      return logits, ends
+
+  def SensNet_Plain(self, X, reuse=None):
+    """Plain strcture"""
+    ends = {}
+
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+
+    with tf.variable_scope('SensNet_Plain'):
+        # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      ends['unit_1'] = net
+
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      ends['unit_2'] = net
+
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      ends['unit_3'] = net
+
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      net = pool(net, 2, 2, 'pool_4')
+      ends['unit_4'] = net
+
+      # output
+      net = tf.reduce_sum(net, axis=1)
       net = layers.dropout(net, self.dropout_keep,
                            is_training=self.is_training)
       logits = self.linear(net, self.num_classes, 'logits')
