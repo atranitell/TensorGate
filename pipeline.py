@@ -58,8 +58,9 @@ def run(argments):
     with open(random_file, 'w') as fw:
       json.dump(task['config'], fw)
     # exec
-    cmd_str = 'python main.py -gpu=%s -dataset=%s -config=%s'
-    cmd = cmd_str % (argments.gpu, task['dataset'], random_file)
+    main = 'main.py' if os.path.exists('main.py') else 'main.pyc'
+    cmd_str = 'python %s -gpu=%s -dataset=%s -config=%s'
+    cmd = cmd_str % (main, argments.gpu, task['dataset'], random_file)
     os.system(cmd)
     os.remove(random_file)
 
