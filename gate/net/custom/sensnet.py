@@ -62,13 +62,17 @@ class SensNet():
   def unit_type_selector(self, unit_type):
     if unit_type == 'multi_addition':
       return self.multi_addition_unit
+    elif unit_type == 'single_addition':
+      return self.single_addition_unit
+    elif unit_type == 'normal':
+      return self.normal_unit
     else:
       raise ValueError('Unknown the unit type [%s]' % unit_type)
 
   def __call__(self, X, reuse=None):
     """Directly Call"""
-    if self.name == 'sensnet_v1':
-      return self.SensNet_v1(X, reuse)
+    if self.name == 'sensnet_v2':
+      return self.SensNet_v2(X, reuse)
     elif self.name == 'sensnet_plain':
       return self.SensNet_Plain(X, reuse)
     else:
@@ -179,13 +183,32 @@ class SensNet():
       Ot = A3 + x
     """
     with tf.variable_scope('sa_' + name):
+      net = self.conv(x, int(in_filters/4), k_size, 1, 'conv1_1',
+                      use_activation, use_bn, use_pre_bn)
+      net = self.conv(net, int(in_filters/4), k_size * 3, 1, 'conv1_2',
+                      use_activation, use_bn, use_pre_bn)
+      net = self.conv(net, in_filters, k_size, 1, 'conv1_3',
+                      use_activation, use_bn, use_pre_bn)
+      return self.activation_output(x + net, use_activation_output)
+
+  def normal_unit(self, x, in_filters, k_size, name,
+                  use_activation_output=False,
+                  use_activation=True,
+                  use_bn=False,
+                  use_pre_bn=False):
+    """Single Addition
+      A1 = f(x)
+      A2 = f(A1)
+      A3 = f(A2)
+    """
+    with tf.variable_scope('normal_' + name):
       net = self.conv(x, in_filters, k_size, 1, 'conv1_1',
                       use_activation, use_bn, use_pre_bn)
       net = self.conv(net, in_filters, k_size * 3, 1, 'conv1_2',
                       use_activation, use_bn, use_pre_bn)
       net = self.conv(net, in_filters, k_size, 1, 'conv1_3',
                       use_activation, use_bn, use_pre_bn)
-      return self.activation_output(x + net, use_activation_output)
+      return net
 
   def squeeze_excitation_module(self, x, in_filters, name):
     """Sequeeze and Excitation Module
@@ -215,7 +238,7 @@ class SensNet():
       attention = tf.sigmoid(self.pool(x, scale, scale, pooling_type='AVG'))
       return feature_map * attention
 
-  def SensNet_v1(self, X, reuse=None):
+  def SensNet_v2(self, X, reuse=None):
     """SensNet including:
       1) residual structure
       2) seqeeze and excitation module
@@ -223,7 +246,7 @@ class SensNet():
       4) multi-view preception
     """
     ends = {}
-    model_name = '_'.join(['SensNet_v1', self.unit_type, self.unit_num_str])
+    model_name = '_'.join(['SensNet_v2', self.unit_type, self.unit_num_str])
 
     conv = functools.partial(self.conv,
                              use_activation=True,
@@ -236,29 +259,29 @@ class SensNet():
 
     with tf.variable_scope(model_name):
       # BLOCK1
-      net = conv(X, 64, 3, 2, 'conv_1')
+      net = conv(X, 64, 20, 2, 'conv_1')
       net = pool(net, 2, 2, 'pool_1')
       for i in range(self.unit_num[0]):
         net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
       ends['unit_1'] = net
 
       # BLOCK2
-      net = conv(net, 128, 3, 2, 'conv_2')
+      net = conv(net, 128, 10, 2, 'conv_2')
       net = pool(net, 2, 2, 'pool_2')
       for i in range(self.unit_num[1]):
         net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
       ends['unit_2'] = net
 
       # BLOCK3
-      net = conv(net, 128, 3, 2, 'conv_3')
+      net = conv(net, 128, 10, 2, 'conv_3')
       net = pool(net, 2, 2, 'pool_3')
       for i in range(self.unit_num[2]):
         net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
       ends['unit_3'] = net
 
       # BLOCK4: output without activation
-      net = conv(net, 256, 3, 2, 'conv_4')
-      net = pool(net, 2, 2, 'pool_4')
+      net = conv(net, 256, 10, 2, 'conv_4')
+      # net = pool(net, 2, 2, 'pool_4')
       for i in range(self.unit_num[3]-1):
         net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
       net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
@@ -271,9 +294,9 @@ class SensNet():
 
       # pool to same length
       # for SE-modlue do not change the length
-      ends['p_1'] = self.pool(ends['a_1'], 64, 64, 'p_1', 'AVG')
-      ends['p_2'] = self.pool(ends['a_2'], 16, 16, 'p_2', 'AVG')
-      ends['p_3'] = self.pool(ends['a_3'], 4, 4, 'p_3', 'AVG')
+      ends['p_1'] = self.pool(ends['a_1'], 32, 32, 'p_1', 'AVG')
+      ends['p_2'] = self.pool(ends['a_2'], 8, 8, 'p_2', 'AVG')
+      ends['p_3'] = self.pool(ends['a_3'], 2, 2, 'p_3', 'AVG')
 
       # Sequeeze and Excitation module
       ends['se_1'] = self.squeeze_excitation_module(ends['p_1'], 64, 'se_1')
@@ -323,7 +346,6 @@ class SensNet():
 
       # BLOCK4: output without activation
       net = conv(net, 256, 10, 2, 'conv_4')
-      net = pool(net, 2, 2, 'pool_4')
       ends['unit_4'] = net
 
       # output
