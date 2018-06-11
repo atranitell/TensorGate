@@ -53,32 +53,32 @@ class NET():
 
   def _set_activation_fn(self, name='relu'):
     """Choose different activation function"""
-    if name is 'relu':
+    if name == 'relu':
       self.activation_fn = tf.nn.relu
-    elif name is 'sigmoid':
+    elif name == 'sigmoid':
       self.activation_fn = tf.nn.sigmoid
-    elif name is 'tanh':
+    elif name == 'tanh':
       self.activation_fn = tf.nn.tanh
-    elif name is 'elu':
+    elif name == 'elu':
       self.activation_fn = tf.nn.elu
-    elif name is 'tanh':
+    elif name == 'tanh':
       self.activation_fn = tf.nn.tanh
-    elif name is 'leaky_relu':
+    elif name == 'leaky_relu':
       self.activation_fn = tf.nn.leaky_relu
     else:
       raise ValueError('Unknown activation fn [%s]' % name)
 
   def _set_initializer_fn(self, name='xavier'):
     """Choose differnet initializer for some certain task"""
-    if name is 'zeros':
+    if name == 'zeros':
       self.initializer_fn = tf.zeros_initializer
-    elif name is 'orthogonal':
+    elif name == 'orthogonal':
       self.initializer_fn = tf.orthogonal_initializer
-    elif name is 'normal':
+    elif name == 'normal':
       self.initializer_fn = tf.truncated_normal_initializer
-    elif name is 'xavier':
+    elif name == 'xavier':
       self.initializer_fn = layers.xavier_initializer
-    elif name is 'uniform':
+    elif name == 'uniform':
       self.initializer_fn = tf.random_uniform_initializer
     else:
       raise ValueError('Unknown input type %s' % name)
@@ -90,13 +90,13 @@ class NET():
 
   def _set_cell_fn(self, name='gru'):
     """Choose different rnn cell"""
-    if name is 'rnn':
+    if name == 'rnn':
       self.cell_fn = rnn.BasicRNNCell
-    elif name is 'gru':
+    elif name == 'gru':
       self.cell_fn = rnn.GRUCell
-    elif name is 'basic_lstm':
+    elif name == 'basic_lstm':
       self.cell_fn = rnn.BasicLSTMCell
-    elif name is 'lstm':
+    elif name == 'lstm':
       self.cell_fn = rnn.LSTMCell
     else:
       raise ValueError('Unknown input type %s' % name)

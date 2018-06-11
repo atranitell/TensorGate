@@ -41,7 +41,7 @@ def init_logger(config):
   pid = datetime.strftime(datetime.now(), '%y%m%d%H%M%S')
   # if output_dir is None, to make a new dir to save model
   # else we use the value of output_dir as workspace
-  filename = string.join_dots(config.name, config.target, pid)
+  filename = string.join_dots(config.name, pid)
   if config.output_dir is None:
     config.output_dir = filesystem.mkdir(env._OUTPUT + filename)
   logger.init(filename, config.output_dir)

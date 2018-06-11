@@ -16,34 +16,50 @@
 import os
 import argparse
 import json
+import uuid
 
 
-def run(filepath, gpu):
+def run(argments):
   """ data format should be like this:
-  [ { "task": "kinface.vae",
-      "extra": {
+  [ 
+    { 
+      "dataset": "kinface.vae",
+      "config": {
         "name": "kinface2.vae",
         "target": "kinvae.encoder",
         "train": {"entry_path": "train_1.txt"},
         "test": {"entry_path": "test_1.txt"},
-        "val": {"entry_path": "train_1.txt"}}},
-    { "task": "kinface.vae",
-      "extra": {
+        "val": {"entry_path": "train_1.txt"}
+      }
+    },
+    { 
+      "dataset": "kinface.vae",
+      "config": {
         "name": "kinface2.vae",
         "target": "kinvae.encoder",
         "train": {"entry_path": "train_2.txt"},
         "test": {"entry_path": "test_2.txt"},
-        "val": {"entry_path": "train_2.txt"}}}]
+        "val": {"entry_path": "train_2.txt"}
+      }
+    }
+  ]
   """
-  with open(filepath) as fp:
+  # mkdir to store temp file
+  if not os.path.exists('_tmp'):
+    os.mkdir('_tmp')
+  # load config.pipline for processing
+  with open(argments.file) as fp:
     content = json.load(fp)
-
-  random_file = '_df8192jkfjsDF.json'
-  for item in content:
+  # there, we split config for a several subtask for the aim of releasing
+  #   tensorflow source fully.
+  for task in content:
+    # write a temp file
+    random_file = '_tmp/' + uuid.uuid4().hex + '.json'
     with open(random_file, 'w') as fw:
-      json.dump(item['extra'], fw)
-    cmd = 'python main.py %s -dataset=%s -config=%s' % (
-        gpu, item['task'], random_file)
+      json.dump(task['config'], fw)
+    # exec
+    cmd_str = 'python main.py -gpu=%s -dataset=%s -config=%s'
+    cmd = cmd_str % (argments.gpu, task['dataset'], random_file)
     os.system(cmd)
     os.remove(random_file)
 
@@ -53,4 +69,4 @@ if __name__ == "__main__":
   parser.add_argument('-file', type=str, dest='file')
   parser.add_argument('-gpu', type=str, dest='gpu', default='0')
   args, _ = parser.parse_known_args()
-  run(args.file, args.gpu)
+  run(args)

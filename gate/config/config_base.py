@@ -81,28 +81,15 @@ class Configbase():
       return json.load(fp)
 
   def _read_config_file(self, default_v, key_v):
-    """key_v like 'train.lr' -> [train][lr]
+    """Parse entry from config json. If it could not pick the value from config
 
     Example:
-      r('../_datasets/train', 'data_dir')
-      if config['data_dir'] has value, return config['data_dir']
-        else return '../_datasets/train'
-
+      In config file:
+        { "train.entry_path": "../_datasets/train.txt" }
+      In config py:
+        r('../_datasets/train.txt', 'train.entry_path')
     """
-    r = key_v.split('.')
-    try:
-      # print(self.EXTRA_CONFIG[r[0]])
-      if len(r) == 1:
-        config_v = self.EXTRA_CONFIG[r[0]]
-      elif len(r) == 2:
-        config_v = self.EXTRA_CONFIG[r[0]][r[1]]
-      elif len(r) == 3:
-        config_v = self.EXTRA_CONFIG[r[0]][r[1]][r[2]]
-      elif len(r) == 4:
-        config_v = self.EXTRA_CONFIG[r[0]][r[1]][r[2]][r[3]]
-      else:
-        raise ValueError('Too long to implement!')
-      v = config_v
-    except BaseException:
-      v = default_v
-    return v
+    if key_v in self.EXTRA_CONFIG and self.EXTRA_CONFIG[key_v] is not None:
+      return self.EXTRA_CONFIG[key_v]
+    else:
+      return default_v

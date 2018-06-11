@@ -279,10 +279,12 @@ class AVEC2014_AUDIO_CNN(Configbase):
   def __init__(self, args):
     """AVEC2014_AUDIO dataset for Depressive Detection"""
     Configbase.__init__(self, args)
-    self.name = 'avec2014'
-    self.target = 'avec2014.audio.cnn'
-    self.output_dir = None
-    self.task = 'train'
+    r = self._read_config_file
+
+    self.name = r('avec2014', 'name')
+    self.target = r('avec2014.audio.cnn', 'target')
+    self.output_dir = r(None, 'output_dir')
+    self.task = r('train', 'task')
 
     """iteration controller"""
     self.log = params.LOG(
@@ -298,20 +300,20 @@ class AVEC2014_AUDIO_CNN(Configbase):
     self.net[0].sensnet(
         num_classes=1,
         weight_decay=0.0001,
-        unit_type='multi_addition',
-        unit_num=[1, 1, 1, 1],
+        unit_type=r('multi_addition', 'net.unit_type'),
+        unit_num=r([1, 1, 1, 1], 'net.unit_num'),
         batch_norm_decay=0.999,
         batch_norm_epsilon=1e-5,
         batch_norm_scale=True,
-        use_batch_norm=False,
-        use_pre_batch_norm=False,
+        use_batch_norm=r(False, 'net.use_batch_norm'),
+        use_pre_batch_norm=r(False, 'net.use_pre_batch_norm'),
         dropout_keep=0.5,
-        activation_fn='leaky_relu',
-        version='sensnet_v1')
+        activation_fn=r('leaky_relu', 'net.activation_fn'),
+        version=r('sensnet_v2', 'net.version'))
 
     """learning rate"""
     self.lr = [params.LR()]
-    self.lr[0].set_fixed(learning_rate=0.00003)
+    self.lr[0].set_fixed(learning_rate=r(0.00003, 'train.lr'))
 
     """optimizer"""
     self.opt = [params.OPT()]
@@ -320,8 +322,9 @@ class AVEC2014_AUDIO_CNN(Configbase):
     """train"""
     self.train = params.Phase('train')
     self.train.data = params.DATA(
-        batchsize=32,
-        entry_path='../_datasets/AVEC2014_Audio/pp_trn_raw.txt',
+        batchsize=r(32, 'train.batchsize'),
+        entry_path=r('../_datasets/AVEC2014_Audio/pp_trn_raw.txt',
+                     'train.entry_path'),
         shuffle=True)
     self.train.data.set_queue_loader(
         loader='load_audio',
@@ -332,8 +335,9 @@ class AVEC2014_AUDIO_CNN(Configbase):
     """val"""
     self.val = params.Phase('val')
     self.val.data = params.DATA(
-        batchsize=50,
-        entry_path='../_datasets/AVEC2014_Audio/pp_val_16.txt',
+        batchsize=r(50, 'val.batchsize'),
+        entry_path=r('../_datasets/AVEC2014_Audio/pp_val_16.txt',
+                     'val.entry_path'),
         shuffle=False)
     self.val.data.set_queue_loader(
         loader='load_audio',
@@ -344,8 +348,9 @@ class AVEC2014_AUDIO_CNN(Configbase):
     """test"""
     self.test = params.Phase('test')
     self.test.data = params.DATA(
-        batchsize=50,
-        entry_path='../_datasets/AVEC2014_Audio/pp_tst_16.txt',
+        batchsize=r(50, 'test.batchsize'),
+        entry_path=r('../_datasets/AVEC2014_Audio/pp_tst_16.txt',
+                     'test.entry_path'),
         shuffle=False)
     self.test.data.set_queue_loader(
         loader='load_audio',
@@ -354,9 +359,12 @@ class AVEC2014_AUDIO_CNN(Configbase):
     self.set_default_data_attr(self.test.data)
 
   def set_default_data_attr(self, data):
+    r = self._read_config_file
     audio = params.Audio()
     audio.set_fixed_length_audio(
-        frame_num=32, frame_length=200, frame_invl=200)
+        frame_num=r(16, 'audio.frame_num'),
+        frame_length=r(200, 'audio.frame_length'),
+        frame_invl=r(200, 'audio.frame_invl'))
     data.add(audio)
     data.set_entry_attr((str, int, int), (True, False, False))
     data.set_label(num_classes=1, span=63, one_hot=False, scale=True)
