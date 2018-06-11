@@ -89,7 +89,8 @@ class Configbase():
       In config py:
         r('../_datasets/train.txt', 'train.entry_path')
     """
-    if key_v in self.EXTRA_CONFIG and self.EXTRA_CONFIG[key_v] is not None:
+    if self.EXTRA_CONFIG is not None  \
+            and key_v in self.EXTRA_CONFIG  \
+            and self.EXTRA_CONFIG[key_v] is not None:
       return self.EXTRA_CONFIG[key_v]
-    else:
-      return default_v
+    return default_v
