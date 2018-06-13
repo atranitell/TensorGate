@@ -96,4 +96,5 @@ ENV/
 .DS_Store
 .vscode
 
-_configs
+_configs/
+_tmp/

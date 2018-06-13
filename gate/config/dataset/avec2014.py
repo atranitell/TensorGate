@@ -284,6 +284,7 @@ class AVEC2014_AUDIO_CNN(Configbase):
     self.name = r('avec2014', 'name')
     self.target = r('avec2014.audio.cnn', 'target')
     self.output_dir = r(None, 'output_dir')
+    self.ckpt_file = r(None, 'ckpt_file')
     self.task = r('train', 'task')
 
     """iteration controller"""

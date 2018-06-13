@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Snapshot"""
-
+import os
 import tensorflow as tf
 from gate.utils.logger import logger
 
@@ -37,15 +37,23 @@ class Snapshot():
     return self.hook
 
   def restore(self, sess, saver):
-    ckpt = tf.train.get_checkpoint_state(self.config.output_dir)
-    if ckpt and ckpt.model_checkpoint_path:
-      saver.restore(sess, ckpt.model_checkpoint_path)
-      global_step = ckpt.model_checkpoint_path.split('/')[-1].split('-')[-1]
+    """If the ckpt_file exists, the program will prefer to load it.
+      else load the output_dir
+    """
+    if self.config.ckpt_file is not None:
+      ckpt = True
+      ckpt_path = os.path.join(self.config.output_dir, self.config.ckpt_file)
+    else:
+      ckpt = tf.train.get_checkpoint_state(self.config.output_dir)
+      ckpt_path = ckpt.model_checkpoint_path
+    if ckpt is not None and ckpt_path:
+      saver.restore(sess, ckpt_path)
+      global_step = ckpt_path.split('/')[-1].split('-')[-1]
       try:
         int(global_step)
       except:
         global_step = 0
-      logger.sys('Load checkpoint from: %s' % ckpt.model_checkpoint_path)
+      logger.sys('Load checkpoint from: %s' % ckpt_path)
       return global_step
     else:
       logger.sys('Start a new model to train.')

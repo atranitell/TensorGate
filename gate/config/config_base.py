@@ -41,7 +41,7 @@ class Configbase():
         raise ValueError('Unknown task %s' % self.args.task)
       self.task = self.args.task
     if self.args.model is not None:
-      filesystem.raise_path_not_exist(self.args.model)
+      # filesystem.raise_path_not_exist(self.args.model)
       self.output_dir = self.args.model
 
   def set_phase(self, phase):

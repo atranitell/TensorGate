@@ -44,6 +44,10 @@ def init_logger(config):
   filename = string.join_dots(config.name, pid)
   if config.output_dir is None:
     config.output_dir = filesystem.mkdir(env._OUTPUT + filename)
+  else:
+    # if the folder is not exisited, but output_dir has been assigned.
+    # the routinue will create a folder
+    filesystem.mkdir(config.output_dir)
   logger.init(filename, config.output_dir)
   logger.info('Initilized logger successful.')
   logger.info('Current model in %s' % config.output_dir)
