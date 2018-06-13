@@ -71,10 +71,16 @@ class SensNet():
 
   def __call__(self, X, reuse=None):
     """Directly Call"""
-    if self.name == 'sensnet_v2':
+    if self.name.lower() == 'sensnet_v2':
       return self.SensNet_v2(X, reuse)
-    elif self.name == 'sensnet_plain':
+    elif self.name.lower() == 'sensnet_plain':
       return self.SensNet_Plain(X, reuse)
+    elif self.name.lower() == 'sensnet_v2_nose':
+      return self.SensNet_v2_nose(X, reuse)
+    elif self.name.lower() == 'sensnet_v2_noda':
+      return self.SensNet_v2_noda(X, reuse)
+    elif self.name.lower() == 'sensnet_v2_mb':
+      return self.SensNet_v2_mb(X, reuse)
     else:
       raise ValueError('Unknown the net [%s]' % self.name)
 
@@ -313,6 +319,175 @@ class SensNet():
                            is_training=self.is_training)
       logits = self.linear(net, self.num_classes, 'logits')
 
+      return logits, ends
+
+  def SensNet_v2_nose(self, X, reuse=None):
+    """No sequeeze and expand module"""
+    ends = {}
+    model_name = '_'.join(
+        ['SensNet_v2_nose', self.unit_type, self.unit_num_str])
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+    with tf.variable_scope(model_name):
+      # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      for i in range(self.unit_num[0]):
+        net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
+      ends['unit_1'] = net
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      for i in range(self.unit_num[1]):
+        net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
+      ends['unit_2'] = net
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      for i in range(self.unit_num[2]):
+        net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
+      ends['unit_3'] = net
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      for i in range(self.unit_num[3]-1):
+        net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
+      net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
+      ends['unit_4'] = net
+      # attention module
+      ends['a_1'] = self.attention_module(X, ends['unit_1'], 'a_1')
+      ends['a_2'] = self.attention_module(X, ends['unit_2'], 'a_2')
+      ends['a_3'] = self.attention_module(X, ends['unit_3'], 'a_3')
+      # pool to same length
+      # for SE-modlue do not change the length
+      ends['p_1'] = self.pool(ends['a_1'], 32, 32, 'p_1', 'AVG')
+      ends['p_2'] = self.pool(ends['a_2'], 8, 8, 'p_2', 'AVG')
+      ends['p_3'] = self.pool(ends['a_3'], 2, 2, 'p_3', 'AVG')
+      # concat
+      ends['concat'] = tf.concat([ends['unit_4'], ends['p_1'],
+                                  ends['p_2'], ends['p_3']], axis=2)
+      # output
+      net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
+      return logits, ends
+
+  def SensNet_v2_noda(self, X, reuse=None):
+    """No data aware module"""
+    ends = {}
+    model_name = '_'.join(
+        ['SensNet_v2_noda', self.unit_type, self.unit_num_str])
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+    with tf.variable_scope(model_name):
+      # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      for i in range(self.unit_num[0]):
+        net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
+      ends['unit_1'] = net
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      for i in range(self.unit_num[1]):
+        net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
+      ends['unit_2'] = net
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      for i in range(self.unit_num[2]):
+        net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
+      ends['unit_3'] = net
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      for i in range(self.unit_num[3]-1):
+        net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
+      net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
+      ends['unit_4'] = net
+      # for SE-modlue do not change the length
+      ends['p_1'] = self.pool(ends['unit_1'], 32, 32, 'p_1', 'AVG')
+      ends['p_2'] = self.pool(ends['unit_2'], 8, 8, 'p_2', 'AVG')
+      ends['p_3'] = self.pool(ends['unit_3'], 2, 2, 'p_3', 'AVG')
+      # SE
+      ends['se_1'] = self.squeeze_excitation_module(ends['p_1'], 64, 'se_1')
+      ends['se_2'] = self.squeeze_excitation_module(ends['p_2'], 128, 'se_2')
+      ends['se_3'] = self.squeeze_excitation_module(ends['p_3'], 128, 'se_3')
+      # concat
+      ends['concat'] = tf.concat([ends['unit_4'], ends['se_1'],
+                                  ends['se_2'], ends['se_3']], axis=2)
+      # output
+      net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
+      return logits, ends
+
+  def SensNet_v2_mb(self, X, reuse=None):
+    """multi-branch module only"""
+    ends = {}
+    model_name = '_'.join(
+        ['SensNet_v2_mb', self.unit_type, self.unit_num_str])
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+    with tf.variable_scope(model_name):
+      # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      for i in range(self.unit_num[0]):
+        net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
+      ends['unit_1'] = net
+
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      for i in range(self.unit_num[1]):
+        net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
+      ends['unit_2'] = net
+
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      for i in range(self.unit_num[2]):
+        net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
+      ends['unit_3'] = net
+
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      for i in range(self.unit_num[3]-1):
+        net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
+      net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
+      ends['unit_4'] = net
+
+      # pool to same length
+      # for SE-modlue do not change the length
+      ends['p_1'] = self.pool(ends['unit_1'], 32, 32, 'p_1', 'AVG')
+      ends['p_2'] = self.pool(ends['unit_2'], 8, 8, 'p_2', 'AVG')
+      ends['p_3'] = self.pool(ends['unit_3'], 2, 2, 'p_3', 'AVG')
+
+      # concat
+      ends['concat'] = tf.concat([ends['unit_4'], ends['p_1'],
+                                  ends['p_2'], ends['p_3']], axis=2)
+
+      # output
+      net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
       return logits, ends
 
   def SensNet_Plain(self, X, reuse=None):
