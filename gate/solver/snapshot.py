@@ -45,8 +45,8 @@ class Snapshot():
       ckpt_path = os.path.join(self.config.output_dir, self.config.ckpt_file)
     else:
       ckpt = tf.train.get_checkpoint_state(self.config.output_dir)
-      ckpt_path = ckpt.model_checkpoint_path
-    if ckpt is not None and ckpt_path:
+      ckpt_path = None if ckpt is None else ckpt.model_checkpoint_path
+    if ckpt and ckpt_path:
       saver.restore(sess, ckpt_path)
       global_step = ckpt_path.split('/')[-1].split('-')[-1]
       try:
