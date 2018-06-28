@@ -30,6 +30,7 @@ class Configbase():
     """Check setting and path."""
     self.EXTRA_CONFIG = None
     self.args = args
+    self.ckpt_file = None
     if args.config is not None:
       filesystem.raise_path_not_exist(args.config)
       self.EXTRA_CONFIG = self._load_config_file(args.config)
