@@ -14,6 +14,8 @@
 # ==============================================================================
 """2018/2/25 AVEC2014"""
 
+import os
+import re
 import tensorflow as tf
 from gate import context
 from gate.net.custom import sensnet
@@ -65,6 +67,7 @@ class AVEC2014_AUDIO_CNN(context.Context):
         keys=['loss', 'mae', 'rmse'],
         values=[loss, mae, rmse],
         # func_test=self.test,
+        func_end=self.test_best_on_validation,
         func_val=self.val))
 
     saver = tf.train.Saver(var_list=variable.all())
@@ -140,3 +143,36 @@ class AVEC2014_AUDIO_CNN(context.Context):
                         tags=['test/video_mae', 'test/video_rmse'],
                         values=[_mae, _rmse])
       return _rmse
+
+  def test_best_on_validation(self):
+    """Find best model on validation results and test on test datasets.
+    """
+    output_dir = self.config.output_dir
+    # find log with early version assumed as a training log
+    for fname in sorted(os.listdir(output_dir)):
+      if fname.find('.log') > 0:
+        fpath = os.path.join(output_dir, fname)
+        break
+
+    # parse
+    fp = open(fpath, 'r')
+    _min_iter = '0'
+    _min_rmse = 100.0
+    _min_mae = 100.0
+    for line in fp:
+      if line.find('[VAL]') > 0 and line.find('video_rmse') > 0:
+        _iter = (re.findall('Iter:(.*?),', line)[0])
+        _mae = float(re.findall('video_mae:(.*?),', line)[0])
+        _rmse = float(re.findall('video_rmse:(.*)', line)[0])
+        if _rmse < _min_rmse:
+          _min_mae = _mae
+          _min_rmse = _rmse
+          _min_iter = _iter
+    fp.close()
+
+    # output best validation
+    logger.info('Best on val - Iter: %s, video_mae: %.4f, video_rmse: %.4f' %
+                (_min_iter, _min_mae, _min_rmse))
+
+    self.config.ckpt_file = self.config.name + '.ckpt-' + _min_iter
+    self.test()
