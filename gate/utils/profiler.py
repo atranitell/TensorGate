@@ -36,14 +36,15 @@ class Profiler():
     sys.stdout.write('total params: %d\n' % param_stats.total_parameters)
 
   @staticmethod
-  def flops():
-    """ flops
-    """
-    param_stats = tf.profiler.profile(
-        graph=tf.get_default_graph(),
-        cmd='scope',
-        options=tf.profiler.ProfileOptionBuilder.float_operation())
-    sys.stdout.write('total flops: %d\n' % param_stats.total_float_ops)
+  def flops(graph=None):
+    """Flops"""
+    if graph is None:
+      graph = tf.get_default_graph()
+    run_meta = tf.RunMetadata()
+    opts = tf.profiler.ProfileOptionBuilder.float_operation()
+    flop = tf.profiler.profile(graph=graph, cmd='op', options=opts)
+    if flop is not None:
+      print('Total FLOPs: ', flop.total_float_ops)
 
   @staticmethod
   def time_memory(path, sess, train_op):
