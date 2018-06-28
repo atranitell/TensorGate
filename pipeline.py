@@ -24,6 +24,7 @@ def run(argments):
   [ 
     { 
       "dataset": "kinface.vae",
+      "run": true,
       "config": {
         "name": "kinface2.vae",
         "target": "kinvae.encoder",
@@ -34,6 +35,7 @@ def run(argments):
     },
     { 
       "dataset": "kinface.vae",
+      "run": false,
       "config": {
         "name": "kinface2.vae",
         "target": "kinvae.encoder",
@@ -53,6 +55,9 @@ def run(argments):
   # there, we split config for a several subtask for the aim of releasing
   #   tensorflow source fully.
   for task in content:
+    # if executable
+    if 'run' in task and task['run'] == False:
+      continue
     # write a temp file
     random_file = '_tmp/' + uuid.uuid4().hex + '.json'
     with open(random_file, 'w') as fw:
@@ -61,8 +66,10 @@ def run(argments):
     main = 'main.py' if os.path.exists('main.py') else 'main.pyc'
     cmd_str = 'python %s -gpu=%s -dataset=%s -config=%s'
     cmd = cmd_str % (main, argments.gpu, task['dataset'], random_file)
+    print(cmd)
     os.system(cmd)
     os.remove(random_file)
+    print('\n\n')
 
 
 if __name__ == "__main__":
