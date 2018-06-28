@@ -88,7 +88,7 @@ class Running_Hook(tf.train.SessionRunHook):
   """ Running Hooks for training showing information """
 
   def __init__(self, config, step, keys, values,
-               func_val=None, func_test=None):
+               func_val=None, func_test=None, func_end=None):
     """ Running session for common application.
         Default values[0] is iteration
         config: config.log
@@ -102,6 +102,7 @@ class Running_Hook(tf.train.SessionRunHook):
     # call
     self.func_val = func_val
     self.func_test = func_test
+    self.func_end = func_end
 
   def begin(self):
     # display variables
@@ -135,6 +136,8 @@ class Running_Hook(tf.train.SessionRunHook):
         self.func_test()
 
     if cur_iter == self.config.max_iter:
+      if self.func_end is not None:
+        self.func_end()
       logger.sys('Achieved the maximum iterations, the system will terminate.')
       exit(0)
 
