@@ -73,6 +73,8 @@ class SensNet():
     """Directly Call"""
     if self.name.lower() == 'sensnet_v2':
       return self.SensNet_v2(X, reuse)
+    elif self.name.lower() == 'sensnet_v2_backbone':
+      return self.SensNet_v2_backbone(X, reuse)
     elif self.name.lower() == 'sensnet_plain':
       return self.SensNet_Plain(X, reuse)
     elif self.name.lower() == 'sensnet_v2_nose':
@@ -179,9 +181,7 @@ class SensNet():
 
   def single_addition_unit(self, x, in_filters, k_size, name,
                            use_activation_output=False,
-                           use_activation=True,
-                           use_bn=False,
-                           use_pre_bn=False):
+                           use_bn=False, use_pre_bn=False, **kwargs):
     """Single Addition
       A1 = f(x)
       A2 = f(A1)
@@ -190,18 +190,15 @@ class SensNet():
     """
     with tf.variable_scope('sa_' + name):
       net = self.conv(x, int(in_filters/4), k_size, 1, 'conv1_1',
-                      use_activation, use_bn, use_pre_bn)
+                      True, use_bn, use_pre_bn)
       net = self.conv(net, int(in_filters/4), k_size * 3, 1, 'conv1_2',
-                      use_activation, use_bn, use_pre_bn)
+                      True, use_bn, use_pre_bn)
       net = self.conv(net, in_filters, k_size, 1, 'conv1_3',
-                      use_activation, use_bn, use_pre_bn)
+                      False, use_bn, use_pre_bn)
       return self.activation_output(x + net, use_activation_output)
 
   def normal_unit(self, x, in_filters, k_size, name,
-                  use_activation_output=False,
-                  use_activation=True,
-                  use_bn=False,
-                  use_pre_bn=False):
+                  use_bn=False, use_pre_bn=False, **kwargs):
     """Single Addition
       A1 = f(x)
       A2 = f(A1)
@@ -209,11 +206,11 @@ class SensNet():
     """
     with tf.variable_scope('normal_' + name):
       net = self.conv(x, in_filters, k_size, 1, 'conv1_1',
-                      use_activation, use_bn, use_pre_bn)
+                      True, use_bn, use_pre_bn)
       net = self.conv(net, in_filters, k_size * 3, 1, 'conv1_2',
-                      use_activation, use_bn, use_pre_bn)
+                      True, use_bn, use_pre_bn)
       net = self.conv(net, in_filters, k_size, 1, 'conv1_3',
-                      use_activation, use_bn, use_pre_bn)
+                      True, use_bn, use_pre_bn)
       return net
 
   def squeeze_excitation_module(self, x, in_filters, name):
@@ -315,6 +312,59 @@ class SensNet():
 
       # output
       net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
+
+      return logits, ends
+
+  def SensNet_v2_backbone(self, X, reuse=None):
+    """Backbone network"""
+    ends = {}
+    model_name = '_'.join(
+        ['SensNet_v2_backbone', self.unit_type, self.unit_num_str])
+
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+
+    with tf.variable_scope(model_name):
+      # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      for i in range(self.unit_num[0]):
+        net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
+      ends['unit_1'] = net
+
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      for i in range(self.unit_num[1]):
+        net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
+      ends['unit_2'] = net
+
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      for i in range(self.unit_num[2]):
+        net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
+      ends['unit_3'] = net
+
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      # net = pool(net, 2, 2, 'pool_4')
+      for i in range(self.unit_num[3]-1):
+        net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
+      net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
+      ends['unit_4'] = net
+
+      # output
+      net = tf.reduce_sum(ends['unit_3'], axis=1)
       net = layers.dropout(net, self.dropout_keep,
                            is_training=self.is_training)
       logits = self.linear(net, self.num_classes, 'logits')

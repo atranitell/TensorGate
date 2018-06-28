@@ -91,6 +91,7 @@ ENV/
 # data file
 *.npy
 *.bk
+*.pyc
 
 # for mac
 .DS_Store
