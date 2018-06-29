@@ -32,6 +32,7 @@ def generate_batch(X, Y, Z, config):
         tensors=[X, Y, Z],
         batch_size=config.batchsize,
         capacity=config.min_queue_num + 3 * config.batchsize,
-        num_threads=config.reader_thread)
+        num_threads=config.reader_thread,
+        allow_smaller_final_batch=True)
 
   return Xs, Ys, Zs

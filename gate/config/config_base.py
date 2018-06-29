@@ -58,6 +58,8 @@ class Configbase():
       self._inference()
     elif phase == 'heatmap':
       self._heatmap()
+    elif phase == 'extract_feature':
+      self._extract_feature()
     else:
       raise ValueError('Unknown phase %s' % phase)
 
@@ -75,6 +77,9 @@ class Configbase():
 
   def _heatmap(self):
     self.data = self.heatmap.data
+  
+  def _extract_feature(self):
+    self.data = self.extract_feature.data
 
   @staticmethod
   def _load_config_file(config_path):

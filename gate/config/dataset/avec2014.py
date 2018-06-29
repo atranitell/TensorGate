@@ -359,6 +359,19 @@ class AVEC2014_AUDIO_CNN(Configbase):
         min_queue_num=128)
     self.set_default_data_attr(self.test.data)
 
+    """extract_feature"""
+    self.extract_feature = params.Phase('extract_feature')
+    self.extract_feature.data = params.DATA(
+        batchsize=r(50, 'extract_feature.batchsize'),
+        entry_path=r('../_datasets/AVEC2014_Audio/pp_tst_16.txt',
+                     'extract_feature.entry_path'),
+        shuffle=False)
+    self.extract_feature.data.set_queue_loader(
+        loader='load_audio',
+        reader_thread=1,  # keep order
+        min_queue_num=128)
+    self.set_default_data_attr(self.extract_feature.data)
+
   def set_default_data_attr(self, data):
     r = self._read_config_file
     audio = params.Audio()

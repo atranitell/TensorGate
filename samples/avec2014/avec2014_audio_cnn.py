@@ -25,6 +25,7 @@ from gate.layer import l2
 from gate.utils import variable
 from gate.utils import filesystem
 from gate.utils import string
+from gate.utils import storage
 from gate.utils.logger import logger
 from samples.avec2014.utils import get_accurate_from_file
 
@@ -176,3 +177,35 @@ class AVEC2014_AUDIO_CNN(context.Context):
 
     self.config.ckpt_file = self.config.name + '.ckpt-' + _min_iter
     self.test()
+
+  @context.graph_phase_wrapper()
+  def extract_feature(self):
+    # create a folder to save
+    test_dir = filesystem.mkdir(self.config.output_dir + '/extract_feature/')
+    # get data
+    image, label, path = load_data(self.config)
+    # get net
+    logit, end_points = self._net(image)
+    # output to file
+    saver = tf.train.Saver()
+    # storage feature
+    storager = storage.Storage()
+    # storage output
+    storager.add_tensor(logit*self.data.span, 'output', 'logit')
+    for name in end_points:
+      storager.add_tensor(end_points[name], 'output', name)
+    # storage source
+    storager.add_tensor(image, 'source', 'data')
+    storager.add_tensor(path, 'source', 'path')
+    storager.add_tensor(label, 'source', 'label')
+    # storage weight
+    for var in tf.global_variables():
+      storager.add_tensor(var, 'weight', var.name)
+    with context.DefaultSession() as sess:
+      self.snapshot.restore(sess, saver)
+      with context.QueueContext(sess):
+        for _iter in range(self.num_batch):
+          storager.add(sess.run(storager.run_tensor))
+          if _iter % 50:
+            logger.info('Has finished %d / %d' % (_iter, self.num_batch))
+        storager.dump(self.config.name)

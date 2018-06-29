@@ -83,6 +83,8 @@ def gate(arguments):
     App(config).val()
   elif config.task == 'heatmap':
     App(config).heatmap()
+  elif config.task == 'extract_feature':
+    App(config).extract_feature()
   else:
     raise ValueError('Unknown task [%s]' % config.task)
 
