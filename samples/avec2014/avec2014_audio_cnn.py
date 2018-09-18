@@ -83,6 +83,13 @@ class AVEC2014_AUDIO_CNN(context.Context):
     val_dir = filesystem.mkdir(self.config.output_dir + '/val/')
     # get data
     image, label, path = load_data(self.config)
+
+    # fix a bug with tf 1.10
+    _, w, _ = image.get_shape().as_list()
+    image = tf.reshape(image, [self.batchsize, w, 1])
+    label = tf.reshape(label, [self.batchsize])
+    path = tf.reshape(path, [self.batchsize])
+
     # get net
     logit, _ = self._net(image)
     # output to file
@@ -117,6 +124,13 @@ class AVEC2014_AUDIO_CNN(context.Context):
     test_dir = filesystem.mkdir(self.config.output_dir + '/test/')
     # get data
     image, label, path = load_data(self.config)
+    
+    # fix a bug with tf 1.10
+    _, w, _ = image.get_shape().as_list()
+    image = tf.reshape(image, [self.batchsize, w, 1])
+    label = tf.reshape(label, [self.batchsize])
+    path = tf.reshape(path, [self.batchsize])
+
     # get net
     logit, _ = self._net(image)
     # output to file

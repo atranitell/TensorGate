@@ -83,6 +83,8 @@ class SensNet():
       return self.SensNet_v2_noda(X, reuse)
     elif self.name.lower() == 'sensnet_v2_mb':
       return self.SensNet_v2_mb(X, reuse)
+    elif self.name.lower() == 'sensnet_v2_fpn':
+      return self.SensNet_v2_fpn(X, reuse)
     else:
       raise ValueError('Unknown the net [%s]' % self.name)
 
@@ -141,6 +143,24 @@ class SensNet():
           net = self.bn(net)
         if use_activation:
           net = self.activation_fn(net)
+      return net
+
+  def deconv(self, x, num_filters, k_size, k_stride, name, use_activation=True):
+    """Deconvolution Layer for 1D CNN
+      We implement the 1D-Deconv by using 2D-Deconv
+    """
+    with tf.variable_scope(name):
+      x = tf.expand_dims(x, 2)
+      net = tf.layers.conv2d_transpose(
+          inputs=x,
+          filters=num_filters,
+          kernel_size=(k_size, 1),
+          strides=(k_stride, 1),
+          padding='SAME',
+          kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+      net = tf.squeeze(net)
+      if use_activation:
+        net = self.activation_fn(net)
       return net
 
   def bn(self, inputs):
@@ -577,6 +597,94 @@ class SensNet():
       net = tf.reduce_sum(net, axis=1)
       net = layers.dropout(net, self.dropout_keep,
                            is_training=self.is_training)
+      logits = self.linear(net, self.num_classes, 'logits')
+
+      return logits, ends
+
+  def auxiliary_boost_v1(self, dataX, dataBlock, dataNext,
+                         ends, finalDim, name):
+    """ 
+      dataX with Shape (N, W, 1)
+      dataBlock with Shape (N, W/p1, c1)
+      dataNext with Shape (N, W/p2, c2)
+      Merged with Shape (N, W/p1, c1)
+    """
+    with tf.variable_scope(name):
+      m_XB = self.attention_module(dataX, dataBlock, name+'_down')
+      _, wXB, cXB = m_XB.get_shape().as_list()
+      _, wN, cN = dataNext.get_shape().as_list()
+      scale = int(wXB/wN)
+      m_N = self.deconv(dataNext, cN, scale, scale, name+'_up')
+      m_concat = tf.concat([m_XB, m_N], axis=2, name='_concat')
+      scale_out = int(wXB/finalDim)
+      m_pool = self.pool(m_concat, scale_out, scale_out,
+                         pooling_type='AVG', name='_se_pre_pool')
+      m_se = self.squeeze_excitation_module(m_pool, cXB+cN, name='_se')
+      return m_concat, m_se
+
+  def SensNet_v2_fpn(self, X, reuse=None):
+    """SensNet including:
+    """
+    ends = {}
+    model_name = '_'.join(
+        ['SensNet_v2_fpn', self.unit_type, self.unit_num_str])
+
+    conv = functools.partial(self.conv,
+                             use_activation=True,
+                             use_bn=self.use_batch_norm,
+                             use_pre_bn=self.use_pre_batch_norm)
+
+    pool = functools.partial(self.pool,
+                             pooling_type='MAX',
+                             padding_type='SAME')
+
+    with tf.variable_scope(model_name):
+      # BLOCK1
+      net = conv(X, 64, 20, 2, 'conv_1')
+      net = pool(net, 2, 2, 'pool_1')
+      for i in range(self.unit_num[0]):
+        net = self.unit_fn(net, 64, 1, 'unit_1_'+str(i))
+      ends['unit_1'] = net  # L/4
+
+      # BLOCK2
+      net = conv(net, 128, 10, 2, 'conv_2')
+      net = pool(net, 2, 2, 'pool_2')
+      for i in range(self.unit_num[1]):
+        net = self.unit_fn(net, 128, 1, 'unit_2_'+str(i))
+      ends['unit_2'] = net  # L/16
+
+      # BLOCK3
+      net = conv(net, 128, 10, 2, 'conv_3')
+      net = pool(net, 2, 2, 'pool_3')
+      for i in range(self.unit_num[2]):
+        net = self.unit_fn(net, 128, 1, 'unit_3_'+str(i))
+      ends['unit_3'] = net  # L/64
+
+      # BLOCK4: output without activation
+      net = conv(net, 256, 10, 2, 'conv_4')
+      for i in range(self.unit_num[3]-1):
+        net = self.unit_fn(net, 256, 1, 'unit_4_'+str(i))
+      net = self.unit_fn(net, 256, 1, 'unit_4_'+str(self.unit_num[3]-1))
+      ends['unit_4'] = net  # L/128
+
+      _, finalW, _ = ends['unit_4'].get_shape().as_list()
+
+      ends['a_1'], ends['se_1'] = self.auxiliary_boost_v1(
+          X, ends['unit_3'], ends['unit_4'], ends, finalW, 'aux3')
+      ends['a_2'], ends['se_2'] = self.auxiliary_boost_v1(
+          X, ends['unit_2'], ends['a_1'], ends, finalW, 'aux2')
+      ends['a_3'], ends['se_3'] = self.auxiliary_boost_v1(
+          X, ends['unit_1'], ends['a_2'], ends, finalW, 'aux1')
+
+      # concat
+      ends['concat'] = tf.concat(
+          [ends['unit_4'], ends['se_1'], ends['se_2'], ends['se_3']], axis=2)
+
+      # output
+      net = tf.reduce_sum(ends['concat'], axis=1)
+      net = layers.dropout(net, self.dropout_keep,
+                           is_training=self.is_training)
+                           
       logits = self.linear(net, self.num_classes, 'logits')
 
       return logits, ends

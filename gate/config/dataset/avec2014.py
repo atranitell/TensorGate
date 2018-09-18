@@ -310,7 +310,7 @@ class AVEC2014_AUDIO_CNN(Configbase):
         use_pre_batch_norm=r(False, 'net.use_pre_batch_norm'),
         dropout_keep=0.5,
         activation_fn=r('leaky_relu', 'net.activation_fn'),
-        version=r('sensnet_v2', 'net.version'))
+        version=r('sensnet_v2_fpn', 'net.version'))
 
     """learning rate"""
     self.lr = [params.LR()]
