@@ -80,7 +80,7 @@ class AVEC2014_IMG_CNN_DLDL(context.Context):
 
     # loss of KL
     t = t_dist/p_dist+self.mu
-    loss_kl = tf.reduce_sum(t_dist*(tf.log(t)))
+    loss_kl = tf.reduce_mean(t_dist*(tf.log(t)))
     # total loss
     losses = 1.0 * loss_er + 1.0 * loss_kl
     return losses, loss_er, loss_kl, loss_sq
