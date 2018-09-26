@@ -38,6 +38,8 @@ from gate.net.deepfuse import resnet_v2_bishared
 from gate.net.deepfuse import vgg_bishared
 from gate.net.deepfuse import alexnet_bishared
 
+from gate.net.critical_learning import resnet_v2_critical
+
 arg_scope = tf.contrib.framework.arg_scope
 
 # -------------------------------------------------------
@@ -335,3 +337,32 @@ def _alexnet_bishared(X, config, is_training):
 
 def _alexnet_bishared_scope(config):
   return alexnet_bishared.alexnet_v2_arg_scope(config.weight_decay)
+
+# -------------------------------------------------------
+# Critical Learning
+# -------------------------------------------------------
+
+def _critical_resnet(X, config, is_train):
+  net_fn_map = {
+      'resnet_v2_critical_50': resnet_v2_critical.resnet_v2_50,
+      'resnet_v2_critical_101': resnet_v2_critical.resnet_v2_101,
+      'resnet_v2_critical_152': resnet_v2_critical.resnet_v2_152,
+      'resnet_v2_critical_200': resnet_v2_critical.resnet_v2_200
+  }
+  net = net_fn_map[config.name](
+      X, num_classes=config.num_classes,
+      is_training=is_train,
+      global_pool=True,
+      output_stride=None,
+      spatial_squeeze=True)
+  return net
+
+
+def _critical_resnet_scope(config):
+  resnet_scope_fn = resnet_v2_critical.resnet_arg_scope
+  argscope = resnet_scope_fn(
+      weight_decay=config.weight_decay,
+      batch_norm_decay=config.batch_norm_decay,
+      batch_norm_epsilon=config.batch_norm_epsilon,
+      batch_norm_scale=config.batch_norm_scale)
+  return argscope
