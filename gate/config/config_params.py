@@ -140,6 +140,27 @@ class NET():
     self._set_activation_fn(activation_fn)
     self._set_global_pool(global_pool)
 
+  def resnet_v2_critical(self,
+                depth='50',  # 50, 101, 152, 200
+                num_classes=1000,
+                weight_decay=0.0001,
+                batch_norm_decay=0.997,
+                batch_norm_epsilon=1e-5,
+                batch_norm_scale=True,
+                use_batch_norm=True,
+                activation_fn='relu',
+                global_pool=True,
+                scope='resnet_v2_critical_'):
+    self._set_name(scope+depth)
+    self._set_num_classes(num_classes)
+    self._set_weight_decay(weight_decay)
+    self._set_batch_norm(batch_norm_decay,
+                         batch_norm_epsilon,
+                         batch_norm_scale,
+                         use_batch_norm)
+    self._set_activation_fn(activation_fn)
+    self._set_global_pool(global_pool)
+
   def resnet_v2_bishared(self,
                          depth='50',  # 50, 101, 152, 200
                          num_classes=1000,
