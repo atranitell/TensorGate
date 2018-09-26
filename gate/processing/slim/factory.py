@@ -18,6 +18,7 @@ import tensorflow as tf
 
 from gate.processing.slim import cifarnet_preprocessing
 from gate.processing.slim import avec2014_preprocessing
+from gate.processing.slim import avec2014_68_preprocessing
 from gate.processing.slim import inception_preprocessing
 from gate.processing.slim import lenet_preprocessing
 from gate.processing.slim import vgg_preprocessing
@@ -30,7 +31,8 @@ preprocessing_map = {
     'lenet': lenet_preprocessing,
     'vgg': vgg_preprocessing,
     'vae.kinship': kinship_vae_preprocessing,
-    'avec2014': avec2014_preprocessing
+    'avec2014': avec2014_preprocessing,
+    'avec2014.68': avec2014_68_preprocessing
 }
 
 
