@@ -56,7 +56,8 @@ network_map = {
     'vgg_11_bishared': net_models._vgg_bishared,
     'vgg_16_bishared': net_models._vgg_bishared,
     'vgg_19_bishared': net_models._vgg_bishared,
-    'alexnet_v2_bishared': net_models._alexnet_bishared
+    'alexnet_v2_bishared': net_models._alexnet_bishared,
+    'resnet_v2_critical_50': net_models._critical_resnet
 }
 
 argscope_map = {
@@ -96,7 +97,8 @@ argscope_map = {
     'vgg_11_bishared': net_models._vgg_bishared_scope,
     'vgg_16_bishared': net_models._vgg_bishared_scope,
     'vgg_19_bishared': net_models._vgg_bishared_scope,
-    'alexnet_v2_bishared': net_models._alexnet_bishared_scope
+    'alexnet_v2_bishared': net_models._alexnet_bishared_scope,
+    'resnet_v2_critical_50': net_models._critical_resnet_scope
 }
 
 
