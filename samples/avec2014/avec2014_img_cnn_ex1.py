@@ -170,17 +170,20 @@ class AVEC2014_IMG_CNN_EX1(context.Context):
     var_r = variable.select_vars('regressor')
     var_g = variable.select_vars('generator')
 
-    L_0 = Ldr
+    L_0 = Ldr + Lorth
     var_0 = var_b + var_wd + var_r
 
-    L_1 = Lc
+    L_1 = Lc + Lorth
     var_1 = var_c + var_wi
 
-    L_2 = Lorth
-    var_2 = var_wd
+    # L_2 = Lorth
+    # var_2 = var_wd + var_wi
 
-    L_3 = Ldg + Lgr
-    var_3 = var_g + var_r
+    L_2 = Ldg + Lgr
+    var_2 = var_g + var_r
+
+    # L_3 = Ldr + Lorth
+    # var_3 = var_b + var_wd + var_r
 
     # error
     error = (Pd-Yr)*self.span
@@ -192,7 +195,9 @@ class AVEC2014_IMG_CNN_EX1(context.Context):
     train_op0 = updater.default(self.config, L_0, global_step, var_0)
     train_op1 = updater.default(self.config, L_1, None, var_1)
     train_op2 = updater.default(self.config, L_2, None, var_2)
-    train_op3 = updater.default(self.config, L_3, None, var_3)
+    # train_op3 = updater.default(self.config, L_3, None, var_3)
+    # train_op4 = updater.default(self.config, L_4, None, var_4, 1)
+    train_op = tf.group(train_op0, train_op1, train_op2)
 
     # add hooks
     self.add_hook(self.snapshot.init())
@@ -209,10 +214,11 @@ class AVEC2014_IMG_CNN_EX1(context.Context):
     with context.DefaultSession(self.hooks) as sess:
       self.snapshot.restore(sess, saver)
       while not sess.should_stop():
-        sess.run(train_op0)
-        sess.run(train_op1)
-        sess.run(train_op2)
-        sess.run(train_op3)
+        sess.run(train_op)
+        # sess.run(train_op1)
+        # sess.run(train_op2)
+        # sess.run(train_op3)
+        # sess.run(train_op4)
 
   @context.graph_phase_wrapper()
   def test(self):
