@@ -232,8 +232,9 @@ class AVEC2014_EX1(Configbase):
     self.lr[1].set_fixed(learning_rate=0.0001)
 
     """optimizer"""
-    self.opt = [params.OPT()]
+    self.opt = [params.OPT(), params.OPT()]
     self.opt[0].set_adam()
+    self.opt[1].set_adam()
 
     """train"""
     self.train = params.Phase('train')
