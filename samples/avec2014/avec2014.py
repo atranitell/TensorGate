@@ -17,6 +17,7 @@
 from samples.avec2014.avec2014_audio_cnn import AVEC2014_AUDIO_CNN
 from samples.avec2014.avec2014_img_cnn import AVEC2014_IMG_CNN
 from samples.avec2014.avec2014_img_cnn_dldl import AVEC2014_IMG_CNN_DLDL
+from samples.avec2014.avec2014_img_cnn_ex1 import AVEC2014_IMG_CNN_EX1
 from samples.avec2014.avec2014_68_img_cnn import AVEC2014_68_IMG_CNN
 from samples.avec2014.avec2014_img_4view import AVEC2014_IMG_4VIEW
 from samples.avec2014.avec2014_img_bicnn import AVEC2014_IMG_BICNN
@@ -31,6 +32,8 @@ def select(config):
     return AVEC2014_IMG_CNN(config)
   elif config.target == 'avec2014.img.cnn.dldl':
     return AVEC2014_IMG_CNN_DLDL(config)
+  elif config.target == 'avec2014.img.cnn.ex1':
+    return AVEC2014_IMG_CNN_EX1(config)
   elif config.target == 'avec2014.68.img.cnn':
     return AVEC2014_68_IMG_CNN(config)
   elif config.target == 'avec2014.img.4view':

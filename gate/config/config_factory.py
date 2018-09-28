@@ -27,6 +27,7 @@ config_map = {
     'avec2014': avec2014.AVEC2014,
     'avec2014.68': avec2014.AVEC2014_68,
     'avec2014.dldl': avec2014.AVEC2014_DLDL,
+    'avec2014.ex1': avec2014.AVEC2014_EX1,
     'avec2014.flow': avec2014.AVEC2014_FLOW,
     'avec2014.bicnn': avec2014.AVEC2014_BICNN,
     'avec2014.audio.cnn': avec2014.AVEC2014_AUDIO_CNN,
