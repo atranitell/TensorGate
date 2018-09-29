@@ -170,17 +170,23 @@ class AVEC2014_IMG_CNN_EX1(context.Context):
     var_r = variable.select_vars('regressor')
     var_g = variable.select_vars('generator')
 
+    """Optimize sequence
+    s1. (Loss_Wd_R, Loss_orth)->Optimize(resnet_50, Wd, Regressor)
+    s2. (Loss_C, Loss_orth)->Optimize(Classifier, Wi)
+    s3. (Loss_G, Loss_GR)->Optimize(Generator, Regressor)
+    """
+
     L_0 = Ldr + Lorth
     var_0 = var_b + var_wd + var_r
 
     L_1 = Lc + Lorth
     var_1 = var_c + var_wi
 
-    # L_2 = Lorth
-    # var_2 = var_wd + var_wi
-
     L_2 = Ldg + Lgr
     var_2 = var_g + var_r
+
+    # L_2 = Lorth
+    # var_2 = var_wd + var_wi
 
     # L_3 = Ldr + Lorth
     # var_3 = var_b + var_wd + var_r
@@ -194,7 +200,7 @@ class AVEC2014_IMG_CNN_EX1(context.Context):
     global_step = tf.train.create_global_step()
     train_op0 = updater.default(self.config, L_0, global_step, var_0)
     train_op1 = updater.default(self.config, L_1, None, var_1)
-    train_op2 = updater.default(self.config, L_2, None, var_2)
+    train_op2 = updater.default(self.config, L_2, None, var_2, 1)
     # train_op3 = updater.default(self.config, L_3, None, var_3)
     # train_op4 = updater.default(self.config, L_4, None, var_4, 1)
     train_op = tf.group(train_op0, train_op1, train_op2)

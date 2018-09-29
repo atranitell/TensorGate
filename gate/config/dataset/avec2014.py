@@ -211,7 +211,7 @@ class AVEC2014_EX1(Configbase):
         save_model_invl=1000,
         test_invl=1000,
         val_invl=1000,
-        max_iter=120000)
+        max_iter=250000)
 
     """network model"""
     self.net = [params.NET()]
@@ -228,8 +228,8 @@ class AVEC2014_EX1(Configbase):
 
     """learning rate"""
     self.lr = [params.LR(), params.LR()]
-    self.lr[0].set_fixed(learning_rate=0.001)
-    self.lr[1].set_fixed(learning_rate=0.0001)
+    self.lr[0].set_fixed(learning_rate=0.0001)
+    self.lr[1].set_fixed(learning_rate=0.00001)
 
     """optimizer"""
     self.opt = [params.OPT(), params.OPT()]
