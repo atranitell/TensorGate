@@ -66,7 +66,7 @@ class AVEC2014(Configbase):
     self.train = params.Phase('train')
     self.train.data = params.DATA(
         batchsize=32,
-        entry_path='../_datasets/AVEC2014/pp_trn_0_img.txt',
+        entry_path='../_datasets/AVEC2014/trn_img.txt',
         shuffle=True)
     self.train.data.set_queue_loader(
         loader='load_image',
@@ -78,7 +78,7 @@ class AVEC2014(Configbase):
     self.test = params.Phase('test')
     self.test.data = params.DATA(
         batchsize=50,
-        entry_path='../_datasets/AVEC2014/pp_tst_img.txt',
+        entry_path='../_datasets/AVEC2014/tst_img.txt',
         shuffle=False)
     self.test.data.set_queue_loader(
         loader='load_image',
@@ -509,7 +509,7 @@ class AVEC2014_BICNN(Configbase):
     self.train = params.Phase('train')
     self.train.data = params.DATA(
         batchsize=32,
-        entry_path='../_datasets/AVEC2014/pp_trn_0_img_flow.txt',
+        entry_path='../_datasets/AVEC2014/trn_img_flow.txt',
         shuffle=True)
     self.train.data.set_queue_loader(
         loader='load_image',
@@ -521,7 +521,7 @@ class AVEC2014_BICNN(Configbase):
     self.test = params.Phase('test')
     self.test.data = params.DATA(
         batchsize=50,
-        entry_path='../_datasets/AVEC2014/pp_tst_img_flow.txt',
+        entry_path='../_datasets/AVEC2014/tst_img_flow.txt',
         shuffle=False)
     self.test.data.set_queue_loader(
         loader='load_image',
