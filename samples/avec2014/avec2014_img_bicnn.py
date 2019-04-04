@@ -22,7 +22,7 @@ we set three distict concat method.
 1) Normal Concat
   RGB -> RGB_feature |
                      | -> final_logit
-  OPT -> OPT_feature | 
+  OPT -> OPT_feature |
 
 2) RGB as main branch (inputs[0])
   OPT -> OPT_feature -> OPT_logit
@@ -92,14 +92,60 @@ class AVEC2014_IMG_BICNN(context.Context):
         activation_fn=None,
         scope='logits')
 
-    loss = l2.loss(logit, label, self.config) + \
-        l2.loss(rgb_logit, label, self.config)
+    loss1 = l2.loss(logit, label, self.config)
+    loss2 = l2.loss(rgb_logit, label, self.config)
+    loss = loss1 + loss2
+    logger.info('rgb: {}, flow: {}'.format(loss2, loss1))
 
     return logit, loss
 
   def _net_orth(self, data, label):
     """ with orth + wasstertin + rgb + flow loss"""
     logger.info('Building with shared network with orth + wassterin.')
+    _, nets = net_graph(data, self.config.net[0], self.phase)
+    flow_net, rgb_net = nets[0], nets[1]
+
+    # rgb orth [n, 2048]
+    rgb_feat = tf.squeeze(rgb_net['global_pool'], [1, 2])
+    rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
+    l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
+
+    # flow orth [n, 2048]
+    flow_feat = tf.squeeze(flow_net['global_pool'], [1, 2])
+    flow_s, flow_p = tf.split(flow_feat, axis=1, num_or_size_splits=2)
+    l_flow_orth = tf.reduce_mean(tf.reduce_sum(flow_s * flow_p, axis=1))
+
+    # distribution loss
+    l_dist_mean = tf.nn.l2_loss(tf.reduce_mean(rgb_s - flow_s, axis=0))
+    bs = self.batchsize
+    bs_avg_rgb_s = tf.pow(tf.reduce_mean(rgb_s, axis=0), 2)
+    bs_avg_flow_s = tf.pow(tf.reduce_mean(flow_s, axis=0), 2)
+    bs_rgb_s = tf.reduce_sum(rgb_s * rgb_s, axis=0) / float(bs - 1)
+    bs_flow_s = tf.reduce_sum(flow_s * flow_s, axis=0) / float(bs - 1)
+    l_dist_std = 2 * tf.nn.l2_loss(bs_rgb_s - bs_avg_rgb_s +
+                                   bs_flow_s - bs_avg_flow_s)
+    l_dist = l_dist_mean + l_dist_std
+
+    # prediction
+    rgb_logit = rgb_net['predictions']
+    net = tf.concat([tf.squeeze(rgb_net['global_pool'], [1, 2]),
+                     tf.squeeze(flow_net['global_pool'], [1, 2]),
+                     rgb_logit], axis=1)
+    logit = tf.contrib.layers.fully_connected(
+        net, 1,
+        biases_initializer=None,
+        weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        weights_regularizer=None,
+        activation_fn=None,
+        scope='logits')
+
+    # losses
+    loss1 = l2.loss(logit, label, self.config)
+    loss2 = l2.loss(rgb_logit, label, self.config)
+    loss = loss1 + loss2 + l_dist + l_rgb_orth + l_flow_orth
+    logger.info('rgb: {}, flow: {}'.format(loss2, loss1))
+
+    return logit, loss
 
   def _net_gan(self, data, label):
     """ with orth + gan + rgb + flow loss"""
@@ -205,4 +251,5 @@ class AVEC2014_IMG_BICNN(context.Context):
       self.summary.adds(global_step=global_step,
                         tags=['test/video_mae', 'test/video_rmse'],
                         values=[_mae, _rmse])
+
       return _rmse
