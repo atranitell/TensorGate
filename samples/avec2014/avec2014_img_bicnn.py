@@ -59,18 +59,18 @@ class AVEC2014_IMG_BICNN(context.Context):
   def _net_shared(self, data, label):
     """with flow loss"""
     logger.info('Building with normal shared network.')
-    _, nets = net_graph(data, self.config.net[0], self.phase)
-    flow_net, rgb_net = nets[0], nets[1]
-    net = tf.concat([tf.squeeze(rgb_net['global_pool'], [1, 2]),
-                     tf.squeeze(flow_net['global_pool'], [1, 2]),
-                     rgb_net['predictions']], axis=1)
-    logit = tf.contrib.layers.fully_connected(
-        net, 1,
-        biases_initializer=None,
-        weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
-        weights_regularizer=None,
-        activation_fn=None,
-        scope='logits')
+    logit, nets = net_graph(data, self.config.net[0], self.phase)
+    # flow_net, rgb_net = nets[0], nets[1]
+    # net = tf.concat([tf.squeeze(rgb_net['global_pool'], [1, 2]),
+    #                  tf.squeeze(flow_net['global_pool'], [1, 2]),
+    #                  rgb_net['predictions']], axis=1)
+    # logit = tf.contrib.layers.fully_connected(
+    #     net, 1,
+    #     biases_initializer=None,
+    #     weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+    #     weights_regularizer=None,
+    #     activation_fn=None,
+    #     scope='logits')
 
     loss = l2.loss(logit, label, self.config)
     return logit, loss
@@ -95,7 +95,6 @@ class AVEC2014_IMG_BICNN(context.Context):
     loss1 = l2.loss(logit, label, self.config)
     loss2 = l2.loss(rgb_logit, label, self.config)
     loss = loss1 + loss2
-    logger.info('rgb: {}, flow: {}'.format(loss2, loss1))
 
     return logit, loss
 
@@ -143,7 +142,6 @@ class AVEC2014_IMG_BICNN(context.Context):
     loss1 = l2.loss(logit, label, self.config)
     loss2 = l2.loss(rgb_logit, label, self.config)
     loss = loss1 + loss2 + l_dist + l_rgb_orth + l_flow_orth
-    logger.info('rgb: {}, flow: {}'.format(loss2, loss1))
 
     return logit, loss
 

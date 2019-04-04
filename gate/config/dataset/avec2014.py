@@ -471,7 +471,7 @@ class AVEC2014_BICNN(Configbase):
     """AVEC2014_BICNN dataset for Depressive Detection"""
     Configbase.__init__(self, args)
     self.name = 'avec2014'
-    self.target = 'avec2014.img.bicnn.orth'
+    self.target = 'avec2014.img.bicnn.shared'
     self.output_dir = None
     self.task = 'train'
 

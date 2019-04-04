@@ -214,17 +214,17 @@ def resnet_v2(inputs,
           net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
           end_points['global_pool'] = net
 
-        # net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
-        #                  tf.squeeze(end_points['global_pool'], [1, 2]),
-        #                  aux_logit], axis=1)
+        net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                         tf.squeeze(end_points['global_pool'], [1, 2]),
+                         aux_logit], axis=1)
 
-        # net = tf.contrib.layers.fully_connected(
-        #     net, num_classes,
-        #     biases_initializer=None,
-        #     weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
-        #     weights_regularizer=None,
-        #     activation_fn=None,
-        #     scope='logits')
+        net = tf.contrib.layers.fully_connected(
+            net, num_classes,
+            biases_initializer=None,
+            weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+            weights_regularizer=None,
+            activation_fn=None,
+            scope='logits')
 
         return net, (end_points, aux_net)
 
