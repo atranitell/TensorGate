@@ -108,13 +108,13 @@ class AVEC2014_IMG_BICNN(context.Context):
   def _net(self, data, label):
     # if using deep-fused network
     if self.config.target.startswith('avec2014.img.bicnn.shared'):
-      return self._net_shared(data)
+      return self._net_shared(data, label)
     elif self.config.target.startswith('avec2014.img.bicnn.2shared'):
-      return self._net_2shared(data)
+      return self._net_2shared(data, label)
     elif self.config.target.startswith('avec2014.img.bicnn.orth'):
-      return self._net_orth(data)
+      return self._net_orth(data, label)
     elif self.config.target.startswith('avec2014.img.bicnn.gan'):
-      return self._net_gan(data)
+      return self._net_gan(data, label)
 
       # using normal concat method
     data = tf.unstack(data, axis=1)
