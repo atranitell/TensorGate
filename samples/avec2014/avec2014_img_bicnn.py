@@ -180,7 +180,7 @@ class AVEC2014_IMG_BICNN(context.Context):
     path = tf.unstack(path, axis=1)
     path = path[0]
     # get net
-    logit, _ = self._net(image)
+    logit, _ = self._net(image, label)
     # output to file
     info = string.concat(self.batchsize, [path, label, logit*self.data.span])
     saver = tf.train.Saver()
