@@ -56,11 +56,67 @@ class AVEC2014_IMG_BICNN(context.Context):
   def __init__(self, config):
     context.Context.__init__(self, config)
 
-  def _net(self, data):
+  def _net_shared(self, data, label):
+    """with flow loss"""
+    logger.info('Building with normal shared network.')
+    _, nets = net_graph(data, self.config.net[0], self.phase)
+    flow_net, rgb_net = nets[0], nets[1]
+    net = tf.concat([tf.squeeze(rgb_net['global_pool'], [1, 2]),
+                     tf.squeeze(flow_net['global_pool'], [1, 2]),
+                     rgb_net['predictions']], axis=1)
+    logit = tf.contrib.layers.fully_connected(
+        net, 1,
+        biases_initializer=None,
+        weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        weights_regularizer=None,
+        activation_fn=None,
+        scope='logits')
+
+    loss = l2.loss(logit, label, self.config)
+    return logit, loss
+
+  def _net_2shared(self, data, label):
+    """with rgb + flow loss"""
+    logger.info('Building with new shared network with two loss.')
+    _, nets = net_graph(data, self.config.net[0], self.phase)
+    flow_net, rgb_net = nets[0], nets[1]
+    rgb_logit = rgb_net['predictions']
+    net = tf.concat([tf.squeeze(rgb_net['global_pool'], [1, 2]),
+                     tf.squeeze(flow_net['global_pool'], [1, 2]),
+                     rgb_logit], axis=1)
+    logit = tf.contrib.layers.fully_connected(
+        net, 1,
+        biases_initializer=None,
+        weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        weights_regularizer=None,
+        activation_fn=None,
+        scope='logits')
+
+    loss = l2.loss(logit, label, self.config) + \
+        l2.loss(rgb_logit, label, self.config)
+
+    return logit, loss
+
+  def _net_orth(self, data, label):
+    """ with orth + wasstertin + rgb + flow loss"""
+    logger.info('Building with shared network with orth + wassterin.')
+
+  def _net_gan(self, data, label):
+    """ with orth + gan + rgb + flow loss"""
+    logger.info('Building with normal shared with gan.')
+
+  def _net(self, data, label):
     # if using deep-fused network
     if self.config.target.startswith('avec2014.img.bicnn.shared'):
-      return net_graph(data, self.config.net[0], self.phase)
-    # using normal concat method
+      return self._net_shared(data)
+    elif self.config.target.startswith('avec2014.img.bicnn.2shared'):
+      return self._net_2shared(data)
+    elif self.config.target.startswith('avec2014.img.bicnn.orth'):
+      return self._net_orth(data)
+    elif self.config.target.startswith('avec2014.img.bicnn.gan'):
+      return self._net_gan(data)
+
+      # using normal concat method
     data = tf.unstack(data, axis=1)
     # get network
     logit0, net0 = net_graph(data[0], self.config.net[0], self.phase, 'RBG')
@@ -79,11 +135,9 @@ class AVEC2014_IMG_BICNN(context.Context):
       raise ValueError('Unknown input target [%s]' % self.config.target)
 
     logit = ops.linear(net, 1, 'logits')
-    return logit, net
 
-  def _loss(self, logit, label):
     loss = l2.loss(logit, label, self.config)
-    return loss
+    return logit, loss
 
   def _error(self, logit, label):
     mae, rmse = l2.error(logit, label, self.config)
@@ -94,9 +148,7 @@ class AVEC2014_IMG_BICNN(context.Context):
     # load data
     image, label, path = load_data(self.config)
     # load net
-    logit, _ = self._net(image)
-    # compute loss
-    loss = self._loss(logit, label)
+    logit, loss = self._net(image, label)
     # compute error
     mae, rmse = self._error(logit, label)
     # update gradients
