@@ -52,6 +52,8 @@ from __future__ import print_function
 
 import tensorflow as tf
 from gate.net.deepfuse import resnet_utils
+from gate.env import env
+from gate.utils.logger import logger
 
 slim = tf.contrib.slim
 resnet_arg_scope = resnet_utils.resnet_arg_scope
@@ -214,19 +216,84 @@ def resnet_v2(inputs,
           net = tf.reduce_mean(net, [1, 2], name='pool5', keep_dims=True)
           end_points['global_pool'] = net
 
-        net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
-                         tf.squeeze(end_points['global_pool'], [1, 2]),
-                         aux_logit], axis=1)
+        if env.target == 'avec2014.img.bicnn.shared':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.shared')
+          net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                           tf.squeeze(end_points['global_pool'], [1, 2]),
+                           aux_logit], axis=1)
+          net = tf.contrib.layers.fully_connected(
+              net, num_classes,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits')
+          end_points['flow_logit'] = net
+          end_points['rgb_logit'] = aux_logit
 
-        net = tf.contrib.layers.fully_connected(
-            net, num_classes,
-            biases_initializer=None,
-            weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
-            weights_regularizer=None,
-            activation_fn=None,
-            scope='logits')
+        elif env.target == 'avec2014.img.bicnn.2shared':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.2shared')
+          net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                           tf.squeeze(end_points['global_pool'], [1, 2]),
+                           aux_logit], axis=1)
+          net = tf.contrib.layers.fully_connected(
+              net, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits')
+          end_points['flow_logit'] = net
+          end_points['rgb_logit'] = aux_logit
 
-        return net, (end_points, aux_net)
+        elif env.target == 'avec2014.img.bicnn.orth':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth')
+          # rgb orth [n, 2048]
+          rgb_feat = tf.squeeze(aux_net['global_pool'], [1, 2])
+          rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
+          l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
+
+          # flow orth [n, 2048]
+          flow_feat = tf.squeeze(end_points['global_pool'], [1, 2])
+          flow_s, flow_p = tf.split(flow_feat, axis=1, num_or_size_splits=2)
+          l_flow_orth = tf.reduce_mean(tf.reduce_sum(flow_s * flow_p, axis=1))
+
+          # distribution loss
+          l_dist_mean = tf.nn.l2_loss(tf.reduce_mean(rgb_s - flow_s, axis=0))
+          bs_avg_rgb_s = tf.pow(tf.reduce_mean(rgb_s, axis=0), 2)
+          bs_avg_flow_s = tf.pow(tf.reduce_mean(flow_s, axis=0), 2)
+          bs_rgb_s = tf.reduce_sum(rgb_s * rgb_s, axis=0) / 31.0
+          bs_flow_s = tf.reduce_sum(flow_s * flow_s, axis=0) / 31.0
+          l_dist_std = 2 * tf.nn.l2_loss(bs_rgb_s - bs_avg_rgb_s +
+                                         bs_flow_s - bs_avg_flow_s)
+          l_dist = l_dist_mean + l_dist_std
+
+          # prediction
+          rgb_logit = aux_net['predictions']
+          net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                           tf.squeeze(end_points['global_pool'], [1, 2]),
+                           rgb_logit], axis=1)
+          net = tf.contrib.layers.fully_connected(
+              net, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits')
+
+          end_points['flow_logit'] = net
+          end_points['rgb_logit'] = aux_logit
+          end_points['l_rgb_orth'] = l_rgb_orth
+          end_points['l_flow_orth'] = l_flow_orth
+          end_points['l_dist'] = l_dist
+
+        elif env.target == 'avec2014.img.bicnn.gan':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.gan')
+
+        else:
+          raise ValueError('Unknown Error')
+
+        return net, end_points
 
 
 resnet_v2.default_image_size = 224
