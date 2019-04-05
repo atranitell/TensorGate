@@ -159,15 +159,17 @@ class AVEC2014_IMG_BICNN(context.Context):
     # update gradients
     global_step = tf.train.create_global_step()
     train_op = updater.default(self.config, loss, global_step)
-    print(losses.keys(), losses.values())
+    keys = ['loss', 'mae', 'rmse'].extend(list(losses.keys()))
+    values = [loss, mae, rmse].extend(list(losses.values()))
+    print(keys, values)
     # add hooks
     self.add_hook(self.snapshot.init())
     self.add_hook(self.summary.init())
     self.add_hook(context.Running_Hook(
         config=self.config.log,
         step=global_step,
-        keys=['loss', 'mae', 'rmse'].extend(list(losses.keys())),
-        values=[loss, mae, rmse].extend(list(losses.values())),
+        keys=keys,
+        values=values,
         func_test=self.test,
         func_val=None))
 
