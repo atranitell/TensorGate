@@ -114,7 +114,7 @@ class AVEC2014_IMG_BICNN(context.Context):
     losses = {
       'l_flow': loss1,
       'l_rgb': loss2,
-      'l_share_orth': loss3,
+      'l_share': loss3,
       'l_rgb_orth': l_rgb_orth,
       'l_flow_orth': l_flow_orth,
       'l_madal_orth': l_madal_orth

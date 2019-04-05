@@ -322,6 +322,7 @@ def resnet_v2(inputs,
       share = tf.reshape(share, [-1, 1, 1, 2048])
       share_logit = slim.conv2d(share, 1, [1, 1], activation_fn=None,
                           normalizer_fn=None, scope='logits_aux', reuse=True)
+      share_logit = tf.squeeze(share_logit, [1, 2])
       end_points['flow_logit'] = net
       end_points['rgb_logit'] = aux_logit
       end_points['share_logit'] = share_logit
