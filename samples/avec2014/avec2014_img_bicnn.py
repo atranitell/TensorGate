@@ -141,8 +141,8 @@ class AVEC2014_IMG_BICNN(context.Context):
       'l_madal_orth': l_madal_orth
     }
     # average logit
-    logit = (nets['flow_logit'] + nets['share_logit']) / 2.0
-    return logit, losses
+    # logit = ( + nets['share_logit']) / 2.0
+    return nets['flow_logit'], losses
 
   def _net(self, data, label):
     # global variable
