@@ -508,7 +508,7 @@ class AVEC2014_BICNN(Configbase):
     """train"""
     self.train = params.Phase('train')
     self.train.data = params.DATA(
-        batchsize=2,
+        batchsize=32,
         entry_path='../_datasets/AVEC2014/pp_trn_0_img_flow.txt',
         shuffle=True)
     self.train.data.set_queue_loader(
@@ -520,7 +520,7 @@ class AVEC2014_BICNN(Configbase):
     """test"""
     self.test = params.Phase('test')
     self.test.data = params.DATA(
-        batchsize=2,
+        batchsize=50,
         entry_path='../_datasets/AVEC2014/pp_tst_img_flow.txt',
         shuffle=False)
     self.test.data.set_queue_loader(
