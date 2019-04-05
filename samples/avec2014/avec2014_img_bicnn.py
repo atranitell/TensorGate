@@ -166,8 +166,8 @@ class AVEC2014_IMG_BICNN(context.Context):
     self.add_hook(context.Running_Hook(
         config=self.config.log,
         step=global_step,
-        keys=['loss', 'mae', 'rmse'].append([losses.keys()]),
-        values=[loss, mae, rmse].append([losses.values()]),
+        keys=['loss', 'mae', 'rmse'].extend(list(losses.keys())),
+        values=[loss, mae, rmse].extend(list(losses.values())),
         func_test=self.test,
         func_val=None))
 
