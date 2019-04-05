@@ -44,6 +44,8 @@ class Configbase():
     if self.args.model is not None:
       # filesystem.raise_path_not_exist(self.args.model)
       self.output_dir = self.args.model
+    if self.args.target is not None:
+      self.target = self.args.target 
 
   def set_phase(self, phase):
     """Switch system phase"""

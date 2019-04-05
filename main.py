@@ -112,6 +112,7 @@ if __name__ == "__main__":
   parser.add_argument('-gpu', type=str, dest='gpu', default='0')
   parser.add_argument('-config', type=str, dest='config', default=None)
   parser.add_argument('-task', type=str, dest='task', default=None)
+  parser.add_argument('-target', type=str, dest='target', default=None)
   parser.add_argument('-model', type=str, dest='model', default=None)
   parser.add_argument('-drawer', type=str, dest='drawer', default=None)
   args, _ = parser.parse_known_args()
