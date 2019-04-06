@@ -180,6 +180,8 @@ class AVEC2014_IMG_BICNN(context.Context):
       'l_s_orth': nets['l_share_orth'],
       'l_f_orth': nets['l_trace'],
     }
+    # for i in losses.values():
+    #   print(i)
     return nets['flow_logit'], losses
 
   def _net(self, data, label):

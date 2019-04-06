@@ -395,7 +395,7 @@ def resnet_v2(inputs,
           # transform1-rgb
           rgb_p_feat_t, w_rgb_p = Transform(rgb_feat, 2048)
           rgb_s_feat_t, w_rgb_s = Transform(rgb_feat, 2048)
-          l_rgb_ps = 0.5 * tf.squeeze(tf.pow(w_rgb_p * w_rgb_s, 2))
+          l_rgb_ps = 0.5 * tf.reduce_sum(tf.pow(w_rgb_p * w_rgb_s, 2))
 
           # transform2-rgb
           rgb_m_feat = tf.concat([rgb_p_feat_t, rgb_s_feat_t], axis=1)
@@ -417,7 +417,7 @@ def resnet_v2(inputs,
           # transform1-flow
           flow_p_feat_t, w_flow_p = Transform(flow_feat, 2048)
           flow_s_feat_t, w_flow_s = Transform(flow_feat, 2048)
-          l_flow_ps = 0.5 * tf.squeeze(tf.pow(w_flow_p * w_flow_s, 2))
+          l_flow_ps = 0.5 * tf.reduce_sum(tf.pow(w_flow_p * w_flow_s, 2))
           flow_s_mean, flow_s_var = tf.nn.moments(flow_s_feat_t, axes=0)
 
           # transform2-flow
@@ -441,7 +441,7 @@ def resnet_v2(inputs,
           l_s_std = 0.5 * tf.reduce_sum(
               tf.pow(tf.sqrt(rgb_s_var)-tf.sqrt(flow_s_var), 2))
           l_s = l_s_mean + l_s_std
-          l_f = tf.squeeze(tf.pow(w_rgb_m * w_flow_m, 2))
+          l_f = tf.reduce_sum(tf.pow(w_rgb_m * w_flow_m, 2))
 
           end_points['flow_logit'] = out_logit
           end_points['rgb_logit'] = rgb_logit
