@@ -175,10 +175,10 @@ class AVEC2014_IMG_BICNN(context.Context):
     losses = {
       'l_flow': loss1,
       'l_rgb': loss2,
-      'l_rgb_orth': l_rgb_ps,
-      'l_flow_orth': l_flow_ps,
-      'l_s_orth': l_s,
-      'l_f_orth': l_f
+      'l_rgb_orth': nets['l_rgb_orth'],
+      'l_flow_orth': nets['l_flow_orth'],
+      'l_s_orth': nets['l_share_orth'],
+      'l_f_orth': nets['l_trace'],
     }
     return nets['flow_logit'], losses
 

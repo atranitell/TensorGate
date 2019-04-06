@@ -449,7 +449,7 @@ def resnet_v2(inputs,
           end_points['rgb_logit'] = rgb_logit
           end_points['l_rgb_orth'] = l_rgb_ps
           end_points['l_flow_orth'] = l_flow_ps
-          end_points['l_orth'] = l_s
+          end_points['l_share_orth'] = l_s
           end_points['l_trace'] = l_f
 
         else:
