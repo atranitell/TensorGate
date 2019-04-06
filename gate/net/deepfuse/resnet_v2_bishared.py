@@ -377,6 +377,81 @@ def resnet_v2(inputs,
           end_points['l_flow_orth'] = l_flow_orth
           end_points['l_madal_orth'] = l_modal_orth
 
+        elif env.target == 'avec2014.img.bicnn.orth4':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth4')
+
+          def Transform(feat, dims):
+            """feat [N, C]"""
+            with tf.variable_scope('transformer'):
+              W = tf.Variable(tf.random_normal(
+                  [1, dims], stddev=0.01))
+              X = W * feat
+            return X, W
+
+          # backbone output
+          rgb_feat = tf.squeeze(aux_net['global_pool'], [1, 2])
+          flow_feat = tf.squeeze(end_points['global_pool'], [1, 2])
+
+          # transform1-rgb
+          rgb_p_feat_t, w_rgb_p = Transform(rgb_feat, 2048)
+          rgb_s_feat_t, w_rgb_s = Transform(rgb_feat, 2048)
+          l_rgb_ps = 0.5 * tf.squeeze(
+              tf.matmul(w_rgb_p, w_rgb_s, transpose_b=True))
+
+          # transform2-rgb
+          rgb_m_feat = tf.concat([rgb_p_feat_t, rgb_s_feat_t], axis=1)
+          rgb_m_feat, w_rgb_m = Transform(rgb_m_feat, 4096)
+
+          # regression-rgb
+          rgb_logit = tf.contrib.layers.fully_connected(
+              rgb_m_feat, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_rgb',
+              reuse=False)
+
+          # [2048], [2048]
+          rgb_s_mean, rgb_s_var = tf.nn.moments(rgb_s_feat_t, axes=0)
+
+          # transform1-flow
+          flow_p_feat_t, w_flow_p = Transform(flow_feat, 2048)
+          flow_s_feat_t, w_flow_s = Transform(flow_feat, 2048)
+          l_flow_ps = 0.5 * tf.squeeze(
+              tf.matmul(w_flow_p, w_flow_s, transpose_b=True))
+          flow_s_mean, flow_s_var = tf.nn.moments(flow_s_feat_t, axes=0)
+
+          # transform2-flow
+          flow_m_feat = tf.concat([flow_p_feat_t, flow_s_feat_t], axis=1)
+          flow_m_feat, w_flow_m = Transform(flow_m_feat, 4096)
+
+          # regression-flow
+          out_feat = tf.concat([rgb_m_feat, flow_m_feat, rgb_logit], axis=1)
+          out_logit = tf.squeeze(tf.contrib.layers.fully_connected(
+              out_feat, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_out',
+              reuse=False))
+
+          # share part
+          l_s_mean = 0.5 * tf.reduce_sum(
+              tf.math.pow(rgb_s_mean-flow_s_mean, 2))
+          l_s_std = 0.5 * tf.reduce_sum(
+              tf.math.pow(tf.math.sqrt(rgb_s_var)-tf.math.sqrt(flow_s_var), 2))
+          l_s = l_s_mean + l_s_std
+          l_f = tf.matmul(w_rgb_m, w_flow_m, transpose_b=True)
+
+          end_points['flow_logit'] = out_logit
+          end_points['rgb_logit'] = rgb_logit
+          end_points['l_rgb_orth'] = l_rgb_ps
+          end_points['l_flow_orth'] = l_flow_ps
+          end_points['l_orth'] = l_s
+          end_points['l_trace'] = l_f
+
         else:
           raise ValueError('Unknown Error')
 
