@@ -490,8 +490,8 @@ def resnet_v2(inputs,
           rgb_s_mean, rgb_s_var = tf.nn.moments(rgb_s_feat_t, axes=0)
 
           # transform1-flow
-          flow_p_feat_t, w_flow_p = Transform(flow_feat, 2048, 'share', True)
-          flow_s_feat_t, w_flow_s = Transform(flow_feat, 2048, 'flow_s')
+          flow_p_feat_t, w_flow_p = Transform(flow_feat, 2048, 'flow_p')
+          flow_s_feat_t, w_flow_s = Transform(flow_feat, 2048, 'share', True)
           l_flow_ps = 0.5 * tf.reduce_sum(tf.pow(w_flow_p * w_flow_s, 2))
           flow_s_mean, flow_s_var = tf.nn.moments(flow_s_feat_t, axes=0)
 
