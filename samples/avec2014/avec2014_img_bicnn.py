@@ -184,6 +184,24 @@ class AVEC2014_IMG_BICNN(context.Context):
     #   print(i)
     return nets['flow_logit'], losses
 
+  def _net_orth5(self, data, label):
+    """with rgb + flow loss"""
+    logger.info('Building with normal shared with orth5.')
+    _, nets = net_graph(data, self.config.net[0], self.phase)
+    loss1 = l2.loss(nets['flow_logit'], label, self.config)
+    loss2 = l2.loss(nets['rgb_logit'], label, self.config)
+    losses = {
+      'l_flow': loss1,
+      'l_rgb': loss2,
+      'l_rgb_orth': nets['l_rgb_orth'],
+      'l_flow_orth': nets['l_flow_orth'],
+      'l_s_orth': nets['l_share_orth'],
+      'l_f_orth': nets['l_trace'],
+    }
+    # for i in losses.values():
+    #   print(i)
+    return nets['flow_logit'], losses
+
   def _net(self, data, label):
     # global variable
     env.target = self.config.target
@@ -203,6 +221,8 @@ class AVEC2014_IMG_BICNN(context.Context):
       return self._net_orth3(data, label)
     elif self.config.target == 'avec2014.img.bicnn.orth4':
       return self._net_orth4(data, label)
+    elif self.config.target == 'avec2014.img.bicnn.orth5':
+      return self._net_orth5(data, label)
 
       # using normal concat method
     data = tf.unstack(data, axis=1)
