@@ -439,9 +439,9 @@ def resnet_v2(inputs,
 
           # share part
           l_s_mean = 0.5 * tf.reduce_sum(
-              tf.math.pow(rgb_s_mean-flow_s_mean, 2))
+              tf.pow(rgb_s_mean-flow_s_mean, 2))
           l_s_std = 0.5 * tf.reduce_sum(
-              tf.math.pow(tf.math.sqrt(rgb_s_var)-tf.math.sqrt(flow_s_var), 2))
+              tf.pow(tf.sqrt(rgb_s_var)-tf.sqrt(flow_s_var), 2))
           l_s = l_s_mean + l_s_std
           l_f = tf.matmul(w_rgb_m, w_flow_m, transpose_b=True)
 
