@@ -121,6 +121,28 @@ class AVEC2014_IMG_BICNN(context.Context):
     }
     return nets['flow_logit'], losses
 
+  def _net_orth2a(self, data, label):
+    """ with orth + orth2a + rgb + flow loss"""
+    logger.info('Building with normal shared with orth2a.')
+    _, nets = net_graph(data, self.config.net[0], self.phase)
+    # results
+    l_rgb_orth = nets['l_rgb_orth']
+    l_flow_orth = nets['l_flow_orth']
+    l_madal_orth = nets['l_madal_orth']
+    # losses
+    loss1 = l2.loss(nets['flow_logit'], label, self.config)
+    loss2 = l2.loss(nets['rgb_logit'], label, self.config)
+    loss3 = l2.loss(nets['share_logit'], label, self.config)
+    losses = {
+      'l_flow': loss1,
+      'l_rgb': loss2,
+      'l_share': loss3,
+      'l_rgb_orth': l_rgb_orth,
+      'l_flow_orth': l_flow_orth,
+      'l_madal_orth': l_madal_orth
+    }
+    return nets['flow_logit'], losses
+
   def _net_orth3(self, data, label):
     logger.info('Building with normal shared with orth3.')
     _, nets = net_graph(data, self.config.net[0], self.phase)
@@ -157,6 +179,8 @@ class AVEC2014_IMG_BICNN(context.Context):
       return self._net_orth(data, label)
     elif self.config.target == 'avec2014.img.bicnn.orth2':
       return self._net_orth2(data, label)
+    elif self.config.target == 'avec2014.img.bicnn.orth2a':
+      return self._net_orth2a(data, label)
     elif self.config.target == 'avec2014.img.bicnn.orth3':
       return self._net_orth3(data, label)
 

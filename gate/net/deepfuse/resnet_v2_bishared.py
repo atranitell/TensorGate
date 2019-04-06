@@ -314,6 +314,22 @@ def resnet_v2(inputs,
               scope='logits',
               reuse=False)
 
+        elif env.target == 'avec2014.img.bicnn.orth2a':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth2a')
+          # rgb orth [n, 2048]
+          rgb_feat = tf.squeeze(aux_net['global_pool'], [1, 2])
+          rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
+          l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
+
+          # flow orth [n, 2048]
+          flow_feat = tf.squeeze(end_points['global_pool'], [1, 2])
+          flow_s, flow_p = tf.split(flow_feat, axis=1, num_or_size_splits=2)
+          l_flow_orth = tf.reduce_mean(tf.reduce_sum(flow_s * flow_p, axis=1))
+
+          # modal orth
+          l_modal_orth = tf.reduce_mean(tf.reduce_sum(rgb_p * flow_p, axis=1))
+          share = tf.concat([rgb_s, flow_s], axis=1)
+
         elif env.target == 'avec2014.img.bicnn.orth3':
           logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth3')
           # rgb orth [n, 2048]
@@ -370,6 +386,34 @@ def resnet_v2(inputs,
       share_logit = slim.conv2d(share, 1, [1, 1], activation_fn=None,
                                 normalizer_fn=None, scope='logits_aux', reuse=True)
       share_logit = tf.squeeze(share_logit, [1, 2])
+      end_points['flow_logit'] = net
+      end_points['rgb_logit'] = aux_logit
+      end_points['share_logit'] = share_logit
+      end_points['l_rgb_orth'] = l_rgb_orth
+      end_points['l_flow_orth'] = l_flow_orth
+      end_points['l_madal_orth'] = l_modal_orth
+
+  elif env.target == 'avec2014.img.bicnn.orth2a':
+    with tf.variable_scope(scope+'_aux', 'resnet_v2_aux', auxiliary_name_scope=False):
+      share = tf.reshape(share, [-1, 1, 1, 2048])
+      share_logit = slim.conv2d(share, 1, [1, 1], activation_fn=None,
+                                normalizer_fn=None, scope='logits_aux', reuse=True)
+      share_logit = tf.squeeze(share_logit, [1, 2])
+
+    with tf.variable_scope(scope, 'resnet_v2'):
+      net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                       tf.squeeze(end_points['global_pool'], [1, 2]),
+                       aux_logit,
+                       share_logit], axis=1)
+      net = tf.contrib.layers.fully_connected(
+          net, 1,
+          biases_initializer=None,
+          weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+          weights_regularizer=None,
+          activation_fn=None,
+          scope='logits',
+          reuse=False)
+
       end_points['flow_logit'] = net
       end_points['rgb_logit'] = aux_logit
       end_points['share_logit'] = share_logit
