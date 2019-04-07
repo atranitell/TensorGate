@@ -482,7 +482,7 @@ class AVEC2014_BICNN(Configbase):
         save_model_invl=1000,
         test_invl=1000,
         val_invl=1000,
-        max_iter=120000)
+        max_iter=200000)
 
     """network model"""
     self.net = [params.NET()]

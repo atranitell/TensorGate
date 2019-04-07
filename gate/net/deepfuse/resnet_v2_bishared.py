@@ -377,6 +377,54 @@ def resnet_v2(inputs,
           end_points['l_flow_orth'] = l_flow_orth
           end_points['l_madal_orth'] = l_modal_orth
 
+        elif env.target == 'avec2014.img.bicnn.orth3a':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth3a')
+          # rgb orth [n, 2048]
+          rgb_feat = tf.squeeze(aux_net['global_pool'], [1, 2])
+          rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
+          l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
+
+          # flow orth [n, 2048]
+          flow_feat = tf.squeeze(end_points['global_pool'], [1, 2])
+          flow_s, flow_p = tf.split(flow_feat, axis=1, num_or_size_splits=2)
+          l_flow_orth = tf.reduce_mean(tf.reduce_sum(flow_s * flow_p, axis=1))
+
+          # modal orth
+          l_modal_orth = tf.reduce_mean(tf.reduce_sum(rgb_p * flow_p, axis=1))
+          # share merge
+          share = tf.concat([rgb_s, flow_s], axis=1)
+          # share output
+          share_logit = tf.contrib.layers.fully_connected(
+              share, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_share',
+              reuse=False)
+
+          # flow merge
+          net = tf.concat([tf.squeeze(aux_net['global_pool'], [1, 2]),
+                           tf.squeeze(end_points['global_pool'], [1, 2]),
+                           aux_logit,
+                           share_logit], axis=1)
+          # flow output
+          net = tf.contrib.layers.fully_connected(
+              net, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits',
+              reuse=False)
+
+          end_points['flow_logit'] = net
+          end_points['rgb_logit'] = aux_logit
+          end_points['share_logit'] = share_logit
+          end_points['l_rgb_orth'] = l_rgb_orth
+          end_points['l_flow_orth'] = l_flow_orth
+          end_points['l_madal_orth'] = l_modal_orth
+
         elif env.target == 'avec2014.img.bicnn.orth4':
           logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth4')
 
