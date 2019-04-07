@@ -740,9 +740,9 @@ def resnet_v2(inputs,
           end_points['share_logit'] = share_logit
           end_points['l_rgb_orth'] = l_rgb_ps
           end_points['l_flow_orth'] = l_flow_ps
-          end_points['l_rgb_v_orth'] = l_rgb_v_orth
-          end_points['l_flow_v_orth'] = l_flow_v_orth
-          end_points['l_unshare_orth'] = l_unshare_orth
+          end_points['l_rgb_v_orth'] = tf.abs(l_rgb_v_orth)
+          end_points['l_flow_v_orth'] = tf.abs(l_flow_v_orth)
+          end_points['l_unshare_orth'] = tf.abs(l_unshare_orth)
 
         else:
           raise ValueError('Unknown Error')
