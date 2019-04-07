@@ -655,6 +655,96 @@ def resnet_v2(inputs,
           end_points['l_rgb_orth'] = l_rgb_ps
           end_points['l_flow_orth'] = l_flow_ps
 
+        elif env.target == 'avec2014.img.bicnn.orth5b':
+          logger.info('resnet_v2_bishared by avec2014.img.bicnn.orth5b')
+
+          def Transform(feat, dims, name, reuse=None):
+            """feat [N, C]"""
+            with tf.variable_scope('transformer', reuse=reuse):
+              W = tf.get_variable(
+                  name,
+                  shape=[1, dims],
+                  initializer=tf.truncated_normal_initializer(stddev=0.01))
+              X = W * feat
+            return X, W
+
+          # backbone output
+          rgb_feat = tf.squeeze(aux_net['global_pool'], [1, 2])
+          flow_feat = tf.squeeze(end_points['global_pool'], [1, 2])
+
+          # transform1-rgb
+          rgb_p_feat_t, w_rgb_p = Transform(rgb_feat, 2048, 'rgb_p')
+          rgb_s_feat_t, w_rgb_s = Transform(rgb_feat, 2048, 'share')
+          l_rgb_ps = 0.5 * tf.reduce_sum(tf.pow(w_rgb_p * w_rgb_s, 2))
+
+          # transform2-rgb
+          rgb_m_feat = tf.concat([
+              tf.nn.leaky_relu(rgb_p_feat_t),
+              tf.nn.leaky_relu(rgb_s_feat_t)], axis=1)
+
+          # regression-rgb
+          rgb_logit = tf.contrib.layers.fully_connected(
+              rgb_m_feat, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_rgb',
+              reuse=False)
+
+          # transform1-flow
+          flow_p_feat_t, w_flow_p = Transform(flow_feat, 2048, 'flow_p')
+          flow_s_feat_t, w_flow_s = Transform(flow_feat, 2048, 'share', True)
+          l_flow_ps = 0.5 * tf.reduce_sum(tf.pow(w_flow_p * w_flow_s, 2))
+
+          # transform2-flow
+          flow_m_feat = tf.concat([
+              tf.nn.leaky_relu(flow_p_feat_t),
+              tf.nn.leaky_relu(flow_s_feat_t)], axis=1)
+
+          # feat share
+          share_feat = tf.concat([
+            tf.nn.leaky_relu(rgb_s_feat_t),
+            tf.nn.leaky_relu(flow_s_feat_t)], axis=1)
+          share_logit = tf.contrib.layers.fully_connected(
+              share_feat, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_share',
+              reuse=False)
+
+          # regression-flow
+          out_feat = tf.concat([
+            rgb_m_feat, 
+            flow_m_feat, 
+            rgb_logit,
+            share_logit], axis=1)
+
+          out_logit = tf.squeeze(tf.contrib.layers.fully_connected(
+              out_feat, 1,
+              biases_initializer=None,
+              weights_initializer=tf.truncated_normal_initializer(stddev=0.01),
+              weights_regularizer=None,
+              activation_fn=None,
+              scope='logits_out',
+              reuse=False))
+
+          l_rgb_v_orth = tf.reduce_mean(tf.reduce_sum(rgb_s_feat_t * rgb_p_feat_t, axis=1))
+          l_flow_v_orth = tf.reduce_mean(tf.reduce_sum(flow_s_feat_t * flow_p_feat_t, axis=1))
+          l_unshare_orth = tf.reduce_mean(tf.reduce_sum(rgb_p_feat_t * flow_p_feat_t, axis=1))
+
+
+          end_points['flow_logit'] = out_logit
+          end_points['rgb_logit'] = rgb_logit
+          end_points['share_logit'] = share_logit
+          end_points['l_rgb_orth'] = l_rgb_ps
+          end_points['l_flow_orth'] = l_flow_ps
+          end_points['l_rgb_v_orth'] = l_rgb_v_orth
+          end_points['l_flow_v_orth'] = l_flow_v_orth
+          end_points['l_unshare_orth'] = l_unshare_orth
+
         else:
           raise ValueError('Unknown Error')
 
