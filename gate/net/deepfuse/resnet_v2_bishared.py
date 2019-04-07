@@ -719,8 +719,7 @@ def resnet_v2(inputs,
           out_feat = tf.concat([
             rgb_m_feat, 
             flow_m_feat, 
-            rgb_logit,
-            share_logit], axis=1)
+            rgb_logit], axis=1)
 
           out_logit = tf.squeeze(tf.contrib.layers.fully_connected(
               out_feat, 1,
