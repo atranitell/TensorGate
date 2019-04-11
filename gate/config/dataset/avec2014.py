@@ -485,8 +485,31 @@ class AVEC2014_BICNN(Configbase):
         max_iter=200000)
 
     """network model"""
-    self.net = [params.NET()]
-    self.net[0].resnet_v2_bishared(
+    # self.net = [params.NET()]
+    # self.net[0].resnet_v2_bishared(
+    #     depth='50',
+    #     num_classes=1,
+    #     weight_decay=0.0005,
+    #     batch_norm_decay=0.997,
+    #     batch_norm_epsilon=1e-5,
+    #     batch_norm_scale=True,
+    #     use_batch_norm=True,
+    #     activation_fn='relu',
+    #     global_pool=True)
+
+    self.net = [params.NET(), params.NET()]
+    self.net[0].resnet_v2(
+        depth='50',
+        num_classes=1,
+        weight_decay=0.0005,
+        batch_norm_decay=0.997,
+        batch_norm_epsilon=1e-5,
+        batch_norm_scale=True,
+        use_batch_norm=True,
+        activation_fn='relu',
+        global_pool=True)
+
+    self.net[1].resnet_v2(
         depth='50',
         num_classes=1,
         weight_decay=0.0005,
