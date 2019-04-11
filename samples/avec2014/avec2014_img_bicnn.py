@@ -43,6 +43,7 @@ from gate.data.data_factory import load_data
 from gate.net.net_factory import net_graph
 from gate.solver import updater
 from gate.layer import l2
+from gate.layer import ops
 from gate.utils import variable
 from gate.utils import filesystem
 from gate.utils import string
@@ -301,6 +302,29 @@ class AVEC2014_IMG_BICNN(context.Context):
       net = tf.concat([net0, net1, logit1], axis=1)
     elif self.config.target == 'avec2014.img.bicnn.opt':
       net = tf.concat([net0, net1, logit0], axis=1)
+    elif self.config.target == 'avec2014.img.bicnn.opt2':
+      net = tf.concat([net0, net1, logit0], axis=1)
+      logit = ops.linear(net, 1, 'logits')
+      l_opt = l2.loss(logit, label, self.config)
+      l_rgb = l2.loss(logit0, label, self.config)
+
+      rgb_feat = tf.squeeze(net0['global_pool'], [1, 2])
+      rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
+      opt_feat = tf.squeeze(net1['global_pool'], [1, 2])
+      opt_s, opt_p = tf.split(opt_feat, axis=1, num_or_size_splits=2)
+
+      l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
+      l_opt_orth = tf.reduce_mean(tf.reduce_sum(opt_s * opt_p, axis=1))
+      l_unshare_orth = tf.reduce_mean(tf.reduce_sum(rgb_p * opt_p, axis=1))
+
+      losses = {
+          'l_opt': l_opt,
+          'l_rgb': l_rgb,
+          'l_opt_orth': l_opt_orth,
+          'l_rgb_orth': l_rgb_orth,
+          'l_orth': l_unshare_orth,
+      }
+      return logit, losses
     else:
       raise ValueError('Unknown input target [%s]' % self.config.target)
 
