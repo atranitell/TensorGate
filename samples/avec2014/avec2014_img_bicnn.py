@@ -307,12 +307,8 @@ class AVEC2014_IMG_BICNN(context.Context):
       logit = ops.linear(net, 1, 'logits')
       l_opt = l2.loss(logit, label, self.config)
       l_rgb = l2.loss(logit0, label, self.config)
-
-      rgb_feat = tf.squeeze(net0['global_pool'], [1, 2])
-      rgb_s, rgb_p = tf.split(rgb_feat, axis=1, num_or_size_splits=2)
-      opt_feat = tf.squeeze(net1['global_pool'], [1, 2])
-      opt_s, opt_p = tf.split(opt_feat, axis=1, num_or_size_splits=2)
-
+      rgb_s, rgb_p = tf.split(net0, axis=1, num_or_size_splits=2)
+      opt_s, opt_p = tf.split(net1, axis=1, num_or_size_splits=2)
       l_rgb_orth = tf.reduce_mean(tf.reduce_sum(rgb_s * rgb_p, axis=1))
       l_opt_orth = tf.reduce_mean(tf.reduce_sum(opt_s * opt_p, axis=1))
       l_unshare_orth = tf.reduce_mean(tf.reduce_sum(rgb_p * opt_p, axis=1))
